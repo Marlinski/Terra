@@ -3,7 +3,7 @@ plugins {
     id("com.github.dcendents.android-maven")
 }
 
-group='com.github.RightMesh.Terra'
+group='com.github.DisruptedSystems.Terra'
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
 }
@@ -19,13 +19,13 @@ dependencies {
     api project(path: ':libdtn-common')
 
     // RxBus for the event bus
-    api 'com.github.RightMesh:librxbus:8abd695a02'
+    api "com.github.Marlinski:librxbus:$librxbusVersion"
 
     // libcbor for block extension parser/serializer
-    api 'com.github.RightMesh:libcbor:6e5ca8868f'
+    api "com.github.Marlinski:libcbor:$libcborVersion"
 
     // RxJava library for reactive programming
-    api 'io.reactivex.rxjava2:rxjava:2.2.3'
+    api "io.reactivex.rxjava3:rxjava:$rxjavaVersion"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

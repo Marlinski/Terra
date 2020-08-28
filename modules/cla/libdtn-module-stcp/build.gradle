@@ -4,7 +4,7 @@ plugins {
     id("com.github.dcendents.android-maven")
 }
 
-group='com.github.RightMesh.Terra'
+group='com.github.DisruptedSystems.Terra'
 
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
@@ -13,11 +13,11 @@ task ApiDoc(type: Javadoc) {
 jar {
     // META-INF/services to load module with ServiceLoader
     serviceLoader {
-        serviceInterface 'io.left.rightmesh.libdtn.core.spi.cla.ConvergenceLayerSpi'
-        serviceInterface 'io.left.rightmesh.libdtn.core.spi.cla.ClaChannelSpi'
-        serviceInterface 'io.left.rightmesh.core.module.cla.stcp.ConvergenceLayerStcp'
-        serviceInterface 'io.left.rightmesh.core.module.cla.stcp.ConvergenceLayerStcp$Channel'
-        serviceInterface 'io.left.rightmesh.core.module.cla.stcp.ClaStcpEid'
+        serviceInterface 'io.disruptedsystems.libdtn.core.spi.ConvergenceLayerSpi'
+        serviceInterface 'io.disruptedsystems.libdtn.core.spi.ClaChannelSpi'
+        serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ConvergenceLayerStcp'
+        serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ConvergenceLayerStcp$Channel'
+        serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ClaStcpEid'
     }
 
     // fat jar dependency, exclude those already in libdtn-core
@@ -53,7 +53,7 @@ dependencies {
 
     // librxtcp for tcp socket
     // note: we need to use compile keyword to add in the fatjar, implementation/api doesn't work
-    compile 'com.github.RightMesh:librxtcp:65e2cb0ab8'
+    compile "com.github.Marlinski:librxtcp:$librxtcpVersion"
 
     // libdtn-core-api for module
     implementation project(path: ':libdtn-core-api')
