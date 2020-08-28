@@ -2,7 +2,7 @@ plugins {
     id("application")
 }
 
-mainClassName="io.left.rightmesh.terra.Terra"
+mainClassName="io.disruptedsystems.terra.Terra"
 
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
@@ -24,7 +24,7 @@ dependencies {
     compile project(path: ':libdtn-core-api')
 
     // RxJava library for reactive programming
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.3'
+    implementation "io.reactivex.rxjava3:rxjava:$rxjavaVersion"
 
     // picocli framework for RequestMessage Line Interface
     compile 'info.picocli:picocli:3.6.1'

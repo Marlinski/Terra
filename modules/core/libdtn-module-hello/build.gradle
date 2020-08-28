@@ -4,7 +4,7 @@ plugins {
     id("com.github.dcendents.android-maven")
 }
 
-group='com.github.RightMesh.Terra'
+group='com.github.DisruptedSystems.Terra'
 
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
@@ -13,8 +13,8 @@ task ApiDoc(type: Javadoc) {
 jar {
     // META-INF/services to load module with ServiceLoader
     serviceLoader {
-        serviceInterface 'io.left.rightmesh.libdtn.core.spi.core.CoreModuleSpi'
-        serviceInterface 'io.left.rightmesh.module.core.hello.CoreModuleHello'
+        serviceInterface 'io.disruptedsystems.libdtn.core.spi.CoreModuleSpi'
+        serviceInterface 'io.disruptedsystems.libdtn.module.core.hello.CoreModuleHello'
     }
 
     // fat jar dependency, exclude those already in libdtn-core
@@ -43,7 +43,7 @@ dependencies {
     implementation project(path: ':libdtn-core-api')
 
     // RxJava library for reactive programming
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.3'
+    implementation "io.reactivex.rxjava3:rxjava:$rxjavaVersion"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

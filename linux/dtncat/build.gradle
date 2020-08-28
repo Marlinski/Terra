@@ -2,7 +2,7 @@ plugins {
     id("application")
 }
 
-mainClassName="io.left.rightmesh.dtncat.DtnCat"
+mainClassName="io.disruptedsystems.dtncat.DtnCat"
 
 repositories {
     google()

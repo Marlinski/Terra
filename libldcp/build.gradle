@@ -3,7 +3,7 @@ plugins {
     id("com.github.dcendents.android-maven")
 }
 
-group='com.github.RightMesh.Terra'
+group='com.github.DisruptedSystems.Terra'
 
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
@@ -30,13 +30,13 @@ dependencies {
     implementation project(path: ':libdtn-common')
 
     // CBOR for encoding/parsing
-    implementation 'com.github.RightMesh:libcbor:6e5ca8868f'
+    implementation "com.github.Marlinski:libcbor:$libcborVersion"
 
     // RxTCP for communication between daemon/api
-    implementation 'com.github.RightMesh:librxtcp:65e2cb0ab8'
+    implementation "com.github.Marlinski:librxtcp:$librxtcpVersion"
 
     // RxJava library for reactive programming
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.3'
+    implementation "io.reactivex.rxjava3:rxjava:$rxjavaVersion"
 
 }
 
