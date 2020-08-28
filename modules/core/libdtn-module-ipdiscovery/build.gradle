@@ -4,7 +4,7 @@ plugins {
     id("com.github.dcendents.android-maven")
 }
 
-group='com.github.RightMesh.Terra'
+group='com.github.DisruptedSystems.Terra'
 
 task ApiDoc(type: Javadoc) {
     source = sourceSets.main.allJava
@@ -13,8 +13,8 @@ task ApiDoc(type: Javadoc) {
 jar {
     // META-INF/services to load module with ServiceLoader
     serviceLoader {
-        serviceInterface 'io.left.rightmesh.libdtn.core.spi.core.CoreModuleSpi'
-        serviceInterface 'io.left.rightmesh.module.core.ipdiscovery.CoreModuleIpDiscovery'
+        serviceInterface 'io.disruptedsystems.libdtn.core.spi.CoreModuleSpi'
+        serviceInterface 'io.disruptedsystems.libdtn.module.core.ipdiscovery.CoreModuleIpDiscovery'
     }
 
     // fat jar dependency, exclude those already in libdtn-core
@@ -41,7 +41,7 @@ dependencies {
 
     // libdetect to detect neighbour on the LAN
     // note: we need to use compile keyword to add in the fatjar, implementation/api doesn't work
-    compile 'com.github.RightMesh:libdetect:5d8aaf041d'
+    compile "com.github.Marlinski:libdetect:$libdetectVersion"
 
     // interface spi
     implementation project(path: ':libdtn-core-api')

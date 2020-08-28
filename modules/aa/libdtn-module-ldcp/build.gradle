@@ -1,0 +1,55 @@
+plugins {
+    id("java-library")
+    id "com.github.harbby.gradle.serviceloader" version "1.1.5"
+    id("com.github.dcendents.android-maven")
+}
+
+group='com.github.DisruptedSystems.Terra'
+
+task ApiDoc(type: Javadoc) {
+    source = sourceSets.main.allJava
+}
+
+jar {
+    dependsOn(':libldcp:jar')
+    // META-INF/services to load module with ServiceLoader
+    serviceLoader {
+        serviceInterface 'io.disruptedsystems.libdtn.core.spi.ApplicationAgentAdapterSpi'
+        serviceInterface 'io.disruptedsystems.libdtn.module.aa.ldcp.AaModuleLdcp'
+    }
+
+    // fat jar dependency, exclude those already in libdtn-core
+    from {
+        configurations.compile
+                .filter({! it.name.matches("rxjava.*")})
+                .filter({! it.name.matches("reactive-streams.*")})
+                .filter({! it.name.matches("libcbor.*")})
+                .filter({! it.name.matches("libdtn-common.*")})
+                .collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+repositories {
+    google()
+    jcenter()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // protocol library
+    // note: we need to use compile keyword to add it in the fatjar, implementation/api doesn't work
+    compile project(path: ':libldcp')
+
+    // libdtn client ldcp api path
+    compile project(path: ':libdtn-client-ldcp')
+
+    // interface spi
+    implementation project(path: ':libdtn-core-api')
+
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
