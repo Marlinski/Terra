@@ -1,6 +1,5 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
@@ -15,16 +14,17 @@ import java.util.regex.Pattern;
 public class ClaStcpEidParser implements ClaEidParser {
 
     @Override
-    public BaseClaEid create(String claName, String claSpecific, String claSink)
+    public ClaStcpEid createClaEid(String claName, String claSpecific)
             throws EidFormatException {
-        final String regex = "^([^:/?#]+):([0-9]+)";
+        final String regex = "^([^:/?#]+):([0-9]+)(/.*)?";
         Pattern r = Pattern.compile(regex);
         Matcher m = r.matcher(claSpecific);
         if (!m.find()) {
-            throw new EidFormatException("not an ClaStcpEid Eid specific host: " + claSpecific);
+            throw new EidFormatException("not an stcp-specific eid: " + claSpecific);
         }
         String host = m.group(1);
         int port = Integer.valueOf(m.group(2));
-        return new ClaStcpEid(host, port, claSink);
+        String sink = m.group(3);
+        return new ClaStcpEid(host, port, sink);
     }
 }

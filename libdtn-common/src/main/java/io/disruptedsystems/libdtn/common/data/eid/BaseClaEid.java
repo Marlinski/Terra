@@ -5,41 +5,25 @@ package io.disruptedsystems.libdtn.common.data.eid;
  *
  * @author Lucien Loiseau on 17/10/18.
  */
-public class BaseClaEid extends BaseEid implements ClaEid {
+public abstract class BaseClaEid extends BaseEid implements ClaEid {
 
     public String claName;
-    public String claSpecific;
+    public String claParameters;
     public String claSink;
 
     // should only be called by safe constructor, no validity check
-    protected BaseClaEid(String claName, String claSpecific) {
+    protected BaseClaEid(String claName, String claParameters) {
         this.claName = claName;
-        this.claSpecific = claSpecific;
+        this.claParameters = claParameters;
         this.claSink = "";
     }
 
-    protected BaseClaEid(String claName, String claSpecific, String sink)
+    protected BaseClaEid(String claName, String claParameters, String sink)
             throws EidFormatException {
         this.claName = claName;
-        this.claSpecific = claSpecific;
+        this.claParameters = claParameters;
         this.claSink = sink;
         checkValidity();
-    }
-
-    /**
-     * setPath sets the path part of the ClaEid. The path provided must be a URI-compatible path.
-     *
-     * @param path to set
-     * @return current ClaEid.
-     * @throws EidFormatException if the path is invalid.
-     */
-    public BaseClaEid setPath(String path) throws EidFormatException {
-        if (!path.startsWith("/")) {
-            path = "/" + path;
-        }
-        this.claSink = path;
-        checkValidity();
-        return this;
     }
 
     @Override
@@ -54,7 +38,7 @@ public class BaseClaEid extends BaseEid implements ClaEid {
 
     @Override
     public String getSsp() {
-        return claName + ":" + claSpecific + claSink;
+        return claName + ":" + getClaSpecificPart();
     }
 
     @Override
@@ -63,21 +47,22 @@ public class BaseClaEid extends BaseEid implements ClaEid {
     }
 
     @Override
-    public String getClaSpecificPart() {
-        return claSpecific;
+    public String getClaParameters() {
+        return claParameters;
     }
 
     @Override
-    public String getPath() {
+    public String getSink() {
         return claSink;
     }
 
     @Override
-    public Eid copy() {
-        BaseClaEid copy = new BaseClaEid(claName, claSpecific);
-        copy.claSink = claSink;
-        return copy;
+    public ClaEid setSink(String sink) throws EidFormatException {
+        this.claSink = sink;
+        checkValidity();
+        return this;
     }
+
 
     @Override
     public boolean matches(Eid other) {
@@ -85,7 +70,7 @@ public class BaseClaEid extends BaseEid implements ClaEid {
             return false;
         }
         if (other instanceof ClaEid) {
-            return claSpecific.equals(((BaseClaEid) other).claSpecific)
+            return claParameters.equals(((BaseClaEid) other).claParameters)
                     && claName.equals(((BaseClaEid) other).claName);
         }
         return false;

@@ -1,7 +1,7 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
 import static io.disruptedsystems.libdtn.common.data.eid.DtnEid.EID_DTN_IANA_VALUE;
-import static io.disruptedsystems.libdtn.common.data.eid.EidIpn.EID_IPN_IANA_VALUE;
+import static io.disruptedsystems.libdtn.common.data.eid.IpnEid.EID_IPN_IANA_VALUE;
 
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
@@ -11,7 +11,7 @@ import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
-import io.disruptedsystems.libdtn.common.data.eid.EidIpn;
+import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 import io.disruptedsystems.libdtn.common.data.eid.UnknowEid;
 
 /**
@@ -54,8 +54,8 @@ public class EidItem implements CborParser.ParseableItem {
 
     private CborParser parseIpn = CBOR.parser()
             .cbor_open_array(2)
-            .cbor_parse_int((p, t, node) -> eid = new EidIpn((int) node, 0))
-            .cbor_parse_int((p, t, service) -> ((EidIpn) eid).serviceNumber = (int) service);
+            .cbor_parse_int((p, t, node) -> eid = new IpnEid((int) node, 0))
+            .cbor_parse_int((p, t, service) -> ((IpnEid) eid).serviceNumber = (int) service);
 
     private CborParser parseDtn = CBOR.parser()
             .cbor_or(

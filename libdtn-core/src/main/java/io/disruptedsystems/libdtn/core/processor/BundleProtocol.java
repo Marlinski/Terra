@@ -208,7 +208,7 @@ public class BundleProtocol implements BundleProtocolApi {
         bundle.tag("delivery_pending");
         /* 5.7 - step 1 */
         core.getLogger().v(TAG, "5.7-1 " + bundle.bid.getBidString());
-        // atm we don't support fragmentation
+        // todo: support fragmentation
 
         /* 5.7 - step 2 */
         core.getLogger().v(TAG, "5.7-2 " + bundle.bid.getBidString());

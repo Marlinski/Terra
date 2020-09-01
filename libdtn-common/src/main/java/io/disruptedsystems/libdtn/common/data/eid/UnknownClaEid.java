@@ -13,12 +13,18 @@ public class UnknownClaEid extends BaseClaEid {
      *
      * @param claName     cla scheme
      * @param claSpecific ClaEid scheme-specific part
-     * @param sink        of the ClaEid
-     * @throws EidFormatException if the scheme-specific part is invalid.
      */
-    public UnknownClaEid(String claName, String claSpecific, String sink)
-            throws EidFormatException {
-        super(claName, claSpecific, sink);
+    public UnknownClaEid(String claName, String claSpecific) {
+        super(claName, claSpecific);
     }
 
+    @Override
+    public String getClaSpecificPart() {
+        return claParameters;
+    }
+
+    @Override
+    public UnknownClaEid copy() {
+        return new UnknownClaEid(claName, claParameters);
+    }
 }

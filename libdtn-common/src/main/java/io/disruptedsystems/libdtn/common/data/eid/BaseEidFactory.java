@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public class BaseEidFactory implements EidFactory, ClaEidParser {
 
-    private EidSspParser ipnParser = new EidIpn.IpnParser();
+    private EidSspParser ipnParser = new IpnEid.IpnParser();
     private EidSspParser dtnParser = new DtnEid.DtnParser();
     private EidSspParser apiParser = new ApiEid.ApiParser();
 
@@ -33,8 +33,8 @@ public class BaseEidFactory implements EidFactory, ClaEidParser {
                 return ApiEid.EID_API_SCHEME;
             case DtnEid.EID_DTN_IANA_VALUE:
                 return DtnEid.EID_DTN_SCHEME;
-            case EidIpn.EID_IPN_IANA_VALUE:
-                return EidIpn.EID_IPN_SCHEME;
+            case IpnEid.EID_IPN_IANA_VALUE:
+                return IpnEid.EID_IPN_SCHEME;
             case ClaEid.EID_CLA_IANA_VALUE:
                 return ClaEid.EID_CLA_SCHEME;
             default:
@@ -61,7 +61,7 @@ public class BaseEidFactory implements EidFactory, ClaEidParser {
         } else {
             throw new EidFormatException("not a URI");
         }
-        return create(scheme, ssp);
+        return createClaEid(scheme, ssp);
     }
 
     @Override
@@ -72,32 +72,31 @@ public class BaseEidFactory implements EidFactory, ClaEidParser {
         if (scheme.equals(DtnEid.EID_DTN_SCHEME)) {
             return dtnParser.create(ssp);
         }
-        if (scheme.equals(EidIpn.EID_IPN_SCHEME)) {
+        if (scheme.equals(IpnEid.EID_IPN_SCHEME)) {
             return ipnParser.create(ssp);
         }
         if (scheme.equals(ClaEid.EID_CLA_SCHEME)) {
-            final String regex = "^([^:/?#]+):([^/?#]+)(/.*)?";
+            final String regex = "^([^:/?#]+)\\+(.+)";
             Pattern r = Pattern.compile(regex);
             Matcher m = r.matcher(ssp);
             if (!m.find()) {
-                throw new EidFormatException("not a BaseClaEid");
+                throw new EidFormatException("not a cla-specific EID");
             }
             String clName = m.group(1);
             String clSpecific = m.group(2);
-            String clSink = m.group(3) == null ? "" : m.group(3);
 
-            return create(clName, clSpecific, clSink);
+            return createClaEid(clName, clSpecific);
         }
         throw new UnknownEidScheme(scheme);
     }
 
     @Override
-    public ClaEid create(String claName, String claSpecific, String claSink)
+    public ClaEid createClaEid(String claName, String claSpecific)
             throws EidFormatException {
         if (throwExceptionForUnknownClaEid) {
             throw new UnknownClaName("claName unknown: " + claName);
         } else {
-            return new UnknownClaEid(claName, claSpecific, claSink);
+            return new UnknownClaEid(claName, claSpecific);
         }
     }
 

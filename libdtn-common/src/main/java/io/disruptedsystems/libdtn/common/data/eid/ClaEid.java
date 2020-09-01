@@ -21,19 +21,37 @@ public interface ClaEid extends Eid {
     String getClaName();
 
     /**
+     * get the Convergence Layer specific parameters
+     *
+     * @return String representing the Convergence Layer specific parameters
+     */
+    String getClaParameters();
+
+    /**
      * get the Convergence Layer specific part of this ClaEid.
      *
      * @return String representing the Convergence Layer specific part
      */
     String getClaSpecificPart();
 
-
     /**
      * get the Sink part of this ClaEid.
      *
      * @return String representing the Sink (also called Path)
      */
-    String getPath();
+    String getSink();
 
+    /**
+     * set the Sink part of this ClaEid.
+     *
+     * @param sink representing the Sink (also called Path)
+     */
+    ClaEid setSink(String sink) throws EidFormatException;
+
+    /**
+     * copy this claeid
+     * @return a copy of the ClaEid
+     */
+    ClaEid copy();
 
 }

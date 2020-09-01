@@ -27,7 +27,6 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
      *
      * @param api configuration
      * @param logger logger instance
-     * @return Flowable of Bundle
      */
     Observable<ClaChannelSpi> start(ConfigurationApi api, Log logger);
 
@@ -39,9 +38,9 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
     void stop();
 
     /**
-     * Tries to open a channel to the given BaseClaEid-specific Eid.
+     * Tries to open a channel to the given Cla-specific Eid.
      *
-     * @param eid of the peer to open a channel too, must be BaseClaEid-specific
+     * @param eid of the peer to open a channel too, must be Cla-specific
      * @return Single of ClaChannelSpi if successful, error otherwise
      */
     Single<ClaChannelSpi> open(ClaEid eid);

@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
 import static org.junit.Assert.assertEquals;
 
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidIpn;
+import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 
 /**
  * Utility class to generate bundles for test purposes.
@@ -30,7 +30,7 @@ public class TestBundle {
      */
     public static Bundle testBundle0() {
         Bundle bundle = new Bundle();
-        bundle.setDestination(new EidIpn(5, 12));
+        bundle.setDestination(new IpnEid(5, 12));
         bundle.setSource(DtnEid.unsafe("source"));
         bundle.setReportto(DtnEid.nullEid());
         bundle.bid = BundleId.create(bundle);

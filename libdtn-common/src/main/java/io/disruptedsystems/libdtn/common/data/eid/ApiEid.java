@@ -14,12 +14,10 @@ public class ApiEid extends BaseEid {
     public static final int EID_API_IANA_VALUE = 251;  // not actually an ianaNumber value
     public static final String EID_API_SCHEME = "api";  // n
 
-    private String ssp;
-    private String path;
+    private String sink;
 
     private ApiEid() {
-        this.ssp = "me";
-        this.path = "";
+        this.sink = "";
     }
 
     public static ApiEid me() {
@@ -32,34 +30,36 @@ public class ApiEid extends BaseEid {
     public static class ApiParser implements EidSspParser {
         @Override
         public Eid create(String ssp) throws EidFormatException {
-            return new ApiEid(ssp);
+            final String regex = "me(/.*)?";
+            Pattern r = Pattern.compile(regex);
+            Matcher m = r.matcher(ssp);
+            if (m.find()) {
+                String sink = m.group(1) == null ? "" : m.group(1);
+                return new ApiEid(sink);
+            } else {
+                throw new EidFormatException("not an ApiEid");
+            }
         }
     }
 
     /**
      * Constructor. Creates an ApiEid after parsing the api-specific part.
      *
-     * @param ssp api-specific part.
+     * @param sink sink
      * @throws EidFormatException if the api-specific part is not recognized.
      */
-    public ApiEid(String ssp) throws EidFormatException {
-        this();
-        final String regex = "me(/.*)?";
-        Pattern r = Pattern.compile(regex);
-        Matcher m = r.matcher(ssp);
-        if (m.find()) {
-            this.ssp = "me";
-            this.path = m.group(1) == null ? "" : m.group(1);
-        } else {
-            throw new EidFormatException("not an ApiEid");
+    public ApiEid(String sink) throws EidFormatException {
+        if(sink == null) {
+            sink = "";
         }
+        this.sink = sink.startsWith("/") ? sink.replaceFirst("/","") : sink;
         checkValidity();
     }
 
     @Override
     public Eid copy() {
         ApiEid me = me();
-        me.path = path;
+        me.sink = sink;
         return me;
     }
 
@@ -75,11 +75,16 @@ public class ApiEid extends BaseEid {
 
     @Override
     public String getSsp() {
-        return ssp + path;
+        return "me" + (sink.equals("") ? "" : "/" + sink);
     }
 
-    public String getPath() {
-        return path;
+    public String getSink() {
+        return sink;
+    }
+
+    public void setSink(String sink) throws EidFormatException {
+        this.sink = sink;
+        checkValidity();
     }
 
     @Override

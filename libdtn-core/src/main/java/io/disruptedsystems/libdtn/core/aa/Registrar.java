@@ -118,17 +118,17 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             if (bundle.getSource().matches(ApiEid.me())) {
                 bundle.setSource(core.getExtensionManager().getEidFactory().create(
                         core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getSource()).getPath()));
+                                + ((ApiEid) bundle.getSource()).getSink()));
             }
             if (bundle.getReportto().matches(ApiEid.me())) {
                 bundle.setReportto(core.getExtensionManager().getEidFactory().create(
                         core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getReportto()).getPath()));
+                                + ((ApiEid) bundle.getReportto()).getSink()));
             }
             if (bundle.getDestination().matches(ApiEid.me())) {
                 bundle.setDestination(core.getExtensionManager().getEidFactory().create(
                         core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getDestination()).getPath()));
+                                + ((ApiEid) bundle.getDestination()).getSink()));
             }
         } catch (EidFormatException efe) {
             throw new BundleMalformed(efe.getMessage());

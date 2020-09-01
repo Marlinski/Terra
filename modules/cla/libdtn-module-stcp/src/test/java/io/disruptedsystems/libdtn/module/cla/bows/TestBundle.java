@@ -1,4 +1,6 @@
-package io.disruptedsystems.libdtn.core.storage;
+package io.disruptedsystems.libdtn.module.cla.bows;
+
+import static org.junit.Assert.assertEquals;
 
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
@@ -10,45 +12,58 @@ import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 
-import static org.junit.Assert.assertEquals;
-
 /**
+ * Utility class to generate bundles for test purposes.
+ *
  * @author Lucien Loiseau on 21/10/18.
  */
 public class TestBundle {
 
     public static String testPayload = "This is a test for bundle serialization";
 
+    /**
+     * generate a simple bundle.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle0() {
-        try {
-            Bundle bundle = new Bundle();
-            bundle.setDestination(new IpnEid(5, 12));
-            bundle.setSource(new DtnEid("source"));
-            bundle.setReportto(DtnEid.nullEid());
-            bundle.bid = BundleId.create(bundle);
-            return bundle;
-        } catch(EidFormatException ignore) {
-            // should not happen
-            //todo: create a safe Eid constructor by encoding URI
-            return null;
-        }
+        Bundle bundle = new Bundle();
+        bundle.setDestination(new IpnEid(5, 12));
+        bundle.setSource(DtnEid.unsafe("source"));
+        bundle.setReportto(DtnEid.nullEid());
+        bundle.bid = BundleId.create(bundle);
+        return bundle;
     }
 
+    /**
+     * generate a simple bundle with payload.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle1() {
         Bundle bundle = testBundle0();
         bundle.addBlock(new PayloadBlock(new String(testPayload)));
         return bundle;
     }
 
+    /**
+     * generate a simple bundle with payload and ageblock.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle2() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
         return bundle;
     }
 
+    /**
+     * generate a simple bundle with payload, ageblock and hop limit.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle3() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
@@ -56,6 +71,11 @@ public class TestBundle {
         return bundle;
     }
 
+    /**
+     * generate a simple bundle with payload, ageblock, hop limit and previous.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle4() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
@@ -64,7 +84,11 @@ public class TestBundle {
         return bundle;
     }
 
-
+    /**
+     * generate a simple bundle with payload, ageblock, hoplimit, previous and crc on primary.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle5() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
@@ -74,18 +98,25 @@ public class TestBundle {
         return bundle;
     }
 
+    /**
+     * generate a simple bundle with payload, ageblock, hoplimit, previous and crc.
+     *
+     * @return test bundle
+     */
     public static Bundle testBundle6() {
         Bundle bundle = testBundle0();
         bundle.setCrcType(PrimaryBlock.CrcFieldType.CRC_32);
 
         CanonicalBlock age = new AgeBlock();
-        CanonicalBlock scope = new ScopeControlHopLimitBlock();
-        CanonicalBlock payload = new PayloadBlock(testPayload);
-        CanonicalBlock previous = new PreviousNodeBlock();
-
         age.crcType = BlockHeader.CrcFieldType.CRC_16;
+
+        CanonicalBlock scope = new ScopeControlHopLimitBlock();
         scope.crcType = BlockHeader.CrcFieldType.CRC_16;
+
+        CanonicalBlock payload = new PayloadBlock(testPayload);
         payload.crcType = BlockHeader.CrcFieldType.CRC_32;
+
+        CanonicalBlock previous = new PreviousNodeBlock();
         previous.crcType = BlockHeader.CrcFieldType.CRC_32;
 
         bundle.addBlock(age);
@@ -95,13 +126,17 @@ public class TestBundle {
         return bundle;
     }
 
-
+    /**
+     * check a test bundle payload.
+     * 
+     * @param bundle
+     */
     public static void checkBundlePayload(Bundle bundle) {
         // assert
         assertEquals(true, bundle != null);
         String[] payload = {null};
         if (bundle != null) {
-            for(CanonicalBlock block : bundle.getBlocks()) {
+            for (CanonicalBlock block : bundle.getBlocks()) {
                 assertEquals(true, block.isTagged("crc_check"));
                 assertEquals(true, block.<Boolean>getTagAttachment("crc_check"));
             }
@@ -122,3 +157,4 @@ public class TestBundle {
 
 
 }
+

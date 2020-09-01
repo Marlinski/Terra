@@ -18,9 +18,8 @@ public interface ClaEidParser {
      *
      * @param claName     convergence layer name
      * @param claSpecific convergence layer specific host-part
-     * @param sink        handle may be null
      * @return new ClaEid
-     * @throws EidFormatException if Convergence Layer name is unknown
+     * @throws EidFormatException if Convergence Layer name is unknown or cannot be parsed
      */
-    ClaEid create(String claName, String claSpecific, String sink) throws EidFormatException;
+    ClaEid createClaEid(String claName, String claSpecific) throws EidFormatException;
 }

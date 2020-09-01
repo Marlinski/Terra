@@ -22,7 +22,7 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidIpn;
+import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class BundleV7Test {
      */
     public static Bundle testBundle0() {
         Bundle bundle = new Bundle();
-        bundle.setDestination(new EidIpn(5, 12));
+        bundle.setDestination(new IpnEid(5, 12));
         bundle.setSource(DtnEid.unsafe("source"));
         bundle.setReportto(DtnEid.nullEid());
         bundle.bid = BundleId.create(bundle);

@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
 import static junit.framework.TestCase.fail;
 

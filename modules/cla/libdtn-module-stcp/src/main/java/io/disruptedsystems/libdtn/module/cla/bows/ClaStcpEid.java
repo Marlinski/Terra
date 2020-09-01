@@ -1,6 +1,7 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
 import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
@@ -35,7 +36,7 @@ public class ClaStcpEid extends BaseClaEid {
      * @throws EidFormatException if the supplied parameters are not valid
      */
     public ClaStcpEid(String host, int port, String sink) throws EidFormatException {
-        super("stcp", host + ":" + port, sink);
+        super("stcp", host + ":" + port, checkRoot(sink));
         this.host = host;
         this.port = port;
     }
@@ -46,21 +47,20 @@ public class ClaStcpEid extends BaseClaEid {
     }
 
     @Override
-    public Eid copy() {
+    public String getClaSpecificPart() {
+        return claParameters + claSink;
+    }
+
+    @Override
+    public ClaStcpEid copy() {
         ClaStcpEid ret = new ClaStcpEid(host, port);
         ret.claSink = this.claSink;
         return ret;
     }
 
-    @Override
-    public boolean matches(Eid other) {
-        if (other == null) {
-            return false;
-        }
-        if (other instanceof ClaStcpEid) {
-            ClaStcpEid o = (ClaStcpEid) other;
-            return (this.host.equals(o.host) && this.port == o.port);
-        }
-        return false;
+    private static String checkRoot(String s) {
+        if (s == null) return "/";
+        if (s.startsWith("/")) return s;
+        return "/" + s;
     }
 }

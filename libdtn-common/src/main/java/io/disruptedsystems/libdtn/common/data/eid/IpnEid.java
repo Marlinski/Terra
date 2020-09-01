@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  *
  * @author Lucien Loiseau on 17/10/18.
  */
-public class EidIpn extends BaseEid {
+public class IpnEid extends BaseEid {
 
     public static final int EID_IPN_IANA_VALUE = 2;
     public static final String EID_IPN_SCHEME = "ipn";
@@ -31,21 +31,21 @@ public class EidIpn extends BaseEid {
                 String service = m.group(2);
                 int nodeNumber = Integer.valueOf(node);
                 int serviceNumber = Integer.valueOf(service);
-                return new EidIpn(nodeNumber, serviceNumber);
+                return new IpnEid(nodeNumber, serviceNumber);
             } else {
                 throw new EidFormatException("not an EidIpn");
             }
         }
     }
 
-    public EidIpn(int node, int service) {
+    public IpnEid(int node, int service) {
         this.nodeNumber = node;
         this.serviceNumber = service;
     }
 
     @Override
     public Eid copy() {
-        return new EidIpn(nodeNumber, serviceNumber);
+        return new IpnEid(nodeNumber, serviceNumber);
     }
 
     @Override
@@ -53,8 +53,8 @@ public class EidIpn extends BaseEid {
         if (other == null) {
             return false;
         }
-        if (other instanceof EidIpn) {
-            EidIpn o = (EidIpn) other;
+        if (other instanceof IpnEid) {
+            IpnEid o = (IpnEid) other;
             return (nodeNumber == o.nodeNumber && serviceNumber == o.serviceNumber);
         } else {
             return false;
@@ -89,9 +89,9 @@ public class EidIpn extends BaseEid {
         if (o == null) {
             return false;
         }
-        if (o instanceof EidIpn) {
-            return this.nodeNumber == ((EidIpn) o).nodeNumber
-                    && this.serviceNumber == ((EidIpn) o).serviceNumber;
+        if (o instanceof IpnEid) {
+            return this.nodeNumber == ((IpnEid) o).nodeNumber
+                    && this.serviceNumber == ((IpnEid) o).serviceNumber;
         }
         return false;
     }

@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.module.core.hello;
 
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
@@ -11,7 +12,6 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
@@ -76,7 +76,6 @@ public class CoreModuleHello implements CoreModuleSpi {
     @Override
     public void init(CoreApi api) {
         this.coreApi = api;
-
         prepareHelloBundle();
 
         try {
@@ -135,7 +134,7 @@ public class CoreModuleHello implements CoreModuleSpi {
     @Subscribe
     public void onEvent(LinkLocalEntryUp up) {
         try {
-            BaseClaEid eid = ((BaseClaEid) up.channel.channelEid().copy()).setPath("/hello/");
+            ClaEid eid = up.channel.channelEid().copy().setSink("/hello/");
             coreApi.getLogger().i(TAG, "sending hello message to: " + eid.getEidString());
             helloBundle.setDestination(eid);
             up.channel.sendBundle(helloBundle,

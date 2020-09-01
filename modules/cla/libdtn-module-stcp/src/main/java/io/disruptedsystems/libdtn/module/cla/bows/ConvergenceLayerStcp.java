@@ -1,7 +1,7 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
-import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT;
-import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
+import static io.disruptedsystems.libdtn.module.cla.bows.Configuration.CLA_STCP_LISTENING_PORT;
+import static io.disruptedsystems.libdtn.module.cla.bows.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
 
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
@@ -18,7 +18,6 @@ import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.marlinski.librxtcp.ConnectionAPI;
@@ -127,8 +126,8 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     public class Channel implements ClaChannelSpi {
 
         RxTCP.Connection tcpcon;
-        BaseClaEid channelEid;
-        BaseClaEid localEid;
+        ClaStcpEid channelEid;
+        ClaStcpEid localEid;
         boolean initiator;
 
         /**
@@ -159,12 +158,12 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         }
 
         @Override
-        public BaseClaEid channelEid() {
+        public ClaStcpEid channelEid() {
             return channelEid;
         }
 
         @Override
-        public BaseClaEid localEid() {
+        public ClaStcpEid localEid() {
             return localEid;
         }
 

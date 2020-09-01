@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.stcp;
+package io.disruptedsystems.libdtn.module.cla.bows;
 
 
 import static org.junit.Assert.assertEquals;
@@ -26,12 +26,12 @@ public class ClaStcpEidTest {
             BaseClaEid cla = new ClaStcpEid("google.com", 4556, "/");
             assertEquals("cla:stcp:google.com:4556/", cla.getEidString());
             assertEquals("stcp", cla.claName);
-            assertEquals("google.com:4556", cla.claSpecific);
+            assertEquals("google.com:4556", cla.claParameters);
             assertEquals("/", cla.claSink);
 
-            Eid eid = (new ClaStcpEidParser()).create("stcp","google.com:4556", "");
-            Eid path = (new ClaStcpEidParser()).create("stcp", "google.com:4556", "/pingservice");
-            assertEquals("cla:stcp:google.com:4556", eid.getEidString());
+            Eid eid = (new ClaStcpEidParser()).createClaEid("stcp","google.com:4556");
+            Eid path = (new ClaStcpEidParser()).createClaEid("stcp", "google.com:4556/pingservice");
+            assertEquals("cla:stcp:google.com:4556/", eid.getEidString());
             assertEquals("cla:stcp:google.com:4556/pingservice", path.getEidString());
             assertTrue(path.matches(eid));
         } catch (EidFormatException eid) {

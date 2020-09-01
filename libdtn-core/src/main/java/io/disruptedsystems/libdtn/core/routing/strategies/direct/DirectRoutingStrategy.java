@@ -116,7 +116,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
         // watch bundle for all potential ClaEid
         potentialClas
-                .map(claeid -> directListener.watch(claeid.getClaSpecificPart(), bid))
+                .map(claeid -> directListener.watch(claeid.getClaParameters(), bid))
                 .subscribe();
 
         // then try to force an opportunity

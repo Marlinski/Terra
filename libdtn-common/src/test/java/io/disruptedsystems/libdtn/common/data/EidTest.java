@@ -4,12 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
-import io.disruptedsystems.libdtn.common.data.eid.EidIpn;
+import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 
 import org.junit.Test;
 
@@ -23,17 +24,55 @@ public class EidTest {
     EidFactory eidFactory = new BaseEidFactory();
 
     @Test
-    public void testIpnEid() {
-        System.out.println("[+] eid: testing EidIpn Scheme");
-        EidIpn eidIpn = new EidIpn(0, 0);
-        assertEquals("ipn:0.0", eidIpn.getEidString());
-        assertEquals(0, eidIpn.nodeNumber);
-        assertEquals(0, eidIpn.serviceNumber);
+    public void testApiEid() {
+        System.out.println("[+] eid: testing ApiEid Scheme");
+        try {
+            ApiEid apiEid2 = new ApiEid(null);
+            assertEquals("api:me", apiEid2.getEidString());
+            assertEquals("api", apiEid2.getScheme());
+            assertEquals("me", apiEid2.getSsp());
+            assertEquals("", apiEid2.getSink());
 
-        eidIpn = new EidIpn(15, 32);
-        assertEquals("ipn:15.32", eidIpn.getEidString());
-        assertEquals(15, eidIpn.nodeNumber);
-        assertEquals(32, eidIpn.serviceNumber);
+            ApiEid apiEid3 = new ApiEid("");
+            assertEquals("api:me", apiEid3.getEidString());
+            assertEquals("api", apiEid3.getScheme());
+            assertEquals("me", apiEid3.getSsp());
+            assertEquals("", apiEid3.getSink());
+
+            ApiEid apiEid4 = new ApiEid("/");
+            assertEquals("api:me", apiEid4.getEidString());
+            assertEquals("api", apiEid4.getScheme());
+            assertEquals("me", apiEid4.getSsp());
+            assertEquals("", apiEid4.getSink());
+
+            ApiEid apiEid5 = new ApiEid("/hello");
+            assertEquals("api:me/hello", apiEid5.getEidString());
+            assertEquals("api", apiEid5.getScheme());
+            assertEquals("me/hello", apiEid5.getSsp());
+            assertEquals("hello", apiEid5.getSink());
+
+            ApiEid apiEid6 = new ApiEid("/hello/world");
+            assertEquals("api:me/hello/world", apiEid6.getEidString());
+            assertEquals("api", apiEid6.getScheme());
+            assertEquals("me/hello/world", apiEid6.getSsp());
+            assertEquals("hello/world", apiEid6.getSink());
+        } catch(EidFormatException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testIpnEid() {
+        System.out.println("[+] eid: testing IpnEid Scheme");
+        IpnEid ipnEid = new IpnEid(0, 0);
+        assertEquals("ipn:0.0", ipnEid.getEidString());
+        assertEquals(0, ipnEid.nodeNumber);
+        assertEquals(0, ipnEid.serviceNumber);
+
+        ipnEid = new IpnEid(15, 32);
+        assertEquals("ipn:15.32", ipnEid.getEidString());
+        assertEquals(15, ipnEid.nodeNumber);
+        assertEquals(32, ipnEid.serviceNumber);
 
         try {
             Eid eid = eidFactory.create("ipn:0.0");

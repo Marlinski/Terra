@@ -139,7 +139,7 @@ public class ExtensionManager implements ExtensionManagerApi {
         @Override
         public Eid create(String scheme, String ssp) throws EidFormatException {
             try {
-                return super.create(scheme, ssp);
+                return super.createClaEid(scheme, ssp);
             } catch (UnknownEidScheme ues) {
                 if (extensionEidParser.containsKey(scheme)) {
                     return extensionEidParser.get(scheme).create(ssp);
@@ -149,15 +149,15 @@ public class ExtensionManager implements ExtensionManagerApi {
         }
 
         @Override
-        public ClaEid create(String claName, String claSpecific, String claSink)
+        public ClaEid createClaEid(String claName, String claSpecific)
                 throws EidFormatException {
             try {
-                return super.create(claName, claSpecific, claSink);
+                return super.createClaEid(claName, claSpecific);
             } catch (UnknownClaName ucn) {
                 if (extensionClaEidParser.containsKey(claName)) {
-                    return extensionClaEidParser.get(claName).create(claName, claSpecific, claSink);
+                    return extensionClaEidParser.get(claName).createClaEid(claName, claSpecific);
                 } else {
-                    return new UnknownClaEid(claName, claSpecific, claSink);
+                    return new UnknownClaEid(claName, claSpecific);
                 }
             }
         }
