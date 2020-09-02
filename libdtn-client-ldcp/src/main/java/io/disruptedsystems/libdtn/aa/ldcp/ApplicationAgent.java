@@ -1,19 +1,19 @@
 package io.disruptedsystems.libdtn.aa.ldcp;
 
-import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
-import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
-import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
-import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
 import io.disruptedsystems.ldcp.LdcpRequest;
 import io.disruptedsystems.ldcp.LdcpServer;
 import io.disruptedsystems.ldcp.Router;
 import io.disruptedsystems.ldcp.messages.ResponseMessage;
+import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
+import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
+import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
+import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
+import io.disruptedsystems.libdtn.common.utils.Log;
+import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Set;
@@ -39,9 +39,10 @@ public class ApplicationAgent implements ApplicationAgentApi {
      *
      * @param host host of the LDCP server running on the registrar
      * @param port port of the LDCP server running on the registrar
+     * @return a new ApplicationAgent
      */
     public static ApplicationAgentApi create(String host,
-                                      int port) {
+                                             int port) {
         return new ApplicationAgent(
                 host,
                 port,
@@ -56,10 +57,11 @@ public class ApplicationAgent implements ApplicationAgentApi {
      * @param host    host of the LDCP server running on the registrar
      * @param port    port of the LDCP server running on the registrar
      * @param factory Blob factory
+     * @return a new ApplicationAgent
      */
     public static ApplicationAgentApi create(String host,
-                                      int port,
-                                      BlobFactory factory) {
+                                             int port,
+                                             BlobFactory factory) {
         return new ApplicationAgent(
                 host,
                 port,
@@ -75,11 +77,12 @@ public class ApplicationAgent implements ApplicationAgentApi {
      * @param port    port of the LDCP server running on the registrar
      * @param toolbox Blocks and Eids factory
      * @param factory Blob factory
+     * @return a new ApplicationAgent
      */
     public static ApplicationAgentApi create(String host,
-                                      int port,
-                                      ExtensionToolbox toolbox,
-                                      BlobFactory factory) {
+                                             int port,
+                                             ExtensionToolbox toolbox,
+                                             BlobFactory factory) {
         return new ApplicationAgent(
                 host,
                 port,
@@ -96,12 +99,13 @@ public class ApplicationAgent implements ApplicationAgentApi {
      * @param toolbox Blocks and Eids factory
      * @param factory Blob factory
      * @param logger  logging service
+     * @return a new ApplicationAgent
      */
     public static ApplicationAgentApi create(String host,
-                                       int port,
-                                       ExtensionToolbox toolbox,
-                                       BlobFactory factory,
-                                       Log logger) {
+                                             int port,
+                                             ExtensionToolbox toolbox,
+                                             BlobFactory factory,
+                                             Log logger) {
         return new ApplicationAgent(
                 host,
                 port,
@@ -148,9 +152,9 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> isRegistered(String sink) {
+    public Single<Boolean> isRegistered(String eid) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.ISREGISTERED.path)
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .send(host, port, toolbox, factory, logger)
                 .map(res -> res.code == ResponseMessage.ResponseCode.OK);
     }
@@ -161,20 +165,20 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<String> register(String sink, ActiveRegistrationCallback cb) {
+    public Single<String> register(String eid, ActiveRegistrationCallback cb) {
         if (startServer(cb)) {
             return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.REGISTER.path)
-                    .setHeader("sink", sink)
+                    .setHeader("eid", eid)
                     .setHeader("active", cb == null ? "false" : "true")
                     .setHeader("active-host", "127.0.0.1")
                     .setHeader("active-port", "" + server.getPort())
                     .send(host, port, toolbox, factory, logger)
                     .flatMap(res -> {
                         if (res.code == ResponseMessage.ResponseCode.ERROR) {
-                            return Single.error(new RegistrarException(res.body));
+                            return Single.error(new ApplicationAgentException(res.body));
                         }
                         if (res.fields.get("cookie") == null) {
-                            return Single.error(new RegistrarException("no cookie received"));
+                            return Single.error(new ApplicationAgentException("no cookie received"));
                         }
                         return Single.just(res.fields.get("cookie"));
                     });
@@ -184,9 +188,9 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> unregister(String sink, String cookie) {
+    public Single<Boolean> unregister(String eid, String cookie) {
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UNREGISTER.path)
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .setHeader("cookie", cookie)
                 .send(host, port, toolbox, factory, logger)
                 .map(res -> res.code == ResponseMessage.ResponseCode.OK);
@@ -198,45 +202,45 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Bundle> get(String sink, String cookie, BundleId bundleId) {
+    public Single<Bundle> get(String eid, String cookie, BundleId bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.GETBUNDLE.path)
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .setHeader("cookie", cookie)
                 .setHeader("bundle-id", bundleId.getBidString())
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {
                     if (res.code == ResponseMessage.ResponseCode.ERROR) {
-                        return Single.error(new RegistrarException());
+                        return Single.error(new ApplicationAgentException());
                     }
                     if (res.bundle == null) {
-                        return Single.error(new RegistrarException());
+                        return Single.error(new ApplicationAgentException());
                     }
                     return Single.just(res.bundle);
                 });
     }
 
     @Override
-    public Single<Bundle> fetch(String sink, String cookie, BundleId bundleId) {
+    public Single<Bundle> fetch(String eid, String cookie, BundleId bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.FETCHBUNDLE.path)
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .setHeader("cookie", cookie)
                 .setHeader("bundle-id", bundleId.getBidString())
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {
                     if (res.code == ResponseMessage.ResponseCode.ERROR) {
-                        return Single.error(new RegistrarException());
+                        return Single.error(new ApplicationAgentException());
                     }
                     if (res.bundle == null) {
-                        return Single.error(new RegistrarException());
+                        return Single.error(new ApplicationAgentException());
                     }
                     return Single.just(res.bundle);
                 });
     }
 
     @Override
-    public Single<Boolean> send(String sink, String cookie, Bundle bundle) {
+    public Single<Boolean> send(String eid, String cookie, Bundle bundle) {
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.DISPATCH.path)
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .setHeader("cookie", cookie)
                 .setBundle(bundle)
                 .send(host, port, toolbox, factory, logger)
@@ -252,10 +256,10 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> reAttach(String sink, String cookie, ActiveRegistrationCallback cb) {
+    public Single<Boolean> reAttach(String eid, String cookie, ActiveRegistrationCallback cb) {
         if (startServer(cb)) {
             return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UPDATE.path)
-                    .setHeader("sink", sink)
+                    .setHeader("eid", eid)
                     .setHeader("cookie", cookie)
                     .setHeader("active", "true")
                     .setHeader("active-host", "127.0.0.1")
@@ -263,7 +267,7 @@ public class ApplicationAgent implements ApplicationAgentApi {
                     .send(host, port, toolbox, factory, logger)
                     .flatMap(res -> {
                         if (res.code == ResponseMessage.ResponseCode.ERROR) {
-                            return Single.error(new RegistrarException(res.body));
+                            return Single.error(new ApplicationAgentException(res.body));
                         }
                         return Single.just(true);
                     });
@@ -273,16 +277,16 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> setPassive(String sink, String cookie) {
+    public Single<Boolean> setPassive(String eid, String cookie) {
         stopServer();
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UPDATE.path)
                 .setHeader("active", "false")
-                .setHeader("sink", sink)
+                .setHeader("eid", eid)
                 .setHeader("cookie", cookie)
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {
                     if (res.code == ResponseMessage.ResponseCode.ERROR) {
-                        return Single.error(new RegistrarException(res.body));
+                        return Single.error(new ApplicationAgentException(res.body));
                     }
                     return Single.just(true);
                 });

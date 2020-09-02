@@ -12,6 +12,7 @@ import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 
 /**
@@ -23,6 +24,14 @@ public class TestBundle {
 
     public static String testPayload = "This is a test for bundle serialization";
 
+    private static DtnEid createSourceEid() {
+        try {
+            return new DtnEid("//source/");
+        } catch (EidFormatException e) {
+            return DtnEid.nullEid();
+        }
+    }
+
     /**
      * generate a simple bundle.
      *
@@ -31,7 +40,7 @@ public class TestBundle {
     public static Bundle testBundle0() {
         Bundle bundle = new Bundle();
         bundle.setDestination(new IpnEid(5, 12));
-        bundle.setSource(DtnEid.unsafe("source"));
+        bundle.setSource(createSourceEid());
         bundle.setReportto(DtnEid.nullEid());
         bundle.bid = BundleId.create(bundle);
         return bundle;

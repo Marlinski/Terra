@@ -2,6 +2,8 @@ package io.disruptedsystems.libdtn.module.core.http;
 
 import java.nio.charset.Charset;
 
+import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
@@ -36,7 +38,6 @@ public class RequestRegistration {
                             return res.setStatus(HttpResponseStatus.CONFLICT)
                                     .writeString(just("sink is already registered: " + sink))
                                     .writeString(just(core.getRegistrar().printTable()));
-
                         } else {
                             String cookie = core.getRegistrar().register(sink);
                             return res.setStatus(HttpResponseStatus.OK)
@@ -56,6 +57,7 @@ public class RequestRegistration {
                         content+buff.toString(Charset.defaultCharset()))
                 .flatMap((sink) -> {
                     try {
+                        // todo fix cookie parameter
                         core.getRegistrar().unregister(sink, sink);
                         return res.setStatus(HttpResponseStatus.OK)
                                 .writeString(just("sink unregistered: " + sink))

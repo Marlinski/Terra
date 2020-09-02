@@ -28,19 +28,19 @@ public interface DeliveryApi extends CoreComponentApi {
      * application agent has accepted the delivery. It may fail if the sink is not currently
      * registered, passive or if the application agent has refused the delivery.
      *
-     * @param sink to send the bundle to
+     * @param eid to send the bundle to
      * @param bundle to deliver
      * @return completable that completes upon successful delivery, onerror otherwise.
      */
-    Completable deliver(String sink, Bundle bundle);
+    Completable deliver(String eid, Bundle bundle);
 
     /**
      * take care of this bundle for later delivery.
      * todo: probably not an ApiEid of delivery
      *
-     * @param sink to deliver the bundle to
+     * @param eid to deliver the bundle to
      * @param bundle to deliver
      */
-    void deliverLater(String sink, final Bundle bundle);
+    void deliverLater(String eid, final Bundle bundle);
 
 }

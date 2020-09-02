@@ -1,10 +1,16 @@
-package io.disruptedsystems.libdtn.module.cla.bows;
+package io.disruptedsystems.libdtn.module.cla.stcp;
 
-import static io.disruptedsystems.libdtn.module.cla.bows.Configuration.CLA_STCP_LISTENING_PORT;
-import static io.disruptedsystems.libdtn.module.cla.bows.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
+import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT;
+import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
 
+import io.disruptedsystems.libdtn.common.ExtensionToolbox;
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
+import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -14,12 +20,6 @@ import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
-import io.disruptedsystems.libdtn.common.ExtensionToolbox;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.marlinski.librxtcp.ConnectionAPI;
 import io.marlinski.librxtcp.RxTCP;
 import io.reactivex.rxjava3.core.Flowable;

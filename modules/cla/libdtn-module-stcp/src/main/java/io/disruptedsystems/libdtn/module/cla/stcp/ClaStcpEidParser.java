@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.bows;
+package io.disruptedsystems.libdtn.module.cla.stcp;
 
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;

@@ -1,6 +1,14 @@
 package io.disruptedsystems.libdtn.module.aa.ldcp;
 
+import io.disruptedsystems.ldcp.LdcpRequest;
+import io.disruptedsystems.ldcp.LdcpServer;
+import io.disruptedsystems.ldcp.RequestHandler;
+import io.disruptedsystems.ldcp.Router;
+import io.disruptedsystems.ldcp.messages.RequestMessage;
+import io.disruptedsystems.ldcp.messages.ResponseMessage;
 import io.disruptedsystems.libdtn.aa.ldcp.ApiPaths;
+import io.disruptedsystems.libdtn.common.ExtensionToolbox;
+import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.NullBlob;
 import io.disruptedsystems.libdtn.common.utils.Log;
@@ -9,14 +17,6 @@ import io.disruptedsystems.libdtn.core.api.DeliveryApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.core.spi.ApplicationAgentAdapterSpi;
-import io.disruptedsystems.ldcp.LdcpRequest;
-import io.disruptedsystems.ldcp.LdcpServer;
-import io.disruptedsystems.ldcp.RequestHandler;
-import io.disruptedsystems.ldcp.Router;
-import io.disruptedsystems.ldcp.messages.RequestMessage;
-import io.disruptedsystems.ldcp.messages.ResponseMessage;
-import io.disruptedsystems.libdtn.common.ExtensionToolbox;
-import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.reactivex.rxjava3.core.Completable;
 
 /**
@@ -88,7 +88,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
         return req.fields.get(key);
     }
 
-    private ActiveRegistrationCallback deliverCallback(String sink, String host, int port) {
+    private ActiveRegistrationCallback deliverCallback(String eid, String host, int port) {
         return (bundle) ->
                 LdcpRequest.POST(ApiPaths.DaemonToClientLdcpPathVersion1.DELIVER.path)
                         .setBundle(bundle)
@@ -96,7 +96,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         .doOnError(d -> {
                             try {
                                 /* connection fail - remote is no longer active */
-                                registrar.setPassive(sink);
+                                registrar.setPassive(eid);
                             } catch (RegistrarApi.RegistrarException re) {
                                 /* ignore */
                             }
@@ -110,8 +110,8 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler isregistered = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
-                    res.setCode(registrar.isRegistered(sink)
+                    String eid = checkField(req, "eid");
+                    res.setCode(registrar.isRegistered(eid)
                             ? ResponseMessage.ResponseCode.OK
                             : ResponseMessage.ResponseCode.ERROR);
                     s.onComplete();
@@ -123,19 +123,19 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler register = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
+                    String eid = checkField(req, "eid");
                     boolean active = checkField(req, "active").equals("true");
 
                     if (active) {
                         String host = checkField(req, "active-host");
                         int port = Integer.valueOf(checkField(req, "active-port"));
 
-                        String cookie = registrar.register(sink, deliverCallback(sink, host, port));
+                        String cookie = registrar.register(eid, deliverCallback(eid, host, port));
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         res.setHeader("cookie", cookie);
                         s.onComplete();
                     } else {
-                        String cookie = registrar.register(sink);
+                        String cookie = registrar.register(eid);
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         res.setHeader("cookie", cookie);
                         s.onComplete();
@@ -149,7 +149,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler update = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
+                    String eid = checkField(req, "eid");
                     String cookie = checkField(req, "cookie");
                     boolean active = checkField(req, "active").equals("true");
 
@@ -157,11 +157,11 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         String host = checkField(req, "active-host");
                         int port = Integer.valueOf(checkField(req, "active-port"));
 
-                        registrar.setActive(sink, cookie, deliverCallback(sink, host, port));
+                        registrar.setActive(eid, cookie, deliverCallback(eid, host, port));
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         s.onComplete();
                     } else {
-                        registrar.setPassive(sink, cookie);
+                        registrar.setPassive(eid, cookie);
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         s.onComplete();
                     }
@@ -173,10 +173,10 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler unregister = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
+                    String eid = checkField(req, "eid");
                     String cookie = checkField(req, "cookie");
 
-                    res.setCode(registrar.unregister(sink, cookie)
+                    res.setCode(registrar.unregister(eid, cookie)
                             ? ResponseMessage.ResponseCode.OK
                             : ResponseMessage.ResponseCode.ERROR);
                     s.onComplete();
@@ -188,11 +188,11 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler get = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
+                    String eid = checkField(req, "eid");
                     String cookie = checkField(req, "cookie");
                     String bid = checkField(req, "bundle-id");
 
-                    Bundle bundle = registrar.get(sink, cookie, bid);
+                    Bundle bundle = registrar.get(eid, cookie, bid);
                     if (bundle != null) {
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         res.setBundle(bundle);
@@ -208,11 +208,11 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler fetch = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String sink = checkField(req, "sink");
+                    String eid = checkField(req, "eid");
                     String cookie = checkField(req, "cookie");
                     String bid = checkField(req, "bundle-id");
 
-                    Bundle bundle = registrar.fetch(sink, cookie, bid);
+                    Bundle bundle = registrar.fetch(eid, cookie, bid);
                     if (bundle != null) {
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         res.setBundle(bundle);

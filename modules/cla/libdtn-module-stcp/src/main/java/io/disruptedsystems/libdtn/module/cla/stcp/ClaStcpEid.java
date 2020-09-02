@@ -1,8 +1,6 @@
-package io.disruptedsystems.libdtn.module.cla.bows;
+package io.disruptedsystems.libdtn.module.cla.stcp;
 
 import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
 /**
@@ -59,8 +57,12 @@ public class ClaStcpEid extends BaseClaEid {
     }
 
     private static String checkRoot(String s) {
-        if (s == null) return "/";
-        if (s.startsWith("/")) return s;
+        if (s == null) {
+            return "/";
+        }
+        if (s.startsWith("/")) {
+            return s;
+        }
         return "/" + s;
     }
 }

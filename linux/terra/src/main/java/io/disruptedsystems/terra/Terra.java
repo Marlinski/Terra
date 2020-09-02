@@ -1,13 +1,13 @@
 package io.disruptedsystems.terra;
 
-import io.disruptedsystems.libdtn.core.CoreConfiguration;
-import io.disruptedsystems.libdtn.core.DtnCore;
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
+import io.disruptedsystems.libdtn.core.CoreConfiguration;
+import io.disruptedsystems.libdtn.core.DtnCore;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.disruptedsystems.libdtn.core.api.CoreApi;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -132,7 +132,6 @@ public class Terra implements Callable<Void> {
     private String[] blacklistModules = new String[0];
 
 
-
     @Override
     public Void call() throws Exception {
         CoreConfiguration conf = new CoreConfiguration();
@@ -198,10 +197,10 @@ public class Terra implements Callable<Void> {
         }
 
         /* module configuration */
-        for(String enableModule : whitelistModules) {
+        for (String enableModule : whitelistModules) {
             conf.getModuleEnabled(enableModule, true).update(true);
         }
-        for(String disableModule : blacklistModules) {
+        for (String disableModule : blacklistModules) {
             conf.getModuleEnabled(disableModule, false).update(false);
         }
 

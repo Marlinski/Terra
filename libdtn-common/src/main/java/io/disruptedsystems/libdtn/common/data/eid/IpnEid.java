@@ -50,15 +50,7 @@ public class IpnEid extends BaseEid {
 
     @Override
     public boolean matches(Eid other) {
-        if (other == null) {
-            return false;
-        }
-        if (other instanceof IpnEid) {
-            IpnEid o = (IpnEid) other;
-            return (nodeNumber == o.nodeNumber && serviceNumber == o.serviceNumber);
-        } else {
-            return false;
-        }
+        return equals(other);
     }
 
     @Override

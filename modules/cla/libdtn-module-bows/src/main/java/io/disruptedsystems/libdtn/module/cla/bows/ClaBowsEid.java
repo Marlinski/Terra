@@ -1,11 +1,10 @@
 package io.disruptedsystems.libdtn.module.cla.bows;
 
+import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
 /**
  * ClaStcpEid is a special Eid whose scheme is "cla:stcp".
@@ -28,7 +27,7 @@ public class ClaBowsEid extends BaseClaEid {
     }
 
     /**
-     * Constructor. A bows eid follows the following pattern "cla:bows:<URL><[?&]>sink=<SINK>
+     * Constructor. A bows eid follows the following pattern "cla:bows:URL<[?&]>sink=SINK
      * that is, "cla:bows" followed by a valid URL with the sink being part of the query parameter.
      *
      * @param url  websocket url
@@ -36,7 +35,7 @@ public class ClaBowsEid extends BaseClaEid {
      * @throws EidFormatException if the supplied parameters are not valid
      */
     public ClaBowsEid(String url, String sink) throws EidFormatException {
-        super("bows", checkURI(url).toASCIIString(), sink);
+        super("bows", checkUri(url).toASCIIString(), sink);
     }
 
     public ClaBowsEid(URI url, String sink) throws EidFormatException {
@@ -46,13 +45,13 @@ public class ClaBowsEid extends BaseClaEid {
     @Override
     public String getClaSpecificPart() {
         URI uri = URI.create(claParameters);
-        if(claSink == null) {
+        if (claSink == null) {
             return uri.toASCIIString();
         }
 
         try {
             return appendUri(uri, "sink=" + claSink).toASCIIString();
-        } catch(URISyntaxException e) {
+        } catch (URISyntaxException e) {
             return uri.toASCIIString();
         }
     }
@@ -85,10 +84,10 @@ public class ClaBowsEid extends BaseClaEid {
                 uri.getPath(), newQuery, uri.getFragment());
     }
 
-    protected static URI checkURI(String uri) throws EidFormatException {
+    protected static URI checkUri(String uri) throws EidFormatException {
         try {
             return new URI(uri);
-        } catch(URISyntaxException e) {
+        } catch (URISyntaxException e) {
             throw new EidFormatException(e.getMessage());
         }
     }

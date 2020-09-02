@@ -24,6 +24,15 @@ public class ApiEid extends BaseEid {
         return new ApiEid();
     }
 
+    // unsafe method
+    public static ApiEid me(String sink) {
+        try {
+            return new ApiEid(sink);
+        } catch(EidFormatException e) {
+            return new ApiEid();
+        }
+    }
+
     /**
      * Scheme-specific parser for the "api" scheme.
      */

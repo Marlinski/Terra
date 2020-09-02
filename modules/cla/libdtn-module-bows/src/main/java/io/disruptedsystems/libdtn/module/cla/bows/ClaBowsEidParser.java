@@ -23,7 +23,7 @@ public class ClaBowsEidParser implements ClaEidParser {
             String query = uri.getQuery();
 
             // extract the sink from the query (if any)
-            if(query != null) {
+            if (query != null) {
                 StringBuilder newQuery = new StringBuilder();
                 String sink = null;
                 int i = 0;
@@ -32,21 +32,23 @@ public class ClaBowsEidParser implements ClaEidParser {
                     String parameter = URLDecoder.decode(pair.substring(0, idx), "UTF-8");
                     String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
                     if (!parameter.equals("sink")) {
-                        if (i++ > 0) pair = "&" + pair;
+                        if (i++ > 0) {
+                            pair = "&" + pair;
+                        }
                         newQuery.append(pair);
                     } else {
                         sink = value;
                     }
                 }
 
-                URI claParameter =  new URI(uri.getScheme(), uri.getAuthority(),
+                URI claParameter = new URI(uri.getScheme(), uri.getAuthority(),
                         uri.getPath(), newQuery.toString().equals("") ? null : newQuery.toString(),
                         uri.getFragment());
                 return new ClaBowsEid(claParameter, sink);
             } else {
                 return new ClaBowsEid(uri, null);
             }
-        } catch(URISyntaxException | UnsupportedEncodingException e) {
+        } catch (URISyntaxException | UnsupportedEncodingException e) {
             throw new EidFormatException(e.getMessage());
         }
     }

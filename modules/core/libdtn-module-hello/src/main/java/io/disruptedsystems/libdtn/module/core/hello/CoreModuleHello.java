@@ -1,6 +1,13 @@
 package io.disruptedsystems.libdtn.module.core.hello;
 
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.PayloadBlock;
+import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
+import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
@@ -8,13 +15,6 @@ import io.disruptedsystems.libdtn.core.spi.CoreModuleSpi;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.PayloadBlock;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
-import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,7 +34,7 @@ import java.nio.ByteBuffer;
 public class CoreModuleHello implements CoreModuleSpi {
 
     private static final String TAG = "HelloModule";
-    private static final String HELLO_SINK = "/hello/";
+    private static final String HELLO_SINK = "api:me/hello/";
 
     private CoreApi coreApi;
     private Bundle helloBundle;
@@ -116,7 +116,8 @@ public class CoreModuleHello implements CoreModuleSpi {
 
                 return Completable.complete();
             });
-        } catch (RegistrarApi.SinkAlreadyRegistered
+        } catch (RegistrarApi.EidAlreadyRegistered
+                | RegistrarApi.InvalidEid
                 | RegistrarApi.RegistrarDisabled
                 | RegistrarApi.NullArgument re) {
             api.getLogger().e(TAG, "initialization failed: " + re.getMessage());

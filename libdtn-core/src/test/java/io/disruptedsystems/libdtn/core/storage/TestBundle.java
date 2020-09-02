@@ -22,19 +22,21 @@ public class TestBundle {
 
     public static String testPayload = "This is a test for bundle serialization";
 
-    public static Bundle testBundle0() {
+    private static DtnEid createSourceEid() {
         try {
-            Bundle bundle = new Bundle();
-            bundle.setDestination(new IpnEid(5, 12));
-            bundle.setSource(new DtnEid("source"));
-            bundle.setReportto(DtnEid.nullEid());
-            bundle.bid = BundleId.create(bundle);
-            return bundle;
-        } catch(EidFormatException ignore) {
-            // should not happen
-            //todo: create a safe Eid constructor by encoding URI
-            return null;
+            return new DtnEid("//source/");
+        } catch (EidFormatException e) {
+            return DtnEid.nullEid();
         }
+    }
+
+    public static Bundle testBundle0() {
+        Bundle bundle = new Bundle();
+        bundle.setDestination(new IpnEid(5, 12));
+        bundle.setSource(createSourceEid());
+        bundle.setReportto(DtnEid.nullEid());
+        bundle.bid = BundleId.create(bundle);
+        return bundle;
     }
 
     public static Bundle testBundle1() {
@@ -101,7 +103,7 @@ public class TestBundle {
         assertEquals(true, bundle != null);
         String[] payload = {null};
         if (bundle != null) {
-            for(CanonicalBlock block : bundle.getBlocks()) {
+            for (CanonicalBlock block : bundle.getBlocks()) {
                 assertEquals(true, block.isTagged("crc_check"));
                 assertEquals(true, block.<Boolean>getTagAttachment("crc_check"));
             }

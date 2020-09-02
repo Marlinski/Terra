@@ -9,16 +9,16 @@ import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
  */
 public class RegistrationActive implements DtnEvent {
 
-    public String sink;
+    public String eid;
     public ActiveRegistrationCallback cb;
 
     public RegistrationActive(String sink, ActiveRegistrationCallback cb) {
-        this.sink = sink;
+        this.eid = sink;
         this.cb = cb;
     }
 
     @Override
     public String toString() {
-        return "Registration active: sink=" + sink;
+        return "Registration active: sink=" + eid;
     }
 }

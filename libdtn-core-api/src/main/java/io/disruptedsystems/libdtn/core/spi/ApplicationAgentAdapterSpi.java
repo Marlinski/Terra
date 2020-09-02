@@ -1,6 +1,5 @@
 package io.disruptedsystems.libdtn.core.spi;
 
-import io.disruptedsystems.libdtn.core.spi.ModuleSpi;
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.utils.Log;

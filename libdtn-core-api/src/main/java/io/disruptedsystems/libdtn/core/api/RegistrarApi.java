@@ -1,14 +1,14 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
+import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.reactivex.rxjava3.core.Flowable;
 
 import java.util.Set;
 
 /**
- * ApiEid to access the services of the Bundle Protocol from an Application Agent.
+ * Api to access the services of the Bundle Protocol from an Application Agent.
  *
  * @author Lucien Loiseau on 23/10/18.
  */
@@ -32,15 +32,21 @@ public interface RegistrarApi {
         }
     }
 
-    class SinkAlreadyRegistered extends RegistrarException {
-        public SinkAlreadyRegistered() {
-            super("sink is already registered");
+    class EidAlreadyRegistered extends RegistrarException {
+        public EidAlreadyRegistered() {
+            super("eid is already registered");
         }
     }
 
-    class SinkNotRegistered extends RegistrarException {
-        public SinkNotRegistered() {
-            super("sink is not registered");
+    class EidNotRegistered extends RegistrarException {
+        public EidNotRegistered() {
+            super("eid is not registered");
+        }
+    }
+
+    class InvalidEid extends RegistrarException {
+        public InvalidEid() {
+            super("eid argument is invalid");
         }
     }
 
@@ -65,67 +71,72 @@ public interface RegistrarApi {
     /**
      * Check wether a sink is registered or not.
      *
-     * @param sink identifying this AA
+     * @param eid identifying this AA
      * @return true if the AA is registered, false otherwise
      * @throws RegistrarDisabled if the registrar is disabled
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean isRegistered(String sink) throws RegistrarDisabled, NullArgument;
+    boolean isRegistered(String eid) throws RegistrarDisabled, InvalidEid, NullArgument;
 
     /**
      * Register a passive pull-based registration. A cookie is returned that can be used
      * to pull data passively.
      *
-     * @param sink to register
+     * @param eid to register
      * @return a cookir for this registration upon success, null otherwise
      * @throws RegistrarDisabled     if the registrar is disabled
-     * @throws SinkAlreadyRegistered if the sink is already registered
+     * @throws EidAlreadyRegistered if the sink is already registered
      * @throws NullArgument          if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    String register(String sink) throws RegistrarDisabled, SinkAlreadyRegistered, NullArgument;
+    String register(String eid) throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
 
     /**
      * Register an active registration. It fails If the sink is already registered.
      *
-     * @param sink to register
+     * @param eid  to register
      * @param cb   callback to receive data for this registration
      * @return a cookie for this registration upon success, null otherwise.
      * @throws RegistrarDisabled     if the registrar is disabled
-     * @throws SinkAlreadyRegistered if the sink is already registered
+     * @throws EidAlreadyRegistered if the sink is already registered
      * @throws NullArgument          if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    String register(String sink, ActiveRegistrationCallback cb)
-            throws RegistrarDisabled, SinkAlreadyRegistered, NullArgument;
+    String register(String eid, ActiveRegistrationCallback cb)
+            throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
 
     /**
      * Unregister an application agent.
      *
-     * @param sink   identifying the AA to be unregistered
+     * @param eid    identifying the AA to be unregistered
      * @param cookie cookie for this registration
      * @return true if the AA was unregister, false otherwise
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink to unregister is not register
+     * @throws EidNotRegistered if the sink to unregister is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean unregister(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument;
+    boolean unregister(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
      * Allow a registered application-agent to send data using the services of the Bundle Protocol.
      *
-     * @param sink   identifying the registered AA.
+     * @param eid    identifying the registered AA.
      * @param cookie cookie for this registration
      * @param bundle to send
      * @return true if the bundle is queued, false otherwise
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws BundleMalformed   if the bundle can't be serialized
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean send(String sink, String cookie, Bundle bundle)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument, BundleMalformed;
+    boolean send(String eid, String cookie, Bundle bundle)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument, BundleMalformed;
 
     /**
      * Allow an anonymous application-agent to send data using the services of the Bundle Protocol.
@@ -143,107 +154,114 @@ public interface RegistrarApi {
     /**
      * Check how many bundles are queued for retrieval for a given sink.
      *
-     * @param sink   to check
+     * @param eid    to check
      * @param cookie that was returned upon registration.
      * @return a list with all the bundle ids.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    Set<BundleId> checkInbox(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument;
+    Set<BundleId> checkInbox(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
      * get a specific bundle but does not mark it as delivered.
      *
-     * @param sink     to check
+     * @param eid      to check
      * @param cookie   that was returned upon registration.
      * @param bundleId id of the bundle to retrieve
      * @return number of data waiting to be retrieved
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws BundleNotFound    if the bundle was not found
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    Bundle get(String sink, String cookie, String bundleId)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, BundleNotFound, NullArgument;
+    Bundle get(String eid, String cookie, String bundleId)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, BundleNotFound, NullArgument;
 
     /**
      * get a specific bundle and mark it as delivered.
      *
-     * @param sink     to check
+     * @param eid      to check
      * @param cookie   that was returned upon registration.
      * @param bundleId id of the bundle to retrieve
      * @return number of data waiting to be retrieved
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws BundleNotFound    if the bundle was not found
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    Bundle fetch(String sink, String cookie, String bundleId)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, BundleNotFound, NullArgument;
+    Bundle fetch(String eid, String cookie, String bundleId)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, BundleNotFound, NullArgument;
 
     /**
      * fetch all the bundle from the inbox.
      *
-     * @param sink   to check
+     * @param eid    to check
      * @param cookie that was returned upon registration.
      * @return Flowable of Blob
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    Flowable<Bundle> fetch(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument;
+    Flowable<Bundle> fetch(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
      * Turn a registration active. If the registration was already active it does nothing,
      * otherwise it set the active callbacks of the registration to the one provided as an
      * argument. Fail if the registration is passive but the cookie did not match or the cb is null.
      *
-     * @param sink   to the registration
+     * @param eid    to the registration
      * @param cookie of the registration
      * @param cb     the callback for the active registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean setActive(String sink, String cookie, ActiveRegistrationCallback cb)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument;
+    boolean setActive(String eid, String cookie, ActiveRegistrationCallback cb)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
      * Turn a registration passive. If the registration was already passive it does nothing,
      * Fails if the registration is active but the cookie did not match.
      *
-     * @param sink   to the registration
+     * @param eid    to the registration
      * @param cookie of the registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean setPassive(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument;
+    boolean setPassive(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
      * Privileged method! Turn a registration passive. If the registration was already passive it
      * does nothing.
      *
-     * @param sink to the registration
+     * @param eid  to the registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws SinkNotRegistered if the sink is not register
+     * @throws EidNotRegistered if the sink is not register
      * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
      */
-    boolean setPassive(String sink)
-            throws RegistrarDisabled, SinkNotRegistered, NullArgument;
+    boolean setPassive(String eid)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument;
 
 
     //todo: remove this

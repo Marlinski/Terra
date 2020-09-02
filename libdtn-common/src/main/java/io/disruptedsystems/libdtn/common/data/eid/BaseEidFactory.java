@@ -61,7 +61,7 @@ public class BaseEidFactory implements EidFactory, ClaEidParser {
         } else {
             throw new EidFormatException("not a URI");
         }
-        return createClaEid(scheme, ssp);
+        return create(scheme, ssp);
     }
 
     @Override

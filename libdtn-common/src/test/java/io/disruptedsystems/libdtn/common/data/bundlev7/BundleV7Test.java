@@ -3,6 +3,7 @@ package io.disruptedsystems.libdtn.common.data.bundlev7;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -36,6 +37,14 @@ public class BundleV7Test {
 
     public static String testPayload = "This is a test for bundle serialization";
 
+    private static DtnEid makeSourceEid() {
+        try {
+            return new DtnEid("//source/");
+        } catch(EidFormatException e) {
+            return DtnEid.nullEid();
+        }
+    }
+
     /**
      * create a simple test Bundle with no payload.
      * @return a Bundle
@@ -43,7 +52,7 @@ public class BundleV7Test {
     public static Bundle testBundle0() {
         Bundle bundle = new Bundle();
         bundle.setDestination(new IpnEid(5, 12));
-        bundle.setSource(DtnEid.unsafe("source"));
+        bundle.setSource(makeSourceEid());
         bundle.setReportto(DtnEid.nullEid());
         bundle.bid = BundleId.create(bundle);
         return bundle;

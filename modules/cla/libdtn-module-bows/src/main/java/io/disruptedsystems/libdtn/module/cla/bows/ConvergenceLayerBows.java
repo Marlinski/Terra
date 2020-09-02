@@ -4,28 +4,27 @@ import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketExtension;
 import com.neovisionaries.ws.client.WebSocketFactory;
 
-import java.net.URI;
-import java.nio.ByteBuffer;
-
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.disruptedsystems.libdtn.core.spi.ConvergenceLayerSpi;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
+
+import java.net.URI;
+import java.nio.ByteBuffer;
 
 /**
  * Bundle Over WebSocket (BOWS) is a WebSocket Convergence Layer Adapter for the Bundle Protocol.
@@ -118,7 +117,9 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
         }
 
         @Override
-        public ClaBowsEid localEid() { return null; }
+        public ClaBowsEid localEid() {
+            return null;
+        }
 
         @Override
         public void close() {

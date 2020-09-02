@@ -1,8 +1,8 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.Set;

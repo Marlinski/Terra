@@ -1,6 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.eid;
 
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * DtnEid is a class of Eid whose scheme is "dtn".
@@ -12,7 +14,10 @@ public class DtnEid extends BaseEid {
     public static final int EID_DTN_IANA_VALUE = 1;
     public static final String EID_DTN_SCHEME = "dtn";
 
-    private String ssp;
+    private String ssp = "";
+    private String nodeName = "";
+    private String demux = "";
+    private boolean singleton = false;
 
     private DtnEid() {
     }
@@ -25,7 +30,8 @@ public class DtnEid extends BaseEid {
     public static DtnEid generate() {
         DtnEid ret = new DtnEid();
         final String uuid = UUID.randomUUID().toString().replace("-", "");
-        ret.ssp = uuid;
+        ret.ssp = "//" + uuid + "/";
+        ret.singleton = false;
         return ret;
     }
 
@@ -37,18 +43,6 @@ public class DtnEid extends BaseEid {
     public static DtnEid nullEid() {
         DtnEid ret = new DtnEid();
         ret.ssp = "none";
-        return ret;
-    }
-
-    /**
-     * creates a new DtnEid from a string but do not check for validity.
-     *
-     * @param ssp scheme specific part of a dtn eid.
-     * @return a new DtnEid.
-     */
-    public static DtnEid unsafe(String ssp) {
-        DtnEid ret = new DtnEid();
-        ret.ssp = ssp;
         return ret;
     }
 
@@ -69,13 +63,33 @@ public class DtnEid extends BaseEid {
      * @throws EidFormatException if the eid is invalid.
      */
     public DtnEid(String ssp) throws EidFormatException {
-        this.ssp = ssp;
+        if (ssp.equals("none")) {
+            this.ssp = ssp;
+            return;
+        }
+
+        final String regex = "^//([\\p{Alnum}\\.\\_\\-\\~\\+]+)/([\\p{Graph}\\p{Punct}]*)$";
+        Pattern r = Pattern.compile(regex);
+        Matcher m = r.matcher(ssp);
+        if (m.find()) {
+            this.nodeName = m.group(1);
+            this.demux = m.group(2);
+            this.ssp = ssp;
+            this.singleton = !demux.startsWith("~");
+        } else {
+            throw new EidFormatException("not a dtn EID");
+        }
         checkValidity();
     }
 
     @Override
     public Eid copy() {
-        return unsafe(this.ssp);
+        DtnEid ret = new DtnEid();
+        ret.ssp = ssp;
+        ret.nodeName = nodeName;
+        ret.demux = demux;
+        ret.singleton = singleton;
+        return ret;
     }
 
     @Override
@@ -91,6 +105,22 @@ public class DtnEid extends BaseEid {
     @Override
     public String getSsp() {
         return ssp;
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public String getDemux() {
+        return demux;
+    }
+
+    public boolean isNullEndPoint() {
+        return ssp.equals("none");
+    }
+
+    public boolean isSingleton() {
+        return singleton;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.bows;
+package io.disruptedsystems.libdtn.module.cla.stcp;
 
 
 import static org.junit.Assert.assertEquals;

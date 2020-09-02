@@ -1,8 +1,5 @@
 package io.disruptedsystems.libdtn.core.extension;
 
-import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
-import io.marlinski.libcbor.CborEncoder;
-import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.BaseBlockFactory;
 import io.disruptedsystems.libdtn.common.data.BlockFactory;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
@@ -23,6 +20,9 @@ import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.data.eid.EidSspParser;
 import io.disruptedsystems.libdtn.common.data.eid.UnknownClaEid;
 import io.disruptedsystems.libdtn.common.utils.Log;
+import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
+import io.marlinski.libcbor.CborEncoder;
+import io.marlinski.libcbor.CborParser;
 
 import java.util.HashMap;
 import java.util.Map;

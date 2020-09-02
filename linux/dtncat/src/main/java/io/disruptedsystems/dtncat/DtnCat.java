@@ -45,12 +45,11 @@ public class DtnCat implements Callable<Void> {
     @CommandLine.Parameters(index = "1", description = "connect to the following DtnEid host.")
     private int dtnport;
 
-    @CommandLine.Option(names = {"-l", "--listen"}, description = "register to a sink and wait "
+    @CommandLine.Option(names = {"-l", "--listen"}, description = "register to an eid and wait "
             + "for bundles.")
-    private String sink;
+    private String eid;
 
-    @CommandLine.Option(names = {"-c", "--cookie"}, description = "register to a sink and wait "
-            + "for bundles.")
+    @CommandLine.Option(names = {"-c", "--cookie"}, description = "supply a cookie for the registration")
     private String cookie;
 
     @CommandLine.Option(names = {"-R", "--report-to"}, description = "report-to Endpoint-ID (Eid)")
@@ -125,21 +124,21 @@ public class DtnCat implements Callable<Void> {
 
         agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
         if (cookie == null) {
-            agent.register(sink, cb).subscribe(
+            agent.register(eid, cb).subscribe(
                     cookie -> {
-                        System.err.println("sink registered. cookie: " + cookie);
+                        System.err.println("eid registered. cookie: " + cookie);
                     },
                     e -> {
-                        System.err.println("could not register to sink: " + sink + " - "
+                        System.err.println("could not register to eid: " + eid + " - "
                                 + e.getMessage());
                         System.exit(1);
                     });
         } else {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
-            agent.reAttach(sink, cookie, cb).subscribe(
-                    b -> System.err.println("re-attach to registered sink"),
+            agent.reAttach(eid, cookie, cb).subscribe(
+                    b -> System.err.println("re-attach to registered eid"),
                     e -> {
-                        System.err.println("could not re-attach to sink: " + sink + " - "
+                        System.err.println("could not re-attach to eid: " + eid + " - "
                                 + e.getMessage());
                         System.exit(1);
                     });
@@ -187,7 +186,7 @@ public class DtnCat implements Callable<Void> {
     public Void call() throws Exception {
         toolbox = new BaseExtensionToolbox();
         factory = new BaseBlobFactory().enableVolatile(1000000).enablePersistent("./");
-        if (sink != null) {
+        if (eid != null) {
             listenBundle();
         } else {
             sendBundle();

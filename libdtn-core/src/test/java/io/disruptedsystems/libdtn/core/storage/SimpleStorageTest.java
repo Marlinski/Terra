@@ -53,6 +53,7 @@ public class SimpleStorageTest {
     public static final AtomicReference<CountDownLatch> WAIT_LOCK = new AtomicReference<>(new CountDownLatch(1));
     private Set<String> paths = new HashSet<>();
     private CoreConfiguration conf = new CoreConfiguration();
+    private String s = System.setProperty("path", "/tmp"); // todo fix this hack because systemProperty is not set from gradle
     private File dir = new File(System.getProperty("path") + "/bundle/");
     private Storage storage;
     private CoreApi mockCore = mockCore();

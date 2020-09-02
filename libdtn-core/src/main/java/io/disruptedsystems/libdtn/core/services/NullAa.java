@@ -16,13 +16,11 @@ public class NullAa implements ApplicationAgentSpi {
     @Override
     public void init(RegistrarApi registrar, Log logger) {
         try {
-            registrar.register("/null/", (bundle) -> {
+            registrar.register("api:me/null/", (bundle) -> {
                 bundle.clearBundle();
                 return Completable.complete();
             });
-        } catch (RegistrarApi.RegistrarDisabled
-                | RegistrarApi.NullArgument
-                | RegistrarApi.SinkAlreadyRegistered e) {
+        } catch (RegistrarApi.RegistrarException e) {
             /* ignore */
         }
     }

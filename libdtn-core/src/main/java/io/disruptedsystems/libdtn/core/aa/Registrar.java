@@ -1,25 +1,25 @@
 package io.disruptedsystems.libdtn.core.aa;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.BundleId;
+import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.core.storage.EventListener;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
-import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Registrar Routing keeps track of all the registered application agent.
@@ -30,8 +30,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     private static final String TAG = "Registrar";
 
-    public class Registration {
-        String registeredSink;
+    public static class Registration {
+        String registration;
         String cookie;
         ActiveRegistrationCallback cb;
 
@@ -39,8 +39,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return cb != passiveRegistration;
         }
 
-        Registration(String sink, ActiveRegistrationCallback cb) {
-            this.registeredSink = sink;
+        Registration(String eid, ActiveRegistrationCallback cb) {
+            this.registration = eid;
             this.cb = cb;
             this.cookie = UUID.randomUUID().toString();
         }
@@ -52,6 +52,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     /**
      * Constructor.
+     *
      * @param core reference to the core
      */
     public Registrar(CoreApi core) {
@@ -87,25 +88,35 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         }
     }
 
-    private Registration checkRegisteredSink(String sink)
-            throws RegistrarDisabled, SinkNotRegistered, NullArgument {
+    private void checkValidEid(String eid) throws InvalidEid {
+        try {
+            core.getExtensionManager().getEidFactory().create(eid);
+        } catch(EidFormatException e) {
+            throw new InvalidEid();
+        }
+    }
+
+    private Registration checkRegisteredSink(String eid)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument {
         checkEnable();
-        checkArgumentNotNull(sink);
-        Registration registration = registrations.get(sink);
+        checkArgumentNotNull(eid);
+        checkValidEid(eid);
+        Registration registration = registrations.get(eid);
         if (registration == null) {
-            throw new SinkNotRegistered();
+            throw new EidNotRegistered();
         }
         return registration;
     }
 
-    private Registration checkRegisteredSink(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument {
+    private Registration checkRegisteredSink(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument {
         checkEnable();
-        checkArgumentNotNull(sink);
+        checkArgumentNotNull(eid);
         checkArgumentNotNull(cookie);
-        Registration registration = registrations.get(sink);
+        checkValidEid(eid);
+        Registration registration = registrations.get(eid);
         if (registration == null) {
-            throw new SinkNotRegistered();
+            throw new EidNotRegistered();
         }
         if (!registration.cookie.equals(cookie)) {
             throw new BadCookie();
@@ -138,45 +149,48 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     /* ------  RegistrarApi  is the contract facing ApplicationAgentAdapter ------- */
 
     @Override
-    public boolean isRegistered(String sink) throws RegistrarDisabled, NullArgument {
+    public boolean isRegistered(String eid) throws RegistrarDisabled, InvalidEid, NullArgument {
         checkEnable();
-        checkArgumentNotNull(sink);
-        return registrations.containsKey(sink);
+        checkArgumentNotNull(eid);
+        checkValidEid(eid);
+        return registrations.containsKey(eid);
     }
 
     @Override
-    public String register(String sink)
-            throws RegistrarDisabled, SinkAlreadyRegistered, NullArgument {
-        return register(sink, passiveRegistration);
+    public String register(String eid)
+            throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument {
+        return register(eid, passiveRegistration);
     }
 
     @Override
-    public String register(String sink, ActiveRegistrationCallback cb)
-            throws RegistrarDisabled, SinkAlreadyRegistered, NullArgument {
+    public String register(String eid, ActiveRegistrationCallback cb)
+            throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument {
         checkEnable();
-        checkArgumentNotNull(sink);
+        checkArgumentNotNull(eid);
         checkArgumentNotNull(cb);
+        checkValidEid(eid);
 
-        Registration registration = new Registration(sink, cb);
-        if (registrations.putIfAbsent(sink, registration) == null) {
-            core.getLogger().i(TAG, "sink registered: " + sink
+        Registration registration = new Registration(eid, cb);
+        if (registrations.putIfAbsent(eid, registration) == null) {
+            core.getLogger().i(TAG, "sink registered: " + eid
                     + " (cookie=" + registration.cookie + ") - "
                     + (cb == passiveRegistration ? "passive" : "active"));
-            RxBus.post(new RegistrationActive(sink, registration.cb));
+            RxBus.post(new RegistrationActive(eid, registration.cb));
             return registration.cookie;
         }
 
-        throw new SinkAlreadyRegistered();
+        throw new EidAlreadyRegistered();
     }
 
     @Override
-    public boolean unregister(String sink, String cookie)
-            throws RegistrarDisabled, SinkNotRegistered, BadCookie, NullArgument {
-        checkRegisteredSink(sink, cookie);
-        if (registrations.remove(sink) == null) {
-            throw new SinkNotRegistered();
+    public boolean unregister(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument {
+        checkRegisteredSink(eid, cookie);
+
+        if (registrations.remove(eid) == null) {
+            throw new EidNotRegistered();
         }
-        core.getLogger().i(TAG, "sink unregistered: " + sink);
+        core.getLogger().i(TAG, "sink unregistered: " + eid);
         return true;
     }
 
@@ -191,9 +205,9 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean send(String sink, String cookie, Bundle bundle)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument, BundleMalformed {
-        checkRegisteredSink(sink, cookie);
+    public boolean send(String eid, String cookie, Bundle bundle)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument, BundleMalformed {
+        checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundle);
         replaceApiMe(bundle);
         core.getBundleProtocol().bundleDispatching(bundle);
@@ -201,63 +215,65 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public Set<BundleId> checkInbox(String sink, String cookie)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
-        checkRegisteredSink(sink, cookie);
+    public Set<BundleId> checkInbox(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkRegisteredSink(eid, cookie);
         // todo: call storage service
         return null;
     }
 
     @Override
-    public Bundle get(String sink, String cookie, String bundleId)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
-        checkRegisteredSink(sink, cookie);
+    public Bundle get(String eid, String cookie, String bundleId)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundleId);
         // todo: call storage service
         return null;
     }
 
     @Override
-    public Bundle fetch(String sink, String cookie, String bundleId)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
-        checkRegisteredSink(sink, cookie);
+    public Bundle fetch(String eid, String cookie, String bundleId)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundleId);
+        // todo: call storage service
         return null;
     }
 
     @Override
-    public Flowable<Bundle> fetch(String sink, String cookie)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
-        checkRegisteredSink(sink, cookie);
+    public Flowable<Bundle> fetch(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkRegisteredSink(eid, cookie);
+        // todo: call storage service
         return null;
     }
 
     @Override
-    public boolean setActive(String sink, String cookie, ActiveRegistrationCallback cb)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
+    public boolean setActive(String eid, String cookie, ActiveRegistrationCallback cb)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkArgumentNotNull(cb);
-        Registration registration = checkRegisteredSink(sink, cookie);
+        Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = cb;
-        core.getLogger().i(TAG, "registration active: " + sink);
-        RxBus.post(new RegistrationActive(sink, registration.cb));
+        core.getLogger().i(TAG, "registration active: " + eid);
+        RxBus.post(new RegistrationActive(eid, registration.cb));
         return true;
     }
 
     @Override
-    public boolean setPassive(String sink)
-            throws RegistrarDisabled, SinkNotRegistered, NullArgument {
-        Registration registration = checkRegisteredSink(sink);
+    public boolean setPassive(String eid)
+            throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument {
+        Registration registration = checkRegisteredSink(eid);
         registration.cb = passiveRegistration;
-        core.getLogger().i(TAG, "registration passive: " + sink);
+        core.getLogger().i(TAG, "registration passive: " + eid);
         return true;
     }
 
     @Override
-    public boolean setPassive(String sink, String cookie)
-            throws RegistrarDisabled, BadCookie, SinkNotRegistered, NullArgument {
-        Registration registration = checkRegisteredSink(sink, cookie);
+    public boolean setPassive(String eid, String cookie)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = passiveRegistration;
-        core.getLogger().i(TAG, "registration passive: " + sink);
+        core.getLogger().i(TAG, "registration passive: " + eid);
         return true;
     }
 
@@ -304,24 +320,25 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
         /**
          * React to RegistrationActive event and forward the relevent bundles.
+         *
          * @param event active registration event
          */
         @Subscribe
         public void onEvent(RegistrationActive event) {
             /* deliver every bundle of interest */
-            getBundlesOfInterest(event.sink).subscribe(
+            getBundlesOfInterest(event.eid).subscribe(
                     bundleID -> {
                         /* retrieve the bundle */
                         core.getStorage().get(bundleID).subscribe(
                                 /* deliver it */
                                 bundle -> event.cb.recv(bundle).subscribe(
                                         () -> {
-                                            listener.unwatch(event.sink, bundle.bid);
+                                            listener.unwatch(event.eid, bundle.bid);
                                             core.getBundleProtocol()
                                                     .bundleLocalDeliverySuccessful(bundle);
                                         },
                                         e -> core.getBundleProtocol()
-                                                .bundleLocalDeliveryFailure(event.sink, bundle)),
+                                                .bundleLocalDeliveryFailure(event.eid, bundle)),
                                 e -> {
                                 });
                     });
@@ -331,18 +348,18 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     /**
      * Deliver a bundle to the registration.
      *
-     * @param sink   registered
+     * @param eid    registered
      * @param bundle to deliver
      * @return completes if the bundle was successfully delivered, onError otherwise
      */
-    public Completable deliver(String sink, Bundle bundle) {
+    public Completable deliver(String eid, Bundle bundle) {
         if (!isEnabled()) {
             return Completable.error(new DeliveryDisabled());
         }
 
         /* first prefix matching strategy */
         for (String registeredSink : registrations.keySet()) {
-            if (sink.startsWith(registeredSink)) {
+            if (eid.startsWith(registeredSink)) {
                 Registration registration = registrations.get(registeredSink);
                 if (registration == null) {
                     return Completable.error(new UnregisteredSink());

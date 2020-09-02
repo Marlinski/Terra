@@ -1,6 +1,9 @@
 package io.disruptedsystems.libdtn.common.data;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -56,7 +59,11 @@ public class EidTest {
             assertEquals("api", apiEid6.getScheme());
             assertEquals("me/hello/world", apiEid6.getSsp());
             assertEquals("hello/world", apiEid6.getSink());
-        } catch(EidFormatException e) {
+
+            Eid eid = eidFactory.create("api:me/null/");
+            assertEquals("api:me/null/", eid.getEidString());
+            assertEquals(true, eid instanceof ApiEid);
+        } catch (EidFormatException e) {
             fail();
         }
     }
@@ -86,16 +93,34 @@ public class EidTest {
     public void testDtnEid() {
         System.out.println("[+] eid: testing DtnEid Scheme");
         try {
-            Eid dtn = new DtnEid("marsOrbital");
-            Eid dtnping = new DtnEid("marsOrbital/pingservice");
-            assertEquals("dtn:marsOrbital", dtn.getEidString());
-            assertEquals("dtn:marsOrbital/pingservice", dtnping.getEidString());
-            assertTrue(dtnping.matches(dtn));
+            DtnEid dtnnone = new DtnEid("none");
+            assertEquals("dtn:none", dtnnone.getEidString());
+            assertEquals(dtnnone.getEidString(), DtnEid.nullEid().getEidString());
+            assertEquals(true, dtnnone.isNullEndPoint());
 
-            dtn = eidFactory.create("dtn:marsOrbital");
-            assertEquals("dtn:marsOrbital", dtn.getEidString());
+            DtnEid dtn = new DtnEid("//marsOrbital/");
+            assertEquals("dtn://marsOrbital/", dtn.getEidString());
+            assertEquals("", dtn.getDemux());
+
+            DtnEid dtnping = new DtnEid("//marsOrbital/pingservice");
+            assertEquals("dtn://marsOrbital/pingservice", dtnping.getEidString());
+            assertTrue(dtnping.matches(dtn));
+            assertTrue(dtnping.isSingleton());
+            assertEquals("pingservice",dtnping.getDemux());
+
+            DtnEid dtnall = new DtnEid("//marsOrbital/~all");
+            assertEquals("dtn://marsOrbital/~all", dtnall.getEidString());
+            assertFalse(dtnall.isSingleton());
+            assertEquals("~all",dtnall.getDemux());
+
+            DtnEid colonyall = new DtnEid("//nasa.gov/~mars/colony/1/all");
+            assertEquals("dtn://nasa.gov/~mars/colony/1/all", colonyall.getEidString());
+            assertFalse(colonyall.isSingleton());
+            assertEquals("~mars/colony/1/all",colonyall.getDemux());
+
         } catch (EidFormatException efe) {
-            fail();
+            efe.printStackTrace();
+            fail(efe.getMessage());
         }
     }
 }

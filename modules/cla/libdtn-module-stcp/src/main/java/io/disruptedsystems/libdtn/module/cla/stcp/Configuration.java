@@ -1,4 +1,4 @@
-package io.disruptedsystems.libdtn.module.cla.bows;
+package io.disruptedsystems.libdtn.module.cla.stcp;
 
 /**
  * Module configuration for the STCP convergence layer.
