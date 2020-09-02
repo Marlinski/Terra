@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.common.data;
 
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 

@@ -62,7 +62,7 @@ public class ClaManager implements ClaManagerApi {
             return Single.error(new Throwable("AutoConnect is disabled"));
         }
 
-        final String opp = "cla=" + eid.getClaName() + " peer=" + eid.getClaSpecificPart();
+        final String opp = "cla=" + eid.getClaName() + " peer=" + eid.getClaParameters();
         core.getLogger().d(TAG, "trying to create an opportunity with " + opp);
         for (ConvergenceLayerSpi cla : clas) {
             if (eid.getClaName().equals(cla.getModuleName())) {

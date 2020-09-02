@@ -3,11 +3,11 @@ package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 import static io.disruptedsystems.libdtn.common.data.eid.DtnEid.EID_DTN_IANA_VALUE;
 import static io.disruptedsystems.libdtn.common.data.eid.IpnEid.EID_IPN_IANA_VALUE;
 
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
@@ -71,7 +71,7 @@ public class EidItem implements CborParser.ParseableItem {
                             (p, str) -> {
                                 logger.v(BundleV7Item.TAG, ".. dtn_ssp=" + str);
                                 try {
-                                    eid = new DtnEid(str);
+                                    eid = eidFactory.create("dtn", str);
                                 } catch (EidFormatException efe) {
                                     throw new RxParserException("DtnEid is not an URI: " + efe);
                                 }

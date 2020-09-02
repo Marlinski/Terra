@@ -1,5 +1,7 @@
 package io.disruptedsystems.libdtn.module.cla.bows;
 
+import java.util.Base64;
+
 import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
@@ -14,81 +16,55 @@ import java.net.URISyntaxException;
  */
 public class ClaBowsEid extends BaseClaEid {
 
+    public static String EID_CLA_BOWS_SCHEME = "bows";
+
     private URI uri;
 
-    // unsafe constructor
-    private ClaBowsEid(URI uri) {
-        super("bows", uri.toASCIIString());
-        this.uri = uri;
+    public URI getUri() {
+        return uri;
     }
 
-    static ClaBowsEid unsafe(URI uri) {
-        return new ClaBowsEid(uri);
+    private static String encode(URI in) {
+        return Base64.getEncoder().encodeToString(in.toASCIIString().getBytes())
+                .replaceAll("\\+", ".")
+                .replaceAll("/", "_")
+                .replaceAll("=", "-");
+    }
+
+    private static URI decode(String in) throws EidFormatException {
+        try {
+            return new URI(new String(Base64.getDecoder().decode(in
+                    .replaceAll("\\.", "+")
+                    .replaceAll("_", "/")
+                    .replaceAll("-", "="))));
+        } catch(URISyntaxException e) {
+            throw new EidFormatException(e.getMessage());
+        }
     }
 
     /**
-     * Constructor. A bows eid follows the following pattern "cla:bows:URL<[?&]>sink=SINK
+     * Constructor. A bows eid follows the following pattern "cla:bows:URL
      * that is, "cla:bows" followed by a valid URL with the sink being part of the query parameter.
      *
-     * @param url  websocket url
-     * @param sink eid registration
+     * @param encodedUrl   websocket url encoded in Base64
+     * @param demux        dtn demux part
      * @throws EidFormatException if the supplied parameters are not valid
      */
-    public ClaBowsEid(String url, String sink) throws EidFormatException {
-        super("bows", checkUri(url).toASCIIString(), sink);
+    public ClaBowsEid(String encodedUrl, String demux) throws EidFormatException {
+        super(EID_CLA_BOWS_SCHEME, encodedUrl, demux);
+        this.uri = decode(encodedUrl);
     }
 
-    public ClaBowsEid(URI url, String sink) throws EidFormatException {
-        super("bows", url.toASCIIString(), sink);
+    public ClaBowsEid(String encodedUrl) throws EidFormatException {
+        this(encodedUrl,"");
     }
 
-    @Override
-    public String getClaSpecificPart() {
-        URI uri = URI.create(claParameters);
-        if (claSink == null) {
-            return uri.toASCIIString();
-        }
-
-        try {
-            return appendUri(uri, "sink=" + claSink).toASCIIString();
-        } catch (URISyntaxException e) {
-            return uri.toASCIIString();
-        }
+    public ClaBowsEid(URI uri, String demux) throws EidFormatException {
+        super(EID_CLA_BOWS_SCHEME, encode(uri),demux);
+        this.uri = uri;
     }
 
-    @Override
-    public int ianaNumber() {
-        return EID_CLA_IANA_VALUE;
-    }
-
-    @Override
-    public ClaBowsEid copy() {
-        ClaBowsEid ret = new ClaBowsEid(uri);
-        ret.claSink = this.claSink;
-        return ret;
-    }
-
-    protected static URI appendUri(URI uri, String appendQuery) throws URISyntaxException {
-        if (appendQuery == null) {
-            return uri;
-        }
-
-        String newQuery = uri.getQuery();
-        if (newQuery == null || newQuery.equals("")) {
-            newQuery = appendQuery;
-        } else {
-            newQuery += "&" + appendQuery;
-        }
-
-        return new URI(uri.getScheme(), uri.getAuthority(),
-                uri.getPath(), newQuery, uri.getFragment());
-    }
-
-    protected static URI checkUri(String uri) throws EidFormatException {
-        try {
-            return new URI(uri);
-        } catch (URISyntaxException e) {
-            throw new EidFormatException(e.getMessage());
-        }
+    public ClaBowsEid(URI uri) throws EidFormatException {
+        this(uri,"");
     }
 }

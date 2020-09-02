@@ -8,7 +8,7 @@ import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
@@ -150,7 +150,7 @@ public class RequestBundle {
 
         destination = new BaseEidFactory().create(destinationstr);
         if (reporttostr == null) {
-            reportTo = DtnEid.nullEid();
+            reportTo = BaseDtnEid.nullEid();
         } else {
             reportTo = new BaseEidFactory().create(reporttostr);
         }

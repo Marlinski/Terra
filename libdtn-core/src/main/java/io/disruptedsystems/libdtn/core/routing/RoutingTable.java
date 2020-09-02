@@ -1,17 +1,18 @@
 package io.disruptedsystems.libdtn.core.routing;
 
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.disruptedsystems.libdtn.core.api.RoutingTableApi;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.core.CoreComponent;
-import io.reactivex.rxjava3.core.Observable;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.core.CoreComponent;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.disruptedsystems.libdtn.core.api.CoreApi;
+import io.disruptedsystems.libdtn.core.api.RoutingTableApi;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * RoutingTable is the default routing table used to take forwarding decisions. It contains
@@ -28,7 +29,6 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     private boolean staticIsEnabled;
     private Set<TableEntry> staticRoutingTable;
     private Set<TableEntry> routingTable;
-
 
     /**
      * Constructor.
@@ -73,10 +73,10 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     }
 
     private Observable<Eid> lookupPotentialNextHops(Eid destination) {
-        return Observable.concat(Observable.just(destination)
-                        .filter(eid -> destination instanceof BaseClaEid),
+        return Observable.concat(
+                Observable.just(destination).filter(eid -> destination instanceof ClaEid),
                 compoundTableObservable()
-                        .filter(entry -> destination.matches(entry.to))
+                        .filter(entry -> entry.to.isAuthoritativeOver(destination))
                         .map(entry -> entry.next));
     }
 

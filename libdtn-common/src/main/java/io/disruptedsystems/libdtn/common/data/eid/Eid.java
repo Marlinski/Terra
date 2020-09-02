@@ -13,21 +13,15 @@ public interface Eid {
 
     String RFC3986_URI_REGEXP = "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?";
 
+    class OperationNotSupported extends Exception {
+    }
+
     /**
      * return the ianaNumber number associated with this Eid scheme.
      *
      * @return an int
      */
     int ianaNumber();
-
-    /**
-     * returns true if this Eid matches the one given as a parameter.
-     * The semantic of "matching" is Eid specific.
-     *
-     * @param other Eid to match
-     * @return true if current Eid matches other Eid, false otherwise
-     */
-    boolean matches(Eid other);
 
     /**
      * returns the scheme part of this Eid.
@@ -50,6 +44,42 @@ public interface Eid {
      */
     String getEidString();
 
+    /**
+     * An EID is said to be "authoritative" if it describes a namespace under which
+     * other EIDs may belongs. Usually, an authoritative Eid authorize that a service part
+     * or sink be appended/encoded within.
+     * <p>
+     * Example of authoritative EIDs:
+     * ------------------------------
+     * <p>
+     * dtn://local-node/
+     * this is because this dtn-eid has a null demux and may act as an administrative endpoint.
+     * such endpoint will match every eid that shares this prefix such as dtn://local-node/service1
+     * <p>
+     * ipn:50.0
+     * this is because ipn eid encodes a node-id and a service-id. a service-id of 0
+     * is often understood as the administrative agent of the bundle node.
+     * <p>
+     * cla:stcp:127.0.0.1:1234
+     * this is because a cla-eid are singleton and unique to a channel. CLA eids often has a
+     * concept of "sink" to denote the application layer registration.
+     * <p>
+     * example of non-authoritative EIDs
+     * ------------------------------------
+     * <p>
+     * dtn://local-node/1
+     * ipn:50.1
+     */
+    boolean isAuthoritativeEid();
+
+    /**
+     * returns true if current EID is an endpoint that has authority over another EID.
+     * This usually return false if the Eid is not authoritative unless they match exactly.
+     *
+     * @param other eid
+     * @return true if current eid has authority over the other eid.
+     */
+    boolean isAuthoritativeOver(Eid other);
 
     /**
      * Eid copy.

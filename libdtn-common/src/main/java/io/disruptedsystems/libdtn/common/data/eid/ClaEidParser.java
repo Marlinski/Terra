@@ -21,5 +21,5 @@ public interface ClaEidParser {
      * @return new ClaEid
      * @throws EidFormatException if Convergence Layer name is unknown or cannot be parsed
      */
-    ClaEid createClaEid(String claName, String claSpecific) throws EidFormatException;
+    ClaEid createClaEid(String claName, String claSpecific, String demux) throws EidFormatException;
 }

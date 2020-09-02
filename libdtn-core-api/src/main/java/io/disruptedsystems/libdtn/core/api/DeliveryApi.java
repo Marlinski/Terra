@@ -11,36 +11,40 @@ import io.reactivex.rxjava3.core.Completable;
  */
 public interface DeliveryApi extends CoreComponentApi {
 
-    class DeliveryDisabled extends Exception {
-    }
+    class DeliveryFailure extends Exception {
+        public enum Reason {
+            DeliverySuccessful,
+            DeliveryRefused,
+            DeliveryDisabled,
+            PassiveRegistration,
+            UnregisteredEid,
+        }
 
-    class PassiveRegistration extends Exception {
-    }
+        Reason reason;
 
-    class UnregisteredSink extends Exception {
-    }
-
-    class DeliveryRefused extends Exception {
+        public DeliveryFailure(Reason reason) {
+            this.reason = reason;
+        }
     }
 
     /**
-     * deliver a bunde to a registered sink. If the action completes, it means that the
-     * application agent has accepted the delivery. It may fail if the sink is not currently
+     * deliver a bundle. If the action completes, it means that the
+     * application agent has accepted the delivery. It may fail if the aa is not currently
      * registered, passive or if the application agent has refused the delivery.
      *
-     * @param eid to send the bundle to
-     * @param bundle to deliver
+     * @param localMatch the local Eid that matches this bundle.
+     * @param bundle     to deliver
      * @return completable that completes upon successful delivery, onerror otherwise.
      */
-    Completable deliver(String eid, Bundle bundle);
+    Completable deliver(LocalEidApi.LocalEid<?> localMatch, Bundle bundle);
 
     /**
      * take care of this bundle for later delivery.
      * todo: probably not an ApiEid of delivery
      *
-     * @param eid to deliver the bundle to
-     * @param bundle to deliver
+     * @param localMatch to deliver the bundle to
+     * @param bundle     to deliver
      */
-    void deliverLater(String eid, final Bundle bundle);
+    void deliverLater(LocalEidApi.LocalEid<?> localMatch, final Bundle bundle);
 
 }

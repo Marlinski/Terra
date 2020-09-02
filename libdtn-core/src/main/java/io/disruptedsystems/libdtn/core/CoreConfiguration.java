@@ -1,7 +1,8 @@
 package io.disruptedsystems.libdtn.core;
 
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.reactivex.rxjava3.core.Observable;

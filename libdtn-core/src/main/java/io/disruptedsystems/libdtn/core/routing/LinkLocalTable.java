@@ -85,7 +85,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
         }
 
         for (ClaChannelSpi cla : linkLocalTable) {
-            if (eid.matches(cla.localEid())) {
+            if (cla.localEid().isAuthoritativeOver(eid)) {
                 return cla.localEid();
             }
         }
@@ -99,7 +99,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
         }
 
         return Observable.fromIterable(linkLocalTable)
-                .filter(c -> destination.matches(c.channelEid()))
+                .filter(c -> c.channelEid().isAuthoritativeOver(destination))
                 .lastElement();
     }
 

@@ -24,16 +24,18 @@ public class ClaStcpEidTest {
 
         try {
             BaseClaEid cla = new ClaStcpEid("google.com", 4556, "/");
-            assertEquals("cla:stcp:google.com:4556/", cla.getEidString());
-            assertEquals("stcp", cla.claName);
-            assertEquals("google.com:4556", cla.claParameters);
-            assertEquals("/", cla.claSink);
+            assertEquals("dtn://[stcp:google.com:4556]/", cla.getEidString());
+            assertEquals("stcp", cla.getClaName());
+            assertEquals("google.com:4556", cla.getClaParameters());
+            assertEquals("", cla.getDemux());
 
-            Eid eid = (new ClaStcpEidParser()).createClaEid("stcp","google.com:4556");
-            Eid path = (new ClaStcpEidParser()).createClaEid("stcp", "google.com:4556/pingservice");
-            assertEquals("cla:stcp:google.com:4556/", eid.getEidString());
-            assertEquals("cla:stcp:google.com:4556/pingservice", path.getEidString());
-            assertTrue(path.matches(eid));
+            Eid eid = (new ClaStcpEidParser()).createClaEid("stcp","google.com:4556","");
+            assertEquals("dtn://[stcp:google.com:4556]/", eid.getEidString());
+
+            Eid path = (new ClaStcpEidParser()).createClaEid("stcp", "google.com:4556", "/pingservice");
+            assertEquals("dtn://[stcp:google.com:4556]/pingservice", path.getEidString());
+            assertTrue(eid.isAuthoritativeOver(path));
+
         } catch (EidFormatException eid) {
             fail(eid.getMessage());
         }

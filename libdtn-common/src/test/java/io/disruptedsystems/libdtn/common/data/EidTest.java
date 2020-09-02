@@ -2,13 +2,13 @@ package io.disruptedsystems.libdtn.common.data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
@@ -31,39 +31,45 @@ public class EidTest {
         System.out.println("[+] eid: testing ApiEid Scheme");
         try {
             ApiEid apiEid2 = new ApiEid(null);
-            assertEquals("api:me", apiEid2.getEidString());
-            assertEquals("api", apiEid2.getScheme());
-            assertEquals("me", apiEid2.getSsp());
-            assertEquals("", apiEid2.getSink());
+            assertEquals("dtn://api:me/", apiEid2.getEidString());
+            assertEquals("dtn", apiEid2.getScheme());
+            assertEquals("//api:me/", apiEid2.getSsp());
+            assertEquals("api:me", apiEid2.getNodeName());
+            assertEquals("", apiEid2.getDemux());
 
             ApiEid apiEid3 = new ApiEid("");
-            assertEquals("api:me", apiEid3.getEidString());
-            assertEquals("api", apiEid3.getScheme());
-            assertEquals("me", apiEid3.getSsp());
-            assertEquals("", apiEid3.getSink());
+            assertEquals("dtn://api:me/", apiEid3.getEidString());
+            assertEquals("dtn", apiEid3.getScheme());
+            assertEquals("//api:me/", apiEid3.getSsp());
+            assertEquals("api:me", apiEid3.getNodeName());
+            assertEquals("", apiEid3.getDemux());
 
             ApiEid apiEid4 = new ApiEid("/");
-            assertEquals("api:me", apiEid4.getEidString());
-            assertEquals("api", apiEid4.getScheme());
-            assertEquals("me", apiEid4.getSsp());
-            assertEquals("", apiEid4.getSink());
+            assertEquals("dtn://api:me/", apiEid4.getEidString());
+            assertEquals("dtn", apiEid4.getScheme());
+            assertEquals("//api:me/", apiEid4.getSsp());
+            assertEquals("api:me", apiEid4.getNodeName());
+            assertEquals("", apiEid4.getDemux());
 
             ApiEid apiEid5 = new ApiEid("/hello");
-            assertEquals("api:me/hello", apiEid5.getEidString());
-            assertEquals("api", apiEid5.getScheme());
-            assertEquals("me/hello", apiEid5.getSsp());
-            assertEquals("hello", apiEid5.getSink());
+            assertEquals("dtn://api:me/hello", apiEid5.getEidString());
+            assertEquals("dtn", apiEid5.getScheme());
+            assertEquals("//api:me/hello", apiEid5.getSsp());
+            assertEquals("api:me", apiEid5.getNodeName());
+            assertEquals("hello", apiEid5.getDemux());
 
             ApiEid apiEid6 = new ApiEid("/hello/world");
-            assertEquals("api:me/hello/world", apiEid6.getEidString());
-            assertEquals("api", apiEid6.getScheme());
-            assertEquals("me/hello/world", apiEid6.getSsp());
-            assertEquals("hello/world", apiEid6.getSink());
+            assertEquals("dtn://api:me/hello/world", apiEid6.getEidString());
+            assertEquals("dtn", apiEid6.getScheme());
+            assertEquals("//api:me/hello/world", apiEid6.getSsp());
+            assertEquals("api:me", apiEid6.getNodeName());
+            assertEquals("hello/world", apiEid6.getDemux());
 
-            Eid eid = eidFactory.create("api:me/null/");
-            assertEquals("api:me/null/", eid.getEidString());
+            Eid eid = eidFactory.create("dtn://api:me/null/");
+            assertEquals("dtn://api:me/null/", eid.getEidString());
             assertEquals(true, eid instanceof ApiEid);
         } catch (EidFormatException e) {
+            e.printStackTrace();
             fail();
         }
     }
@@ -93,34 +99,51 @@ public class EidTest {
     public void testDtnEid() {
         System.out.println("[+] eid: testing DtnEid Scheme");
         try {
-            DtnEid dtnnone = new DtnEid("none");
+            DtnEid dtnnone = DtnEid.nullEid();
             assertEquals("dtn:none", dtnnone.getEidString());
             assertEquals(dtnnone.getEidString(), DtnEid.nullEid().getEidString());
             assertEquals(true, dtnnone.isNullEndPoint());
 
-            DtnEid dtn = new DtnEid("//marsOrbital/");
+            DtnEid dtn = new BaseDtnEid("marsOrbital");
             assertEquals("dtn://marsOrbital/", dtn.getEidString());
             assertEquals("", dtn.getDemux());
 
-            DtnEid dtnping = new DtnEid("//marsOrbital/pingservice");
+            DtnEid dtnping = new BaseDtnEid("marsOrbital","pingservice");
             assertEquals("dtn://marsOrbital/pingservice", dtnping.getEidString());
-            assertTrue(dtnping.matches(dtn));
+            assertTrue(dtn.isAuthoritativeOver(dtnping));
             assertTrue(dtnping.isSingleton());
             assertEquals("pingservice",dtnping.getDemux());
 
-            DtnEid dtnall = new DtnEid("//marsOrbital/~all");
+            DtnEid dtnall = new BaseDtnEid("marsOrbital","~all");
             assertEquals("dtn://marsOrbital/~all", dtnall.getEidString());
             assertFalse(dtnall.isSingleton());
             assertEquals("~all",dtnall.getDemux());
 
-            DtnEid colonyall = new DtnEid("//nasa.gov/~mars/colony/1/all");
+            DtnEid colonyall = new BaseDtnEid("nasa.gov","~mars/colony/1/all");
             assertEquals("dtn://nasa.gov/~mars/colony/1/all", colonyall.getEidString());
             assertFalse(colonyall.isSingleton());
             assertEquals("~mars/colony/1/all",colonyall.getDemux());
 
+            Eid testParse = eidFactory.create("dtn://nasa.gov/~mars/colony/1/all");
+            assertEquals("dtn://nasa.gov/~mars/colony/1/all", testParse.getEidString());
+            assertFalse(colonyall.isSingleton());
+            assertEquals("~mars/colony/1/all",colonyall.getDemux());
+
+            Eid testParse2 = eidFactory.create("dtn://[stcp:1.2.3.4:5]/hello");
+            assertEquals("dtn://[stcp:1.2.3.4:5]/hello", testParse2.getEidString());
+            assertTrue(testParse2 instanceof DtnEid);
+            assertTrue(testParse2 instanceof ClaEid);
+            assertEquals("hello",((DtnEid)testParse2).getDemux());
+
+            Eid testParse3 = eidFactory.create("dtn://[:]/hello");
+            assertEquals("dtn://[:]/hello", testParse3.getEidString());
+            assertTrue(testParse3 instanceof DtnEid);
+            assertFalse(testParse3 instanceof ClaEid);
+            assertEquals("hello",((DtnEid)testParse3).getDemux());
         } catch (EidFormatException efe) {
             efe.printStackTrace();
             fail(efe.getMessage());
         }
     }
+
 }

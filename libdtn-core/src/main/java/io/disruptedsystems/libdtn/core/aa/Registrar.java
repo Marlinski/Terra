@@ -8,10 +8,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
+import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
@@ -20,6 +22,11 @@ import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+
+import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.DeliveryDisabled;
+import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.DeliveryRefused;
+import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.PassiveRegistration;
+import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.UnregisteredEid;
 
 /**
  * Registrar Routing keeps track of all the registered application agent.
@@ -91,7 +98,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     private void checkValidEid(String eid) throws InvalidEid {
         try {
             core.getExtensionManager().getEidFactory().create(eid);
-        } catch(EidFormatException e) {
+        } catch (EidFormatException e) {
             throw new InvalidEid();
         }
     }
@@ -124,25 +131,18 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         return registration;
     }
 
-    private void replaceApiMe(Bundle bundle) throws BundleMalformed {
-        try {
-            if (bundle.getSource().matches(ApiEid.me())) {
-                bundle.setSource(core.getExtensionManager().getEidFactory().create(
-                        core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getSource()).getSink()));
-            }
-            if (bundle.getReportto().matches(ApiEid.me())) {
-                bundle.setReportto(core.getExtensionManager().getEidFactory().create(
-                        core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getReportto()).getSink()));
-            }
-            if (bundle.getDestination().matches(ApiEid.me())) {
-                bundle.setDestination(core.getExtensionManager().getEidFactory().create(
-                        core.getLocalEid().localEid().getEidString()
-                                + ((ApiEid) bundle.getDestination()).getSink()));
-            }
-        } catch (EidFormatException efe) {
-            throw new BundleMalformed(efe.getMessage());
+    private void replaceApiMe(Bundle bundle) {
+        if (bundle.getSource() instanceof ApiEid) {
+            bundle.setSource(core.getLocalEid().nodeId().copy().copyDemux(
+                    ((ApiEid) bundle.getSource())));
+        }
+        if (bundle.getReportto() instanceof ApiEid) {
+            bundle.setReportto(core.getLocalEid().nodeId().copy().copyDemux(
+                    ((ApiEid) bundle.getSource())));
+        }
+        if (bundle.getDestination() instanceof ApiEid) {
+            bundle.setDestination(core.getLocalEid().nodeId().copy().copyDemux(
+                    ((ApiEid) bundle.getSource())));
         }
     }
 
@@ -338,48 +338,68 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
                                                     .bundleLocalDeliverySuccessful(bundle);
                                         },
                                         e -> core.getBundleProtocol()
-                                                .bundleLocalDeliveryFailure(event.eid, bundle)),
+                                                .bundleLocalDeliveryFailure(bundle, LocalEidApi.LocalEid.registered(event.eid), e)),
                                 e -> {
                                 });
                     });
         }
     }
 
-    /**
-     * Deliver a bundle to the registration.
-     *
-     * @param eid    registered
-     * @param bundle to deliver
-     * @return completes if the bundle was successfully delivered, onError otherwise
-     */
-    public Completable deliver(String eid, Bundle bundle) {
+    @Override
+    public Completable deliver(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
         if (!isEnabled()) {
-            return Completable.error(new DeliveryDisabled());
+            return Completable.error(new DeliveryFailure(DeliveryDisabled));
         }
 
-        /* first prefix matching strategy */
-        for (String registeredSink : registrations.keySet()) {
-            if (eid.startsWith(registeredSink)) {
-                Registration registration = registrations.get(registeredSink);
-                if (registration == null) {
-                    return Completable.error(new UnregisteredSink());
-                }
+        // first we check if there's an AA that registered to the bundle destination EID.
+        Registration reg = registrations.get(bundle.getDestination().getEidString());
+        if (reg != null) {
+            return deliverToRegistration(reg, bundle);
+        }
 
-                if (!registration.isActive()) {
-                    return Completable.error(new PassiveRegistration());
-                }
+        // if the device was detected to be local because of a registration, then it must have
+        // been unregistered by then (should be very rare).
+        if (localMatch instanceof LocalEidApi.Registered) {
+            return Completable.error(new DeliveryFailure(UnregisteredEid));
+        }
 
-                return registration.cb.recv(bundle);
+        // this bundle have been detected to be local because it matched
+        // against either a node id or a CLA. So last chance is to try swaping with api:me
+        // which is only applicable for dtn-eid
+        if (!(bundle.getDestination() instanceof DtnEid)) {
+            return Completable.error(new DeliveryFailure(UnregisteredEid));
+        }
+
+        try {
+            ApiEid newEid = new ApiEid(((DtnEid) bundle.getDestination()).getDemux());
+            reg = registrations.get(newEid.getEidString());
+            if (reg != null) {
+                return deliverToRegistration(reg, bundle);
             }
+            return Completable.error(new DeliveryFailure(UnregisteredEid));
+        } catch (EidFormatException e) {
+            /* cannot happen */
+            return Completable.error(e);
         }
-        return Completable.error(new UnregisteredSink());
     }
 
-    public void deliverLater(String sink, final Bundle bundle) {
-        listener.watch(sink, bundle.bid);
+    private Completable deliverToRegistration(Registration registration, Bundle bundle) {
+        if (registration == null) {
+            return Completable.error(new DeliveryFailure(UnregisteredEid));
+        }
+        if (!registration.isActive()) {
+            return Completable.error(new DeliveryFailure(PassiveRegistration));
+        }
+        return registration.cb.recv(bundle)
+                .onErrorResumeWith(Completable.error(new DeliveryFailure(DeliveryRefused)));
+    }
+
+    @Override
+    public void deliverLater(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
+        listener.watch("todo", bundle.bid);
     }
 
     /* passive registration */
     private static ActiveRegistrationCallback passiveRegistration
-            = (payload) -> Completable.error(new PassiveRegistration());
+            = (payload) -> Completable.error(new DeliveryFailure(PassiveRegistration));
 }

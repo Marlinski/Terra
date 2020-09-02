@@ -8,11 +8,7 @@ package io.disruptedsystems.libdtn.common.data.eid;
  *
  * @author Lucien Loiseau on 28/11/18.
  */
-public interface ClaEid extends Eid {
-
-    int EID_CLA_IANA_VALUE = 3;  // not actually an IANA number (yet)
-    String EID_CLA_SCHEME = "cla";
-
+public interface ClaEid extends DtnEid {
     /**
      * get the Convergence Layer name for this ClaEid.
      *
@@ -27,31 +23,6 @@ public interface ClaEid extends Eid {
      */
     String getClaParameters();
 
-    /**
-     * get the Convergence Layer specific part of this ClaEid.
-     *
-     * @return String representing the Convergence Layer specific part
-     */
-    String getClaSpecificPart();
-
-    /**
-     * get the Sink part of this ClaEid.
-     *
-     * @return String representing the Sink (also called Path)
-     */
-    String getSink();
-
-    /**
-     * set the Sink part of this ClaEid.
-     *
-     * @param sink representing the Sink (also called Path)
-     */
-    ClaEid setSink(String sink) throws EidFormatException;
-
-    /**
-     * copy this claeid
-     * @return a copy of the ClaEid
-     */
+    @Override
     ClaEid copy();
-
 }

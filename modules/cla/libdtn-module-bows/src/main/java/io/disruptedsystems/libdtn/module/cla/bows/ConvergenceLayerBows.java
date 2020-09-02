@@ -4,6 +4,9 @@ import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketExtension;
 import com.neovisionaries.ws.client.WebSocketFactory;
 
+import java.net.URI;
+import java.nio.ByteBuffer;
+
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
@@ -11,6 +14,7 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSeria
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -22,9 +26,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
-
-import java.net.URI;
-import java.nio.ByteBuffer;
 
 /**
  * Bundle Over WebSocket (BOWS) is a WebSocket Convergence Layer Adapter for the Bundle Protocol.
@@ -72,15 +73,14 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     @Override
     public Single<ClaChannelSpi> open(ClaEid peer) {
         if (peer instanceof ClaBowsEid) {
-            return open(((ClaBowsEid) peer).claParameters);
+            return open(((ClaBowsEid) peer).getUri());
         } else {
             return Single.error(new Throwable("peer is not a ConvergenceLayerStcp peer"));
         }
     }
 
-    private Single<ClaChannelSpi> open(String webSocketUrl) {
+    private Single<ClaChannelSpi> open(URI webSocketUrl) {
         return Single.just(webSocketUrl)
-                .map(url -> new URI(url).toASCIIString())
                 .map(uri -> new WebSocketFactory()
                         .createSocket(uri)
                         .setPingInterval(0)
@@ -92,7 +92,7 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
 
     public class Channel implements ClaChannelSpi {
 
-        WebSocket  ws;
+        WebSocket ws;
         ClaBowsEid channelEid;
 
         /**
@@ -100,10 +100,16 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
          *
          * @param ws a connected websocket
          */
-        public Channel(WebSocket ws) {
+        public Channel(WebSocket ws) throws EidFormatException {
             this.ws = ws;
-            channelEid = ClaBowsEid.unsafe(ws.getURI());
-            logger.i(TAG, "new ClaBowsEid CLA channel openned: " + channelEid.getEidString());
+            try {
+                channelEid = new ClaBowsEid(ws.getURI());
+                logger.i(TAG, "new bows channel openned: " + channelEid.getEidString());
+            } catch(EidFormatException e) {
+                logger.i(TAG, "could not create bows eid: " + e.toString());
+                close();
+                throw e;
+            }
         }
 
         @Override

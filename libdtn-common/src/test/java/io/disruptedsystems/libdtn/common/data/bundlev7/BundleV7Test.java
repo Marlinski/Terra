@@ -3,6 +3,7 @@ package io.disruptedsystems.libdtn.common.data.bundlev7;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
@@ -22,7 +23,7 @@ import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 
@@ -39,7 +40,7 @@ public class BundleV7Test {
 
     private static DtnEid makeSourceEid() {
         try {
-            return new DtnEid("//source/");
+            return new BaseDtnEid("//source/");
         } catch(EidFormatException e) {
             return DtnEid.nullEid();
         }

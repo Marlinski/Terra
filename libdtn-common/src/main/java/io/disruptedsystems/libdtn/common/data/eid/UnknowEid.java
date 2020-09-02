@@ -11,11 +11,15 @@ public class UnknowEid extends BaseEid {
     public static final String EID_UNK_SCHEME = "unk";
 
     private int iana;
-    private String scheme;
     private String ssp;
 
     /* unsafe constructor - no validity check */
     private UnknowEid() {
+    }
+
+    public UnknowEid(UnknowEid o) {
+        this.iana = o.iana;
+        this.ssp = o.ssp;
     }
 
     /**
@@ -27,7 +31,6 @@ public class UnknowEid extends BaseEid {
      */
     public UnknowEid(int ianaValue, String ssp) throws EidFormatException {
         this.iana = ianaValue;
-        this.scheme = EID_UNK_SCHEME;
         this.ssp = ssp;
         if (!Eid.isValidEid(this.getEidString())) {
             throw new EidFormatException("not an URI");
@@ -35,12 +38,8 @@ public class UnknowEid extends BaseEid {
     }
 
     @Override
-    public Eid copy() {
-        UnknowEid ret = new UnknowEid();
-        ret.iana = iana;
-        ret.scheme = scheme;
-        ret.ssp = ssp;
-        return ret;
+    public UnknowEid copy() {
+        return new UnknowEid(this);
     }
 
     @Override
@@ -50,7 +49,7 @@ public class UnknowEid extends BaseEid {
 
     @Override
     public String getScheme() {
-        return scheme;
+        return EID_UNK_SCHEME;
     }
 
     @Override
@@ -59,11 +58,12 @@ public class UnknowEid extends BaseEid {
     }
 
     @Override
-    public boolean matches(Eid other) {
-        if (other == null) {
-            return false;
-        }
-        return scheme.equals(((UnknowEid) other).scheme)
-                && ssp.equals(((UnknowEid) other).ssp);
+    public boolean isAuthoritativeEid() {
+        return false;
+    }
+
+    @Override
+    public boolean isAuthoritativeOver(Eid other) {
+        return false;
     }
 }

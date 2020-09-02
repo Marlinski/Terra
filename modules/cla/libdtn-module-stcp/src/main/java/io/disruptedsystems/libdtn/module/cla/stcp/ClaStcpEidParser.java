@@ -13,18 +13,18 @@ import java.util.regex.Pattern;
  */
 public class ClaStcpEidParser implements ClaEidParser {
 
+    public static final String STCP_PARAM_REGEX = "^([^:/?#]+):([0-9]+)$";
+    public static final Matcher stcpMatcher = Pattern.compile(STCP_PARAM_REGEX).matcher("");
+
     @Override
-    public ClaStcpEid createClaEid(String claName, String claSpecific)
+    public ClaStcpEid createClaEid(String claName, String claSpecific, String demux)
             throws EidFormatException {
-        final String regex = "^([^:/?#]+):([0-9]+)(/.*)?";
-        Pattern r = Pattern.compile(regex);
-        Matcher m = r.matcher(claSpecific);
-        if (!m.find()) {
+        stcpMatcher.reset(claSpecific);
+        if (!stcpMatcher.matches()) {
             throw new EidFormatException("not an stcp-specific eid: " + claSpecific);
         }
-        String host = m.group(1);
-        int port = Integer.valueOf(m.group(2));
-        String sink = m.group(3);
-        return new ClaStcpEid(host, port, sink);
+        String host = stcpMatcher.group(1);
+        int port = Integer.valueOf(stcpMatcher.group(2));
+        return new ClaStcpEid(host, port, demux);
     }
 }

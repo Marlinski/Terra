@@ -11,32 +11,26 @@ import java.util.regex.Pattern;
  *
  * @author Lucien Loiseau on 28/11/18.
  */
-public class BaseEidFactory implements EidFactory, ClaEidParser {
+public class BaseEidFactory implements EidFactory {
 
     private EidSspParser ipnParser = new IpnEid.IpnParser();
-    private EidSspParser dtnParser = new DtnEid.DtnParser();
-    private EidSspParser apiParser = new ApiEid.ApiParser();
-
-    private boolean throwExceptionForUnknownClaEid = false;
+    private EidSspParser dtnParser;
 
     public BaseEidFactory() {
+        this(new BaseDtnEidFactory());
     }
 
-    public BaseEidFactory(boolean throwExceptionForUnknownClaEid) {
-        this.throwExceptionForUnknownClaEid = throwExceptionForUnknownClaEid;
+    public BaseEidFactory(EidSspParser dtnParser) {
+        this.dtnParser = dtnParser;
     }
 
     @Override
     public String getIanaScheme(int ianaScheme) throws UnknownIanaNumber {
         switch (ianaScheme) {
-            case ApiEid.EID_API_IANA_VALUE:
-                return ApiEid.EID_API_SCHEME;
-            case DtnEid.EID_DTN_IANA_VALUE:
-                return DtnEid.EID_DTN_SCHEME;
+            case BaseDtnEid.EID_DTN_IANA_VALUE:
+                return BaseDtnEid.EID_DTN_SCHEME;
             case IpnEid.EID_IPN_IANA_VALUE:
                 return IpnEid.EID_IPN_SCHEME;
-            case ClaEid.EID_CLA_IANA_VALUE:
-                return ClaEid.EID_CLA_SCHEME;
             default:
                 throw new UnknownIanaNumber(ianaScheme);
         }
@@ -66,39 +60,12 @@ public class BaseEidFactory implements EidFactory, ClaEidParser {
 
     @Override
     public Eid create(String scheme, String ssp) throws EidFormatException {
-        if (scheme.equals(ApiEid.EID_API_SCHEME)) {
-            return apiParser.create(ssp);
-        }
-        if (scheme.equals(DtnEid.EID_DTN_SCHEME)) {
-            return dtnParser.create(ssp);
-        }
         if (scheme.equals(IpnEid.EID_IPN_SCHEME)) {
             return ipnParser.create(ssp);
         }
-        if (scheme.equals(ClaEid.EID_CLA_SCHEME)) {
-            final String regex = "^([^:/?#]+)\\+(.+)";
-            Pattern r = Pattern.compile(regex);
-            Matcher m = r.matcher(ssp);
-            if (!m.find()) {
-                throw new EidFormatException("not a cla-specific EID");
-            }
-            String clName = m.group(1);
-            String clSpecific = m.group(2);
-
-            return createClaEid(clName, clSpecific);
+        if (scheme.equals(BaseDtnEid.EID_DTN_SCHEME)) {
+            return dtnParser.create(ssp);
         }
         throw new UnknownEidScheme(scheme);
     }
-
-    @Override
-    public ClaEid createClaEid(String claName, String claSpecific)
-            throws EidFormatException {
-        if (throwExceptionForUnknownClaEid) {
-            throw new UnknownClaName("claName unknown: " + claName);
-        } else {
-            return new UnknownClaEid(claName, claSpecific);
-        }
-    }
-
-
 }

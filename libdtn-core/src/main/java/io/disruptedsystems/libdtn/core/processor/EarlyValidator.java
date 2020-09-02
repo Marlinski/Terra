@@ -2,6 +2,7 @@ package io.disruptedsystems.libdtn.core.processor;
 
 import static io.disruptedsystems.libdtn.common.data.BlockHeader.BlockV7Flags.DELETE_BUNDLE_IF_NOT_PROCESSED;
 
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
@@ -9,7 +10,7 @@ import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.core.utils.ClockUtil;
 
 /**
@@ -59,7 +60,7 @@ public class EarlyValidator {
             throw new RejectedException("forbidden anonnymous source");
         }
 
-        if (!core.getLocalEid().isLocal(block.getDestination())
+        if ((core.getLocalEid().isEidLocal(block.getDestination()) == null)
                 && !core.getConf()
                 .<Boolean>get(ConfigurationApi.CoreEntry.ENABLE_FORWARDING).value()) {
             throw new RejectedException("forward isn't enabled and bundle is not local");

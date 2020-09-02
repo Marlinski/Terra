@@ -1,8 +1,10 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-
 import java.util.Set;
+
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 
 /**
  * API to request the local Eid of the node.
@@ -11,12 +13,50 @@ import java.util.Set;
  */
 public interface LocalEidApi {
 
+    abstract class LocalEid<T> {
+        public T eid;
+
+        LocalEid(T eid) {
+            this.eid = eid;
+        }
+
+        public static Registered registered(String eid) {
+            return new Registered(eid);
+        }
+
+        public static NodeId alias(Eid eid) {
+            return new NodeId(eid);
+        }
+
+        public static LinkLocal link(ClaEid eid) {
+            return new LinkLocal(eid);
+        }
+    }
+
+    class Registered extends LocalEid<String> {
+        public Registered(String eid) {
+            super(eid);
+        }
+    }
+
+    class NodeId extends LocalEid<Eid> {
+        public NodeId(Eid eid) {
+            super(eid);
+        }
+    }
+
+    class LinkLocal extends LocalEid<ClaEid> {
+        public LinkLocal(ClaEid eid) {
+            super(eid);
+        }
+    }
+
     /**
      * Return the configured local Eid for current node.
      *
      * @return local Eid
      */
-    Eid localEid();
+    DtnEid nodeId();
 
     /**
      * Return the set of all aliases for current node.
@@ -26,19 +66,20 @@ public interface LocalEidApi {
     Set<Eid> aliases();
 
     /**
-     * check if an Eid is local or foreign.
+     * Check if an EID is a node id (either local node-id or an alias).
      *
-     * @param eid to check
-     * @return true if Eid match a local Eid or an alias, false otherwise
+     * @return true if eid is a local node id, false otherwise.
      */
-    boolean isLocal(Eid eid);
+    Eid isEidNodeId(Eid eid);
 
     /**
-     * return the matching Eid.
+     * check if an Eid is local. It checks if the eid
+     * - matches one of the local node-id or aliases
+     * - matches a registered eid by an application agent
+     * - matches a CLA Eid in the link-local table.
      *
      * @param eid to check
-     * @return the Eid that matches this Eid, null otherwise
+     * @return true if eid is local, false otherwise.
      */
-    Eid matchLocal(Eid eid);
-
+    LocalEid isEidLocal(Eid eid);
 }

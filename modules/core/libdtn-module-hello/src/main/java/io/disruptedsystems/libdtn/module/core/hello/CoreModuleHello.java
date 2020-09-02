@@ -5,7 +5,7 @@ import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -49,7 +49,7 @@ public class CoreModuleHello implements CoreModuleSpi {
         HelloMessage hello = new HelloMessage(coreApi.getExtensionManager().getEidFactory());
 
         /* add node local Eid */
-        hello.eids.add(coreApi.getLocalEid().localEid());
+        hello.eids.add(coreApi.getLocalEid().nodeId());
 
         /* add aliases */
         hello.eids.addAll(coreApi.getLocalEid().aliases());
@@ -69,7 +69,7 @@ public class CoreModuleHello implements CoreModuleSpi {
                 .subscribe();
 
         /* create Hello Bundle Skeleton */
-        helloBundle = new Bundle(DtnEid.nullEid());
+        helloBundle = new Bundle(BaseDtnEid.nullEid());
         helloBundle.addBlock(new PayloadBlock(blobHello));
     }
 
@@ -135,7 +135,7 @@ public class CoreModuleHello implements CoreModuleSpi {
     @Subscribe
     public void onEvent(LinkLocalEntryUp up) {
         try {
-            ClaEid eid = up.channel.channelEid().copy().setSink("/hello/");
+            ClaEid eid = up.channel.channelEid().copy().insertSink("/hello/");
             coreApi.getLogger().i(TAG, "sending hello message to: " + eid.getEidString());
             helloBundle.setDestination(eid);
             up.channel.sendBundle(helloBundle,

@@ -13,7 +13,6 @@ public interface EidFactory extends EidSspParser {
         }
     }
 
-
     class UnknownEidScheme extends EidFormatException {
         public UnknownEidScheme(String scheme) {
             super("unknown Eid Scheme: " + scheme);

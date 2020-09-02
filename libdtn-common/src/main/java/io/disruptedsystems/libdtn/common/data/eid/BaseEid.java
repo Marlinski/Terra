@@ -21,4 +21,25 @@ public abstract class BaseEid implements Eid {
             throw new EidFormatException("not an URI");
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if(this == o) {
+            return true;
+        }
+        if(o instanceof Eid) {
+            return this.getEidString().equals(((Eid) o).getEidString());
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return getEidString();
+    }
+
+    @Override
+    public int hashCode() {
+        return getEidString().hashCode();
+    }
 }

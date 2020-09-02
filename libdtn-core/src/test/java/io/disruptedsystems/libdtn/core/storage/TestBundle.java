@@ -9,6 +9,7 @@ import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
@@ -24,7 +25,7 @@ public class TestBundle {
 
     private static DtnEid createSourceEid() {
         try {
-            return new DtnEid("//source/");
+            return new BaseDtnEid("//source/");
         } catch (EidFormatException e) {
             return DtnEid.nullEid();
         }

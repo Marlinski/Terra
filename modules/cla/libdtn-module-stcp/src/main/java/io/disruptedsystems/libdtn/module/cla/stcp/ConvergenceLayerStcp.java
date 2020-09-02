@@ -11,6 +11,7 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSeria
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
+import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -136,24 +137,23 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
          * @param tcpcon    tcp connection
          * @param initiator true if current node initiated the connection, false otherwise
          */
-        public Channel(RxTCP.Connection tcpcon, boolean initiator) {
+        public Channel(RxTCP.Connection tcpcon, boolean initiator) throws EidFormatException {
             this.tcpcon = tcpcon;
             this.initiator = initiator;
-            channelEid = ClaStcpEid.unsafe(tcpcon.getRemoteHost(), tcpcon.getRemotePort());
-            localEid = ClaStcpEid.unsafe(tcpcon.getLocalHost(), tcpcon.getLocalPort());
-            logger.i(TAG, "new ClaStcpEid CLA channel openned (initiated="
-                    + initiator + "): " + channelEid.getEidString());
+            try {
+                channelEid = new ClaStcpEid(tcpcon.getRemoteHost(), tcpcon.getRemotePort());
+                localEid = new ClaStcpEid(tcpcon.getLocalHost(), tcpcon.getLocalPort());
+                logger.i(TAG, "new stcp channel openned (initiated="
+                        + initiator + "): " + channelEid.getEidString());
+            } catch(EidFormatException e) {
+                logger.e(TAG, "could not create stcp eid: " + e.toString());
+                close();
+                throw e;
+            }
         }
 
         @Override
         public ChannelMode getMode() {
-            /*
-            if (initiator) {
-                return ChannelMode.OutUnidirectional;
-            } else {
-                return ChannelMode.InUnidirectional;
-            }
-            */
             return ChannelMode.BiDirectional;
         }
 
@@ -175,11 +175,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         @Override
         public Observable<Integer> sendBundle(Bundle bundle,
                                               BlockDataSerializerFactory serializerFactory) {
-            /*
-            if (!initiator) {
-                return Observable.error(new RecvOnlyPeerException());
-            }
-            */
             Flowable<ByteBuffer> job = createBundleJob(bundle, serializerFactory);
             if (job == null) {
                 return Observable.error(new Throwable("Cannot serialize the bundle"));
@@ -193,11 +188,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         @Override
         public Observable<Integer> sendBundles(Flowable<Bundle> upstream,
                                                BlockDataSerializerFactory serializerFactory) {
-            /*
-            if (!initiator) {
-                return Observable.error(new RecvOnlyPeerException());
-            }
-            */
             return Observable.create(s -> {
                 upstream.subscribe(new DisposableSubscriber<Bundle>() {
                     int bundleSent;
@@ -237,24 +227,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         @Override
         public Observable<Bundle> recvBundle(ExtensionToolbox toolbox,
                                              BlobFactory blobFactory) {
-            /*
-            if (initiator) {
-                return Observable.create(s ->
-                        tcpcon.recv().subscribe(
-                                buffer -> {
-
-                                },
-                                e -> {
-                                    s.onComplete();
-                                    close();
-                                },
-                                () -> {
-                                    s.onComplete();
-                                    close();
-                                }));
-            }
-            */
-
             return Observable.<Bundle>create(s -> {
                 CborParser pdu = CBOR.parser()
                         .cbor_open_array(2)

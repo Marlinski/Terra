@@ -5,40 +5,22 @@ package io.disruptedsystems.libdtn.common.data.eid;
  *
  * @author Lucien Loiseau on 17/10/18.
  */
-public abstract class BaseClaEid extends BaseEid implements ClaEid {
+public class BaseClaEid extends BaseDtnEid implements ClaEid {
 
-    public String claName;
-    public String claParameters;
-    public String claSink;
+    protected String claName;
+    protected String claParameters;
 
-    // should only be called by safe constructor, no validity check
-    protected BaseClaEid(String claName, String claParameters) {
-        this.claName = claName;
-        this.claParameters = claParameters;
-        this.claSink = "";
+    private BaseClaEid(ClaEid eid) {
+        super(eid);
+        this.claName = eid.getClaName();
+        this.claParameters = eid.getClaParameters();
     }
 
-    protected BaseClaEid(String claName, String claParameters, String sink)
+    public BaseClaEid(String claName, String claParameters, String demux)
             throws EidFormatException {
+        super("["+claName+":"+claParameters+"]", demux);
         this.claName = claName;
-        this.claParameters = claParameters;
-        this.claSink = sink;
-        checkValidity();
-    }
-
-    @Override
-    public int ianaNumber() {
-        return ClaEid.EID_CLA_IANA_VALUE;
-    }
-
-    @Override
-    public String getScheme() {
-        return "cla";
-    }
-
-    @Override
-    public String getSsp() {
-        return claName + ":" + getClaSpecificPart();
+        this.claParameters = claParameters == null ? "" : claParameters;
     }
 
     @Override
@@ -52,27 +34,7 @@ public abstract class BaseClaEid extends BaseEid implements ClaEid {
     }
 
     @Override
-    public String getSink() {
-        return claSink;
-    }
-
-    @Override
-    public ClaEid setSink(String sink) throws EidFormatException {
-        this.claSink = sink;
-        checkValidity();
-        return this;
-    }
-
-
-    @Override
-    public boolean matches(Eid other) {
-        if (other == null) {
-            return false;
-        }
-        if (other instanceof ClaEid) {
-            return claParameters.equals(((BaseClaEid) other).claParameters)
-                    && claName.equals(((BaseClaEid) other).claName);
-        }
-        return false;
+    public ClaEid copy() {
+        return new BaseClaEid(this);
     }
 }

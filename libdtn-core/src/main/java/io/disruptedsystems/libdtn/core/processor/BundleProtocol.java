@@ -1,5 +1,27 @@
 package io.disruptedsystems.libdtn.core.processor;
 
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
+
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
+import io.disruptedsystems.libdtn.common.data.PayloadBlock;
+import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
+import io.disruptedsystems.libdtn.common.data.StatusReport;
+import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
+import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
+import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
+import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
+import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.AdministrativeRecordSerializer;
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.core.api.BundleProtocolApi;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.disruptedsystems.libdtn.core.api.CoreApi;
+import io.disruptedsystems.libdtn.core.api.LocalEidApi;
+import io.disruptedsystems.libdtn.core.utils.ClockUtil;
+import io.marlinski.libcbor.CborEncoder;
+
 import static io.disruptedsystems.libdtn.common.data.BlockHeader.BlockV7Flags.DELETE_BUNDLE_IF_NOT_PROCESSED;
 import static io.disruptedsystems.libdtn.common.data.BlockHeader.BlockV7Flags.DISCARD_IF_NOT_PROCESSED;
 import static io.disruptedsystems.libdtn.common.data.BlockHeader.BlockV7Flags.TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED;
@@ -14,28 +36,6 @@ import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertio
 import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertion.ReportingNodeDeliveredBundle;
 import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertion.ReportingNodeForwardedBundle;
 import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertion.ReportingNodeReceivedBundle;
-
-import io.disruptedsystems.libdtn.core.api.BundleProtocolApi;
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.marlinski.libcbor.CborEncoder;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
-import io.disruptedsystems.libdtn.common.data.PayloadBlock;
-import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.StatusReport;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
-import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
-import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.AdministrativeRecordSerializer;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.core.utils.ClockUtil;
-
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * BundleProtocol is the entry point of all Bundle (either from Application Agent or
@@ -63,8 +63,8 @@ public class BundleProtocol implements BundleProtocolApi {
         /* 5.2 - step 1 */
         core.getLogger().v(TAG, "5.2-1 " + bundle.bid.getBidString());
         if (!bundle.getSource().equals(DtnEid.nullEid())
-                && !core.getLocalEid().isLocal(bundle.getSource())) {
-            bundle.setSource(core.getLocalEid().localEid());
+                && (core.getLocalEid().isEidNodeId(bundle.getSource()) != null)) {
+            bundle.setSource(core.getLocalEid().nodeId());
         }
         bundle.tag("dispatch_pending");
 
@@ -81,8 +81,9 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.3 - step 1 */
         core.getLogger().v(TAG, "5.3-1: " + bundle.bid.getBidString());
-        if (core.getLocalEid().isLocal(bundle.getDestination())) {
-            bundleLocalDelivery(bundle);
+        LocalEidApi.LocalEid localMatch = core.getLocalEid().isEidLocal(bundle.getDestination());
+        if (localMatch != null) {
+            bundleLocalDelivery(localMatch, bundle);
             return;
         }
 
@@ -140,7 +141,7 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.4.2 - step 2 */
         core.getLogger().v(TAG, "5.4.2-2 " + bundle.bid.getBidString());
-        if (core.getLocalEid().isLocal(bundle.getDestination())) {
+        if (core.getLocalEid().isEidLocal(bundle.getDestination()) != null) {
             bundle.removeTag("forward_pending");
             bundleDiscarding(bundle);
         } else {
@@ -204,7 +205,7 @@ public class BundleProtocol implements BundleProtocolApi {
     }
 
     /* 5.7 */
-    private void bundleLocalDelivery(Bundle bundle) {
+    private void bundleLocalDelivery(LocalEidApi.LocalEid localMatch, Bundle bundle) {
         bundle.tag("delivery_pending");
         /* 5.7 - step 1 */
         core.getLogger().v(TAG, "5.7-1 " + bundle.bid.getBidString());
@@ -212,19 +213,10 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.7 - step 2 */
         core.getLogger().v(TAG, "5.7-2 " + bundle.bid.getBidString());
-        Eid localMatch = core.getLocalEid().matchLocal(bundle.getDestination());
-        if (localMatch != null) {
-            String sink = bundle.getDestination().getEidString()
-                    .replaceFirst(localMatch.getEidString(), "");
-            core.getDelivery().deliver(sink, bundle).subscribe(
-                    () -> bundleLocalDeliverySuccessful(bundle),
-                    deliveryFailure -> bundleLocalDeliveryFailure(sink, bundle));
-        } else {
-            // it should never happen because we already checked that the bundle was local (5.3).
-            // but if the configuration changed right when the thread was jumping here it
-            // may happen. In such unlikely event, we simply go back to bundleDispatching.
-            bundleDispatching(bundle);
-        }
+        core.getDelivery().deliver(localMatch, bundle).subscribe(
+                () -> bundleLocalDeliverySuccessful(bundle),
+                deliveryFailure -> bundleLocalDeliveryFailure(bundle, localMatch, deliveryFailure));
+
     }
 
     /* 5.7 - step 3 */
@@ -240,14 +232,17 @@ public class BundleProtocol implements BundleProtocolApi {
 
     /* 5.7 - step 2 - delivery failure */
     @Override
-    public void bundleLocalDeliveryFailure(String sink, Bundle bundle) {
-        core.getLogger().i(TAG, "bundle could not be delivered sink=" + sink + " bundleID="
-                + bundle.bid.getBidString());
+    public void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid<?> localMatch, Throwable reason) {
+        core.getLogger().i(TAG, "bundle could not be delivered to: "
+                + bundle.getDestination().getEidString()
+                + "[ localMatch=" + localMatch.eid.toString()
+                + "  reason=" + reason.getMessage()
+                + "  bundleID=" + bundle.bid.getBidString() + "]");
         if (!bundle.isTagged("in_storage")) {
             core.getStorage().store(bundle).subscribe(
                     b -> {
                         /* register for event and deliver later */
-                        core.getDelivery().deliverLater(sink, bundle);
+                        core.getDelivery().deliverLater(localMatch, bundle);
                         endProcessing(bundle);
                     },
                     storageFailure -> {
@@ -259,7 +254,7 @@ public class BundleProtocol implements BundleProtocolApi {
             );
         } else {
             /* register for event and deliver later */
-            core.getDelivery().deliverLater(sink, bundle);
+            core.getDelivery().deliverLater(localMatch, bundle);
         }
     }
 
@@ -294,10 +289,7 @@ public class BundleProtocol implements BundleProtocolApi {
         core.getLogger().i(TAG, "discarding bundle: " + bundle.bid.getBidString());
         core.getStorage().remove(bundle.bid).subscribe(
                 bundle::clearBundle,
-                e -> {
-                    bundle.clearBundle();
-                }
-        );
+                e -> bundle.clearBundle());
         endProcessing(bundle);
     }
 
@@ -308,7 +300,7 @@ public class BundleProtocol implements BundleProtocolApi {
             for (Bundle report : reports) {
                 core.getLogger().i(TAG, "sending status report to: "
                         + report.getDestination().getEidString());
-                report.setSource(core.getLocalEid().localEid());
+                report.setSource(core.getLocalEid().nodeId());
                 bundleDispatching(report);
             }
         }

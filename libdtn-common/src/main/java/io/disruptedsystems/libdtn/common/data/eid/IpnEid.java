@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * EidIpn is a class of Eid whose scheme is "ipn". it identifies both endpoint node and
+ * IpnEid is a class of Eid whose scheme is "ipn". it identifies both endpoint node and
  * endpoint service with an integer.
  *
  * @author Lucien Loiseau on 17/10/18.
@@ -38,19 +38,28 @@ public class IpnEid extends BaseEid {
         }
     }
 
+
+    public IpnEid(IpnEid o) {
+        this.nodeNumber = o.nodeNumber;
+        this.serviceNumber = o.serviceNumber;
+    }
+
     public IpnEid(int node, int service) {
         this.nodeNumber = node;
         this.serviceNumber = service;
     }
 
-    @Override
-    public Eid copy() {
-        return new IpnEid(nodeNumber, serviceNumber);
+    public int getNodeNumber() {
+        return nodeNumber;
+    }
+
+    public int getServiceNumber() {
+        return serviceNumber;
     }
 
     @Override
-    public boolean matches(Eid other) {
-        return equals(other);
+    public IpnEid copy() {
+        return new IpnEid(this);
     }
 
     @Override
@@ -68,36 +77,15 @@ public class IpnEid extends BaseEid {
         return nodeNumber + "." + serviceNumber;
     }
 
-    public int getNodeNumber() {
-        return nodeNumber;
-    }
-
-    public int getServiceNumber() {
-        return serviceNumber;
+    @Override
+    public boolean isAuthoritativeEid() {
+        return serviceNumber == 0;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
-        }
-        if (o instanceof IpnEid) {
-            return this.nodeNumber == ((IpnEid) o).nodeNumber
-                    && this.serviceNumber == ((IpnEid) o).serviceNumber;
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 17;
-        hash = hash * 31 + nodeNumber;
-        hash = hash * 31 + serviceNumber;
-        return hash;
-    }
-
-    @Override
-    public String toString() {
-        return getScheme() + ":" + getSsp();
+    public boolean isAuthoritativeOver(Eid other) {
+        return isAuthoritativeEid()
+                && (other instanceof IpnEid)
+                && nodeNumber == ((IpnEid) other).nodeNumber;
     }
 }

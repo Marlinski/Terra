@@ -12,6 +12,9 @@ import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
 import org.junit.Test;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * Test class for the ClaStcpEid.
  *
@@ -24,23 +27,33 @@ public class ClaBowsEidTest {
         System.out.println("[+] eid: testing BaseClaEid Scheme");
 
         try {
-            BaseClaEid cla = new ClaBowsEid("ws://google.com", "/");
-            assertEquals("cla:bows:ws://google.com?sink=/", cla.getEidString());
-            assertEquals("bows", cla.claName);
-            assertEquals("ws://google.com", cla.claParameters);
-            assertEquals("/", cla.claSink);
+            BaseClaEid cla = new ClaBowsEid(new URI("ws://google.com"), "/");
+            assertEquals("dtn://[bows:d3M6Ly9nb29nbGUuY29t]/", cla.getEidString());
+            assertEquals("bows", cla.getClaName());
+            assertEquals("d3M6Ly9nb29nbGUuY29t", cla.getClaParameters());
+            assertEquals("", cla.getDemux());
 
-            ClaEid eid = (new ClaBowsEidParser()).createClaEid("bows","wss://google.com:4556");
-            ClaEid path = (new ClaBowsEidParser()).createClaEid("bows", "wss://google.com:4556?sink=/pingservice");
-            assertEquals("cla:bows:wss://google.com:4556", eid.getEidString());
-            assertEquals("wss://google.com:4556", eid.getClaParameters());
-            assertEquals(null, eid.getSink());
-            assertEquals("cla:bows:wss://google.com:4556?sink=/pingservice", path.getEidString());
-            assertEquals("wss://google.com:4556", path.getClaParameters());
-            assertEquals("/pingservice", path.getSink());
-            assertTrue(path.matches(eid));
-        } catch (EidFormatException eid) {
-            fail(eid.getMessage());
+            ClaEid eid = (new ClaBowsEidParser()).createClaEid("bows","d3NzOi8vZ29vZ2xlLmNvbTo0NTU2","");
+            assertEquals("dtn://[bows:d3NzOi8vZ29vZ2xlLmNvbTo0NTU2]/", eid.getEidString());
+            assertEquals("d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", eid.getClaParameters());
+            assertEquals("", eid.getDemux());
+
+            ClaEid path = (new ClaBowsEidParser()).createClaEid("bows", "d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", "pingservice");
+            assertEquals("dtn://[bows:d3NzOi8vZ29vZ2xlLmNvbTo0NTU2]/pingservice", path.getEidString());
+            assertEquals("d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", path.getClaParameters());
+            assertEquals("pingservice", path.getDemux());
+            assertEquals("wss://google.com:4556", ((ClaBowsEid)path).getUri().toASCIIString());
+
+            assertTrue(eid.isAuthoritativeOver(path));
+
+            BaseClaEid complex = new ClaBowsEid(new URI("ws://google.com/path/sub?query=12&35#fragment01"), "/service1");
+            assertEquals("dtn://[bows:d3M6Ly9nb29nbGUuY29tL3BhdGgvc3ViP3F1ZXJ5PTEyJjM1I2ZyYWdtZW50MDE-]/service1", complex.getEidString());
+            BaseClaEid complexi = new ClaBowsEid("d3M6Ly9nb29nbGUuY29tL3BhdGgvc3ViP3F1ZXJ5PTEyJjM1I2ZyYWdtZW50MDE-", "/service1");
+            assertEquals("dtn://[bows:d3M6Ly9nb29nbGUuY29tL3BhdGgvc3ViP3F1ZXJ5PTEyJjM1I2ZyYWdtZW50MDE-]/service1", complexi.getEidString());
+            assertTrue(complex.equals(complexi));
+        } catch (EidFormatException | URISyntaxException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
         }
     }
 

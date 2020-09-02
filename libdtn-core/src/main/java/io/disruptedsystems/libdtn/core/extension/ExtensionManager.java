@@ -11,14 +11,17 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessor;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
+import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.BaseClaEidFactory;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
+import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.data.eid.EidSspParser;
-import io.disruptedsystems.libdtn.common.data.eid.UnknownClaEid;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
 import io.marlinski.libcbor.CborEncoder;
@@ -27,6 +30,8 @@ import io.marlinski.libcbor.CborParser;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ExtensionManager implements the ExtensionManagerAPI and provides entry point to add new
@@ -54,6 +59,8 @@ public class ExtensionManager implements ExtensionManagerApi {
     public ExtensionManager(Log logger) {
         this.logger = logger;
     }
+
+    /*** BLOCK EXTENSION LOGIC ***/
 
     private BlockFactory coreBlockFactory = new BlockFactory() {
         BlockFactory baseBlockFactory = new BaseBlockFactory();
@@ -123,7 +130,25 @@ public class ExtensionManager implements ExtensionManagerApi {
         }
     };
 
-    private EidFactory eidFactory = new BaseEidFactory(true) {
+    /*** CLA EID EXTENSION LOGIC ***/
+
+    private ClaEidParser claFactory = new BaseClaEidFactory(true) {
+        @Override
+        public ClaEid createClaEid(String claName, String claSpecific, String demux) throws EidFormatException {
+            try {
+                return super.createClaEid(claName, claSpecific,demux);
+            } catch (EidFactory.UnknownEidScheme ues) {
+                if (extensionClaEidParser.containsKey(claName)) {
+                    return extensionClaEidParser.get(claName).createClaEid(claName, claSpecific,demux);
+                }
+            }
+            return new BaseClaEid(claName, claSpecific, demux);
+        }
+    };
+
+    private EidSspParser dtnParser = new BaseDtnEidFactory(claFactory);
+
+    private EidFactory eidFactory = new BaseEidFactory(dtnParser) {
         @Override
         public String getIanaScheme(int ianaScheme) throws UnknownIanaNumber {
             try {
@@ -139,7 +164,7 @@ public class ExtensionManager implements ExtensionManagerApi {
         @Override
         public Eid create(String scheme, String ssp) throws EidFormatException {
             try {
-                return super.createClaEid(scheme, ssp);
+                return super.create(scheme, ssp);
             } catch (UnknownEidScheme ues) {
                 if (extensionEidParser.containsKey(scheme)) {
                     return extensionEidParser.get(scheme).create(ssp);
@@ -147,21 +172,9 @@ public class ExtensionManager implements ExtensionManagerApi {
             }
             throw new UnknownEidScheme(scheme);
         }
-
-        @Override
-        public ClaEid createClaEid(String claName, String claSpecific)
-                throws EidFormatException {
-            try {
-                return super.createClaEid(claName, claSpecific);
-            } catch (UnknownClaName ucn) {
-                if (extensionClaEidParser.containsKey(claName)) {
-                    return extensionClaEidParser.get(claName).createClaEid(claName, claSpecific);
-                } else {
-                    return new UnknownClaEid(claName, claSpecific);
-                }
-            }
-        }
     };
+
+    /*** EXTENSION MANAGEMENT ***/
 
     @Override
     public BlockFactory getBlockFactory() {

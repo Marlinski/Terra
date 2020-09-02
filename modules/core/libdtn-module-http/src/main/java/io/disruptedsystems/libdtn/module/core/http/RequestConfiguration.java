@@ -24,7 +24,7 @@ public class RequestConfiguration {
     }
 
     private Action confLocalEID = (params, req, res) -> {
-        final String localeid = core.getLocalEid().localEid().getEidString();
+        final String localeid = core.getLocalEid().nodeId().getEidString();
         return res.setStatus(HttpResponseStatus.OK).writeString(just("localeid=" + localeid));
     };
 

@@ -2,9 +2,9 @@ package io.disruptedsystems.libdtn.common.data.bundlev7.serializer;
 
 import static io.disruptedsystems.libdtn.common.data.eid.IpnEid.EID_IPN_IANA_VALUE;
 
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
 
