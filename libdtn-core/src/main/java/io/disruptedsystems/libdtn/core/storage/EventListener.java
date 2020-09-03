@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p> Similarly for ChannelOpenned Event we would have the following EventListener:
  *
  * <pre>
- *    Listener for Event RegistrationActive
+ *    Listener for Event ChannelOpened
  *
  *     +-------+-------+-----+-------+
  *     | Peer1 | Peer2 | ... | PeerN |

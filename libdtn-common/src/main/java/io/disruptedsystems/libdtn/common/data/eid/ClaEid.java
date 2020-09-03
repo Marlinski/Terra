@@ -9,6 +9,9 @@ package io.disruptedsystems.libdtn.common.data.eid;
  * @author Lucien Loiseau on 28/11/18.
  */
 public interface ClaEid extends DtnEid {
+
+    String CLA_NODE_REGEXP = "^\\[([^\\[\\]:]+):([^\\[\\]]+)\\]$";
+
     /**
      * get the Convergence Layer name for this ClaEid.
      *
@@ -24,5 +27,10 @@ public interface ClaEid extends DtnEid {
     String getClaParameters();
 
     @Override
+    ClaEid copyWithDemuxSetTo(String demux) throws EidFormatException;
+
+    @Override
     ClaEid copy();
+
+
 }

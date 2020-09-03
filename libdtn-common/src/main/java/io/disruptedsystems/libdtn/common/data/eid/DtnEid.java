@@ -30,17 +30,19 @@ public interface DtnEid extends Eid {
      */
     boolean isNullEndPoint();
 
+    /**
+     * return the node-name part of this 'dtn' eid
+     *
+     * @return a String containing the node-name of this eid.
+     */
     String getNodeName();
 
-    String getDemux();
-
     /**
-     * copy the demux from another dtn eid to this one
+     * return the demux part of this 'dtn' eid
      *
-     * @param other eid
-     * @return current eid
+     * @return a String containing the demux of this eid.
      */
-    DtnEid copyDemux(DtnEid other);
+    String getPath();
 
     /**
      * todo
@@ -60,6 +62,20 @@ public interface DtnEid extends Eid {
      */
     boolean isAuthoritativeOver(Eid other);
 
+    /**
+     * copy this eid.
+     *
+     * @return a new DtnEid.
+     */
     @Override
     DtnEid copy();
+
+
+    /**
+     * returns a copy of this eid with the demux part of this 'dtn' eid set
+     * the current Eid will not be modified.
+     *
+     * @throws EidFormatException if this breaks the dtn scheme specification
+     */
+    DtnEid copyWithDemuxSetTo(String demux) throws EidFormatException;
 }

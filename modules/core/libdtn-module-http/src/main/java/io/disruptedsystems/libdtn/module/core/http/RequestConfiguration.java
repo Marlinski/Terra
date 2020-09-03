@@ -39,10 +39,10 @@ public class RequestConfiguration {
     private Action dumpConfiguration = (params, req, res) ->
             res.setStatus(HttpResponseStatus.OK).writeString(just("conf"));
 
-    Action confAction = (params, req, res) -> Dispatch.using(new Router<ByteBuf, ByteBuf>()
-                .GET("/conf/", dumpConfiguration)
-                .GET("/conf/localeid/", confLocalEID)
-                .GET("/conf/aliases/", confAliases))
-                .handle(req, res);
+    Router<ByteBuf, ByteBuf> router = new Router<ByteBuf, ByteBuf>()
+            .GET("/conf/", dumpConfiguration)
+            .GET("/conf/localeid/", confLocalEID)
+            .GET("/conf/aliases/", confAliases);
 
+    Action confAction = (params, req, res) -> Dispatch.using(router).handle(req, res);
 }

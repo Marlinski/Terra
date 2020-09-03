@@ -56,6 +56,7 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
 
     private static final String TAG = "ConvergenceLayerStcp";
 
+    private ClaEid convergenceLayerEid = null;
     private RxTCP.Server<RxTCP.Connection> server;
     private int port = 0;
     private Log logger = new NullLogger();
@@ -97,6 +98,11 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         logger.i(TAG, "starting a stcp server on port " + port);
         return server.start()
                 .map(tcpcon -> new Channel(tcpcon, false));
+    }
+
+    @Override
+    public boolean isStarted() {
+        return server != null;
     }
 
     @Override

@@ -19,6 +19,8 @@ import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.core.spi.ApplicationAgentAdapterSpi;
 import io.reactivex.rxjava3.core.Completable;
 
+import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.DeliveryRefused;
+
 /**
  * AAModuleLdcp is an module that is used to enable register and manage application agents
  * over LDCP.
@@ -103,7 +105,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         })
                         .flatMapCompletable(d ->
                                 d.code.equals(ResponseMessage.ResponseCode.ERROR)
-                                        ? Completable.error(new DeliveryApi.DeliveryRefused())
+                                        ? Completable.error(new DeliveryApi.DeliveryFailure(DeliveryRefused))
                                         : Completable.complete());
     }
 

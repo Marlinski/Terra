@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.reactivex.rxjava3.core.Observable;
 
@@ -59,7 +59,7 @@ public interface RoutingTableApi extends CoreComponentApi {
      * @param destination Eid of destination
      * @return Observable of BaseClaEid-Eid that can make forward progress toward destination
      */
-    Observable<BaseClaEid> resolveEid(Eid destination);
+    Observable<ClaEid> resolveEid(Eid destination);
 
     /**
      * Dump all entries from the Routing Table.

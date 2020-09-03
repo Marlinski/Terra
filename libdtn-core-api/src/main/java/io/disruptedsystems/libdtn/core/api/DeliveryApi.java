@@ -20,7 +20,7 @@ public interface DeliveryApi extends CoreComponentApi {
             UnregisteredEid,
         }
 
-        Reason reason;
+        public Reason reason;
 
         public DeliveryFailure(Reason reason) {
             this.reason = reason;

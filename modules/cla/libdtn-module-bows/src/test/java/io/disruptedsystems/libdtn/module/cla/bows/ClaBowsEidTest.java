@@ -7,7 +7,6 @@ import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 
 import org.junit.Test;
@@ -31,17 +30,17 @@ public class ClaBowsEidTest {
             assertEquals("dtn://[bows:d3M6Ly9nb29nbGUuY29t]/", cla.getEidString());
             assertEquals("bows", cla.getClaName());
             assertEquals("d3M6Ly9nb29nbGUuY29t", cla.getClaParameters());
-            assertEquals("", cla.getDemux());
+            assertEquals("", cla.getPath());
 
             ClaEid eid = (new ClaBowsEidParser()).createClaEid("bows","d3NzOi8vZ29vZ2xlLmNvbTo0NTU2","");
             assertEquals("dtn://[bows:d3NzOi8vZ29vZ2xlLmNvbTo0NTU2]/", eid.getEidString());
             assertEquals("d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", eid.getClaParameters());
-            assertEquals("", eid.getDemux());
+            assertEquals("", eid.getPath());
 
             ClaEid path = (new ClaBowsEidParser()).createClaEid("bows", "d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", "pingservice");
             assertEquals("dtn://[bows:d3NzOi8vZ29vZ2xlLmNvbTo0NTU2]/pingservice", path.getEidString());
             assertEquals("d3NzOi8vZ29vZ2xlLmNvbTo0NTU2", path.getClaParameters());
-            assertEquals("pingservice", path.getDemux());
+            assertEquals("pingservice", path.getPath());
             assertEquals("wss://google.com:4556", ((ClaBowsEid)path).getUri().toASCIIString());
 
             assertTrue(eid.isAuthoritativeOver(path));

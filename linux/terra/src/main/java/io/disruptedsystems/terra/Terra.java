@@ -1,5 +1,9 @@
 package io.disruptedsystems.terra;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
@@ -8,11 +12,6 @@ import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.DtnCore;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -77,17 +76,9 @@ public class Terra implements Callable<Void> {
             description = "Start Terra as a daemon.")
     private boolean daemon;
 
-    @Option(names = {"--module-cla"},
-            description = "set the path to the network Convergence Layer Adapters modules.")
-    private String claModuleDirectory = null;
-
-    @Option(names = {"--module-aa"},
-            description = "set the path to the Application Agent Adapters modules.")
-    private String aaModuleDirectory = null;
-
-    @Option(names = {"--module-core"},
-            description = "set the path to the Core modules.")
-    private String coreModuleDirectory = null;
+    @Option(names = {"-m", "--modules"},
+            description = "set the path to the dtn modules.")
+    private String moduleDirectory = null;
 
     @Option(names = {"-v", "--verbose"},
             description = "set the log level to debug (-v -vv -vvv).")
@@ -163,24 +154,12 @@ public class Terra implements Callable<Void> {
         conf.get(ConfigurationApi.CoreEntry.ENABLE_AUTO_CONNECT_FOR_BUNDLE).update(!disableEidAutoconnect);
         conf.get(ConfigurationApi.CoreEntry.ENABLE_AUTO_CONNECT_FOR_DETECT_EVENT).update(!disablePeerAutoconnect);
 
-        if (claModuleDirectory != null) {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_CLA_MODULES).update(true);
-            conf.get(ConfigurationApi.CoreEntry.MODULES_CLA_PATH).update(claModuleDirectory);
-        } else {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_CLA_MODULES).update(false);
-        }
-        if (aaModuleDirectory != null) {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_AA_MODULES).update(true);
-            conf.get(ConfigurationApi.CoreEntry.MODULES_AA_PATH).update(aaModuleDirectory);
-        } else {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_AA_MODULES).update(false);
-        }
-        if (coreModuleDirectory != null) {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_CORE_MODULES).update(true);
-            conf.get(ConfigurationApi.CoreEntry.MODULES_CORE_PATH).update(coreModuleDirectory);
-        } else {
-            conf.get(ConfigurationApi.CoreEntry.ENABLE_CORE_MODULES).update(false);
-        }
+        conf.get(ConfigurationApi.CoreEntry.ENABLE_CLA_MODULES).update(true);
+        conf.get(ConfigurationApi.CoreEntry.MODULES_CLA_PATH).update(moduleDirectory);
+        conf.get(ConfigurationApi.CoreEntry.ENABLE_AA_MODULES).update(true);
+        conf.get(ConfigurationApi.CoreEntry.MODULES_AA_PATH).update(moduleDirectory);
+        conf.get(ConfigurationApi.CoreEntry.ENABLE_CORE_MODULES).update(true);
+        conf.get(ConfigurationApi.CoreEntry.MODULES_CORE_PATH).update(moduleDirectory);
 
         switch (verbose.length) {
             case 0:

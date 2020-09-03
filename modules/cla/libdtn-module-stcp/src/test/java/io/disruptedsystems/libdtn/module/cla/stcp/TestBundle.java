@@ -27,7 +27,7 @@ public class TestBundle {
 
     private static DtnEid createSourceEid() {
         try {
-            return new BaseDtnEid("//source/");
+            return new BaseDtnEid("source");
         } catch (EidFormatException e) {
             return DtnEid.nullEid();
         }

@@ -74,7 +74,7 @@ public class ResponseMessage {
     }
 
     public ResponseMessage setBody(String body) {
-        this.body = body;
+        this.body = (body == null ? "" : body);
         return this;
     }
 

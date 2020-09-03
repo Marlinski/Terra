@@ -1,9 +1,6 @@
 package io.disruptedsystems.libdtn.module.core.http.nettyrouter;
 
 
-import io.netty.handler.codec.http.HttpMethod;
-import io.reactivex.netty.protocol.http.server.RequestHandler;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +8,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import io.netty.handler.codec.http.HttpMethod;
+import io.reactivex.netty.protocol.http.server.RequestHandler;
 
 /**
  * Creates a jauter.Router using netty's HttpMethod

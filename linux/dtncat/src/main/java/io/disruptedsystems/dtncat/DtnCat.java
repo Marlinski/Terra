@@ -1,5 +1,11 @@
 package io.disruptedsystems.dtncat;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.Callable;
+
 import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
 import io.disruptedsystems.libdtn.aa.ldcp.ApplicationAgent;
@@ -16,14 +22,9 @@ import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.common.utils.Log;
+import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.reactivex.rxjava3.core.Completable;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.Callable;
-
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -38,6 +39,8 @@ import picocli.CommandLine;
         footer = {
                 ""})
 public class DtnCat implements Callable<Void> {
+
+    static final String TAG = "DtnCat";
 
     @CommandLine.Parameters(index = "0", description = "connect to the following DtnEid host.")
     private String dtnhost;
@@ -68,9 +71,29 @@ public class DtnCat implements Callable<Void> {
     @CommandLine.Option(names = {"--crc-32"}, description = "use Crc-32")
     private boolean crc32 = false;
 
+    @CommandLine.Option(names = {"-v", "--verbose"},
+            description = "set the log level to debug (-v -vv -vvv).")
+    private boolean[] verbose = new boolean[0];
+
     private ApplicationAgentApi agent;
     private ExtensionToolbox toolbox;
     private BlobFactory factory;
+    private SimpleLogger logger;
+
+    private String fixEid(String eid) {
+        if (eid == null) {
+            return null;
+        }
+
+        if (!eid.startsWith("dtn://")) {
+            if (eid.startsWith("/")) {
+                return "dtn://api:me" + eid;
+            } else {
+                return "dtn://api:me/" + eid;
+            }
+        }
+        return eid;
+    }
 
     private Bundle createBundleFromStdin(Bundle bundle) throws
             IOException,
@@ -102,6 +125,7 @@ public class DtnCat implements Callable<Void> {
     private void listenBundle() {
         ActiveRegistrationCallback cb = (recvbundle) ->
                 Completable.create(s -> {
+                    logger.i(TAG, "bundle received from: " + recvbundle.getSource().getEidString());
                     try {
                         BufferedOutputStream bos = new BufferedOutputStream(System.out);
                         recvbundle.getPayloadBlock().data.observe().subscribe(
@@ -111,6 +135,7 @@ public class DtnCat implements Callable<Void> {
                                     }
                                 },
                                 e -> {
+                                    logger.i(TAG, "error while reading payload: " + e.getMessage());
                                     /* ignore */
                                 }
                         );
@@ -122,23 +147,23 @@ public class DtnCat implements Callable<Void> {
                     }
                 });
 
-        agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
+        agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory, logger);
         if (cookie == null) {
             agent.register(eid, cb).subscribe(
                     cookie -> {
-                        System.err.println("eid registered. cookie: " + cookie);
+                        logger.i(TAG, "eid registered. cookie: " + cookie);
                     },
                     e -> {
-                        System.err.println("could not register to eid: " + eid + " - "
+                        logger.e(TAG, "could not register to eid: " + eid + " - "
                                 + e.getMessage());
                         System.exit(1);
                     });
         } else {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
             agent.reAttach(eid, cookie, cb).subscribe(
-                    b -> System.err.println("re-attach to registered eid"),
+                    b -> logger.i(TAG, "re-attach to registered eid"),
                     e -> {
-                        System.err.println("could not re-attach to eid: " + eid + " - "
+                        logger.e(TAG, "could not re-attach to eid: " + eid + " - "
                                 + e.getMessage());
                         System.exit(1);
                     });
@@ -157,35 +182,53 @@ public class DtnCat implements Callable<Void> {
                 bundle.setReportto(reportTo);
             }
 
-            agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, null);
+            agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, null, logger);
             agent.send(createBundleFromStdin(bundle)).subscribe(
                     isSent -> {
                         if (isSent) {
                             bundle.clearBundle();
-                            System.err.println("bundle successfully sent to " + dtnhost + ":"
+                            logger.i(TAG, "bundle successfully sent to " + dtnhost + ":"
                                     + dtnport);
                             System.exit(0);
                         } else {
                             bundle.clearBundle();
-                            System.err.println("bundle was refused by " + dtnhost + ":" + dtnport);
+                            logger.e(TAG, "bundle was refused by " + dtnhost + ":" + dtnport);
                             System.exit(1);
                         }
                     },
                     err -> {
                         bundle.clearBundle();
-                        System.err.println("error: " + err.getMessage());
+                        logger.e(TAG, "error: " + err.getMessage());
                         System.exit(1);
                     });
         } catch (IOException | WritableBlob.BlobOverflowException | EidFormatException e) {
             /* ignore */
-            System.err.println("error: " + e.getMessage());
+            logger.e(TAG, "sending error: " + e.getMessage());
         }
     }
 
     @Override
     public Void call() throws Exception {
+        eid = fixEid(eid);
+        deid = fixEid(deid);
         toolbox = new BaseExtensionToolbox();
         factory = new BaseBlobFactory().enableVolatile(1000000).enablePersistent("./");
+        logger = new SimpleLogger();
+
+        switch (verbose.length) {
+            case 0:
+                logger.set(Log.LogLevel.WARN);
+                break;
+            case 1:
+                logger.set(Log.LogLevel.INFO);
+                break;
+            case 2:
+                logger.set(Log.LogLevel.DEBUG);
+                break;
+            default:
+                logger.set(Log.LogLevel.VERBOSE);
+        }
+
         if (eid != null) {
             listenBundle();
         } else {

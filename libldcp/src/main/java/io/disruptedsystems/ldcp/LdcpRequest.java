@@ -72,6 +72,7 @@ public class LdcpRequest {
     /**
      * initiate a TCP connection and send the LdcpRequest to a remote host. The connection will
      * be closed upon reception of the LdcpResponse.
+     * todo: make it nicer and test
      *
      * @param host    host to connect to
      * @param port    port to connect to
@@ -85,6 +86,30 @@ public class LdcpRequest {
                                         ExtensionToolbox toolbox,
                                         BlobFactory factory,
                                         Log logger) {
+        /*
+        return Single.just(new RxTCP.ConnectionRequest<>(host, port))
+                .flatMap(RxTCP.ConnectionRequest::connect)
+                .doOnSuccess(c -> logger.d(TAG, "connected to: " + host + ":" + port))
+                .flatMap(c -> c.order(requestMessage.encode())
+                        .track()
+                        .ignoreElements()
+                        .toSingle(() -> c)
+                        .doOnError(e -> c.closeNow())
+                )
+                .doOnSuccess(c -> logger.d(TAG, "request sent, waiting for response"))
+                .flatMap(c -> Single.<ResponseMessage>create(s ->
+                {
+                    CborParser parser = ResponseMessage.getParser(logger, toolbox, factory);
+                    c.recv().subscribe(
+                            (buf) -> {
+                                while (buf.hasRemaining() && !parser.isDone()) {
+                                    if (parser.read(buf)) {
+                                        s.onSuccess(parser.getReg(0));
+                                    }
+                                }
+                            }, s::onError);
+                }).doOnTerminate(c::closeNow));
+    */
         return Single.create(s -> new RxTCP.ConnectionRequest<>(host, port)
                 .connect()
                 .subscribe(

@@ -11,7 +11,7 @@ public class SimpleLogger implements Log {
 
     private void log(LogLevel l, String tag, String msg) {
         if (l.ordinal() >= level.ordinal()) {
-            System.out.println(System.currentTimeMillis() + " " + l + " - " + tag + ": " + msg);
+            System.err.println(System.currentTimeMillis() + " " + l + " - " + tag + ": " + msg);
         }
     }
 

@@ -18,7 +18,7 @@ public class CoreConfigurationTest {
     @Test
     public void testLocalEIDConfiguration() {
         try {
-            Eid testEid = new BaseDtnEid("//test/");
+            Eid testEid = new BaseDtnEid("test");
             CoreConfiguration conf = new CoreConfiguration();
             conf.<Eid>get(ConfigurationApi.CoreEntry.LOCAL_EID).update(testEid);
             Eid localEid = conf.<Eid>get(ConfigurationApi.CoreEntry.LOCAL_EID).value();

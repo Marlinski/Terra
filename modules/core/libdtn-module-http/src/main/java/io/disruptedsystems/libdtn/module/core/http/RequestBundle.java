@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.module.core.http;
 
+import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Dispatch;
@@ -8,7 +9,6 @@ import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
 import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
@@ -150,7 +150,7 @@ public class RequestBundle {
 
         destination = new BaseEidFactory().create(destinationstr);
         if (reporttostr == null) {
-            reportTo = BaseDtnEid.nullEid();
+            reportTo = DtnEid.nullEid();
         } else {
             reportTo = new BaseEidFactory().create(reporttostr);
         }

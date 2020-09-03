@@ -62,9 +62,9 @@ public class BundleId {
 
         // no algorithm were found so we make something up (that should never happen though)
         // FIXME this method provides a unique bid but can be long, should probably use some XOR
-        String sb = new StringBuilder("s=" + source.getEidString())
-                + "t=" + Long.toString(timestamp)
-                + "s=" + Long.toString(sequence);
+        String sb = "s=" + source.getEidString()
+                + "t=" + timestamp
+                + "s=" + sequence;
         String bid = Base64.getEncoder().encodeToString(sb.getBytes());
         return new BundleId(bid);
     }

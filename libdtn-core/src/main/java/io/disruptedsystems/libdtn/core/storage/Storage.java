@@ -205,7 +205,7 @@ public class Storage extends CoreComponent implements StorageApi {
             return Single.error(new BundleAlreadyExistsException());
         }
 
-        /* call block specific routing for storage */
+        /* call block specific routine for storage */
         try {
             for (CanonicalBlock block : bundle.getBlocks()) {
                 try {

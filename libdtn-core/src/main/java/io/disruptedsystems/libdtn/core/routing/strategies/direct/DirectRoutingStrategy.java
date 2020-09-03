@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
+import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
 import io.disruptedsystems.libdtn.core.api.EventListenerApi;
@@ -9,7 +10,6 @@ import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -108,12 +108,15 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     }
 
     private Single<RoutingStrategyResult> forwardLater(Bundle bundle) {
-        /* register a listener that will listen for LinkLocalEntryUp event
-         * and pull the bundle from storage if there is a match */
         final BundleId bid = bundle.bid;
         final Eid destination = bundle.getDestination();
-        Observable<BaseClaEid> potentialClas = core.getRoutingTable().resolveEid(destination);
+        Observable<ClaEid> potentialClas = core.getRoutingTable().resolveEid(destination);
+        core.getLogger().v(TAG, "forward later: "
+                + bundle.bid.getBidString() + " -> "
+                + potentialClas.map(ClaEid::getEidString).reduce((str,eid) -> str+","+eid).blockingGet());
 
+        /* register a listener that will listen for LinkLocalEntryUp event
+         * and pull the bundle from storage if there is a match */
         // watch bundle for all potential ClaEid
         potentialClas
                 .map(claeid -> directListener.watch(claeid.getClaParameters(), bid))

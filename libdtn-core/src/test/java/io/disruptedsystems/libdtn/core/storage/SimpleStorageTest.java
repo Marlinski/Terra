@@ -159,7 +159,7 @@ public class SimpleStorageTest {
                                         s.onComplete();
                                     },
                                     e -> {
-                                        System.out.println("error pulling bundle: " + e.getMessage());
+                                        System.out.println("error pulling bundle bid="+b.bid.getBidString()+" reason=" + e.getMessage());
                                         s.onComplete();
                                     })))
                     .subscribe(
@@ -172,11 +172,11 @@ public class SimpleStorageTest {
             /* check that they are the same */
             for (Bundle bundle : pulledBundles) {
                 boolean found = false;
-                for (int j = 0; j < bundles.length; j++) {
-                    if (bundles[j].bid.getBidString().equals(bundle.bid.getBidString())) {
+                for (Bundle value : bundles) {
+                    if (value.bid.getBidString().equals(bundle.bid.getBidString())) {
                         found = true;
                         assertArrayEquals(
-                                flowableToByteArray(bundles[j].getPayloadBlock().data.observe()),
+                                flowableToByteArray(value.getPayloadBlock().data.observe()),
                                 flowableToByteArray(bundle.getPayloadBlock().data.observe()));
                         bundle.clearBundle();
                     }

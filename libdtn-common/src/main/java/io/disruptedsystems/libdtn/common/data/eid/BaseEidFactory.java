@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
  */
 public class BaseEidFactory implements EidFactory {
 
+    private static final Matcher rfc3986 = Pattern
+            .compile(RFC3986_URI_REGEXP)
+            .matcher("");
+
     private EidSspParser ipnParser = new IpnEid.IpnParser();
     private EidSspParser dtnParser;
 
@@ -40,18 +44,17 @@ public class BaseEidFactory implements EidFactory {
     public Eid create(String str) throws EidFormatException {
         String scheme;
         String ssp;
-        Pattern r = Pattern.compile(RFC3986_URI_REGEXP);
-        Matcher m = r.matcher(str);
-        if (m.find()) {
-            scheme = m.group(2);
-            String slashedAuthority = m.group(3) == null ? "" : m.group(3);
-            String authority = m.group(4) == null ? "" : m.group(4);
-            String path = m.group(5) == null ? "" : m.group(5);
-            String undef = m.group(6) == null ? "" : m.group(6);
-            String query = m.group(7) == null ? "" : m.group(7);
-            String related = m.group(8) == null ? "" : m.group(8);
-            String fragment = m.group(9) == null ? "" : m.group(9);
-            ssp = slashedAuthority + path + undef + query + related;
+        rfc3986.reset(str);
+        if (rfc3986.matches()) {
+            scheme = rfc3986.group(2);
+            String slashedAuthority = rfc3986.group(3) == null ? "" : rfc3986.group(3);
+            String authority = rfc3986.group(4) == null ? "" : rfc3986.group(4);
+            String path = rfc3986.group(5) == null ? "" : rfc3986.group(5);
+            String undef = rfc3986.group(6) == null ? "" : rfc3986.group(6);
+            String query = rfc3986.group(7) == null ? "" : rfc3986.group(7);
+            String related = rfc3986.group(8) == null ? "" : rfc3986.group(8);
+            String fragment = rfc3986.group(9) == null ? "" : rfc3986.group(9);
+            ssp = slashedAuthority + path + undef + related;
         } else {
             throw new EidFormatException("not a URI");
         }

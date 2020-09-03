@@ -40,14 +40,14 @@ import picocli.CommandLine;
                 ""})
 public class DtnPing implements Callable<Void> {
 
-    @CommandLine.Parameters(index = "0", description = "connect to the following DtnEid host.")
+    @CommandLine.Parameters(index = "0", description = "ping the following dtn host.")
     private String dtneid;
 
-    @CommandLine.Option(names = {"-t", "--connect-to"}, description = "connect to DtnEid "
+    @CommandLine.Option(names = {"-t", "--connect-to"}, description = "connect to dtn "
             + "daemon host IP address (defaut: localhost)")
     private String dtnhost = "127.0.0.1";
 
-    @CommandLine.Option(names = {"-p", "--port"}, description = "connect to DtnEid daemon TCP "
+    @CommandLine.Option(names = {"-p", "--port"}, description = "connect to dtn daemon TCP "
             + "port, (default: 4557)")
     private int dtnport = 4557;
 
@@ -70,6 +70,21 @@ public class DtnPing implements Callable<Void> {
     private String sink;
     private Log logger;
 
+    private String fixEid(String eid) {
+        if (eid == null) {
+            return null;
+        }
+
+        if (!eid.startsWith("dtn://")) {
+            if (eid.startsWith("/")) {
+                return "dtn://api:me" + eid;
+            } else {
+                return "dtn://api:me/" + eid;
+            }
+        }
+        return eid;
+    }
+
     private static float round(float number, int scale) {
         int pow = 10;
         for (int i = 1; i < scale; i++) {
@@ -84,7 +99,7 @@ public class DtnPing implements Callable<Void> {
                 Completable.create(s -> {
                     String dest = recvbundle.getDestination().getEidString();
 
-                    final String regex = "(.*)/dtnping/([0-9a-fA-F]+)/([0-9]+)/([0-9]+)";
+                    final String regex = "(.*)/dtnping/([0-9a-fA-F]+)?seq=([0-9]+)&ts=([0-9]+)";
                     Pattern r = Pattern.compile(regex);
                     Matcher m = r.matcher(dest);
                     if (!m.find()) {
@@ -144,7 +159,7 @@ public class DtnPing implements Callable<Void> {
         if (sessionId == null) {
             sessionId = Long.toHexString(Double.doubleToLongBits(Math.random()));
         }
-        sink = "/dtnping/" + sessionId + "/";
+        sink = "dtn://api:me/dtnping/" + sessionId;
 
         logger = new SimpleLogger();
         switch (verbose.length) {
@@ -165,12 +180,7 @@ public class DtnPing implements Callable<Void> {
         receiveEchoResponse();
 
         /* set ping destination eid */
-        final String regex = "^.*?/.*$";
-        Pattern r = Pattern.compile(regex);
-        Matcher m = r.matcher(dtneid);
-        if (!m.find()) {
-            dtneid += "/null/";
-        }
+        dtneid = fixEid(dtneid);
 
         /* create ping bundle */
         EidFactory eidFactory = new BaseEidFactory();
@@ -187,7 +197,7 @@ public class DtnPing implements Callable<Void> {
             try {
                 /* update ping seq number */
                 long timestamp = System.nanoTime();
-                String reportto = "api:me" + sink + seq.get() + "/" + timestamp;
+                String reportto = sink + "?seq="+seq.get() + "&ts=" + timestamp;
                 bundle.setReportto(eidFactory.create(reportto));
                 bundle.setCreationTimestamp(timestamp);
                 agent.send(bundle).subscribe(

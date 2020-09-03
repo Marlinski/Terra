@@ -34,6 +34,11 @@ public class BaseClaEid extends BaseDtnEid implements ClaEid {
     }
 
     @Override
+    public ClaEid copyWithDemuxSetTo(String demux) throws EidFormatException {
+        return new BaseClaEid(claName, claParameters, demux);
+    }
+
+    @Override
     public ClaEid copy() {
         return new BaseClaEid(this);
     }

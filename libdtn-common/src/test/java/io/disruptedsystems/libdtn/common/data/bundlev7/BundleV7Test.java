@@ -40,7 +40,7 @@ public class BundleV7Test {
 
     private static DtnEid makeSourceEid() {
         try {
-            return new BaseDtnEid("//source/");
+            return new BaseDtnEid("source");
         } catch(EidFormatException e) {
             return DtnEid.nullEid();
         }

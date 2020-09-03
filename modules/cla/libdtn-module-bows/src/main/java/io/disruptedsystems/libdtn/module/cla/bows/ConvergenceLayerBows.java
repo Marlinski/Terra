@@ -67,6 +67,11 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     }
 
     @Override
+    public boolean isStarted() {
+        return false;
+    }
+
+    @Override
     public void stop() {
     }
 

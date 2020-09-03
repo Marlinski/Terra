@@ -137,7 +137,7 @@ public class ExtensionManager implements ExtensionManagerApi {
         public ClaEid createClaEid(String claName, String claSpecific, String demux) throws EidFormatException {
             try {
                 return super.createClaEid(claName, claSpecific,demux);
-            } catch (EidFactory.UnknownEidScheme ues) {
+            } catch (EidFormatException ues) {
                 if (extensionClaEidParser.containsKey(claName)) {
                     return extensionClaEidParser.get(claName).createClaEid(claName, claSpecific,demux);
                 }

@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.CoreComponent;
@@ -63,6 +62,39 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     protected void componentDown() {
     }
 
+    @Override
+    public Observable<ClaEid> resolveEid(Eid destination) {
+        if (!isEnabled()) {
+            return Observable.error(new ComponentIsDownException(getComponentName()));
+        }
+        return resolveEid(destination, Observable.empty());
+    }
+
+    private Observable<ClaEid> resolveEid(Eid destination, Observable<Eid> path) {
+        return Observable.concat(
+                lookupPotentialNextHops(destination) // we add all next hops that are cla-eid
+                        .filter(eid -> eid instanceof ClaEid)
+                        .map(eid -> (ClaEid) eid),
+                lookupPotentialNextHops(destination) // otherwise we try to resolve them to cla-eids
+                        .filter(eid -> !(eid instanceof ClaEid))
+                        .flatMap(candidate -> path.contains(candidate).flatMapObservable((b) -> {
+                            if (!b) {
+                                return resolveEid(candidate,
+                                        path.concatWith(Observable.just(candidate)));
+                            } else {
+                                return Observable.empty();
+                            }
+                        })));
+    }
+
+    private Observable<Eid> lookupPotentialNextHops(Eid destination) {
+        return Observable.concat(
+                Observable.just(destination).filter(eid -> destination instanceof ClaEid),
+                compoundTableObservable()
+                        .filter(entry -> (entry.to == destination) || entry.to.isAuthoritativeOver(destination))
+                        .map(entry -> entry.next));
+    }
+
     private Observable<TableEntry> compoundTableObservable() {
         if (staticIsEnabled) {
             return Observable.fromIterable(staticRoutingTable)
@@ -70,43 +102,6 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         } else {
             return Observable.fromIterable(routingTable);
         }
-    }
-
-    private Observable<Eid> lookupPotentialNextHops(Eid destination) {
-        return Observable.concat(
-                Observable.just(destination).filter(eid -> destination instanceof ClaEid),
-                compoundTableObservable()
-                        .filter(entry -> entry.to.isAuthoritativeOver(destination))
-                        .map(entry -> entry.next));
-    }
-
-    private Observable<BaseClaEid> resolveEid(Eid destination, Observable<Eid> path) {
-        return Observable.concat(
-                lookupPotentialNextHops(destination)
-                        .filter(eid -> eid instanceof BaseClaEid)
-                        .map(eid -> (BaseClaEid) eid),
-                lookupPotentialNextHops(destination)
-                        .filter(eid -> !(eid instanceof BaseClaEid))
-                        .flatMap(candidate ->
-                                path.contains(candidate)
-                                        .toObservable()
-                                        .flatMap((b) -> {
-                                            if (!b) {
-                                                return resolveEid(
-                                                        candidate,
-                                                        path.concatWith(
-                                                                Observable.just(candidate)));
-                                            }
-                                            return Observable.empty();
-                                        })));
-    }
-
-    @Override
-    public Observable<BaseClaEid> resolveEid(Eid destination) {
-        if (!isEnabled()) {
-            return Observable.error(new ComponentIsDownException(getComponentName()));
-        }
-        return resolveEid(destination, Observable.empty());
     }
 
 

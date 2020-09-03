@@ -18,6 +18,7 @@ import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
 import io.disruptedsystems.libdtn.core.api.BundleProtocolApi;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
+import io.disruptedsystems.libdtn.core.api.DeliveryApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.utils.ClockUtil;
 import io.marlinski.libcbor.CborEncoder;
@@ -81,7 +82,7 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.3 - step 1 */
         core.getLogger().v(TAG, "5.3-1: " + bundle.bid.getBidString());
-        LocalEidApi.LocalEid localMatch = core.getLocalEid().isEidLocal(bundle.getDestination());
+        LocalEidApi.LocalEid<?> localMatch = core.getLocalEid().isEidLocal(bundle.getDestination());
         if (localMatch != null) {
             bundleLocalDelivery(localMatch, bundle);
             return;
@@ -235,9 +236,12 @@ public class BundleProtocol implements BundleProtocolApi {
     public void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid<?> localMatch, Throwable reason) {
         core.getLogger().i(TAG, "bundle could not be delivered to: "
                 + bundle.getDestination().getEidString()
-                + "[ localMatch=" + localMatch.eid.toString()
-                + "  reason=" + reason.getMessage()
+                + " -- localMatch=" + localMatch.eid.toString()
+                + "  reason=" + ((reason instanceof DeliveryApi.DeliveryFailure)
+                    ? ((DeliveryApi.DeliveryFailure)reason).reason.name()
+                    : reason.getMessage())
                 + "  bundleID=" + bundle.bid.getBidString() + "]");
+
         if (!bundle.isTagged("in_storage")) {
             core.getStorage().store(bundle).subscribe(
                     b -> {

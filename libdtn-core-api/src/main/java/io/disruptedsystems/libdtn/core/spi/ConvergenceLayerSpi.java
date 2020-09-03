@@ -31,6 +31,11 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
     Observable<ClaChannelSpi> start(ConfigurationApi api, Log logger);
 
     /**
+     * Return true if the convergence layer is currently running, false otherwise.
+     */
+    boolean isStarted();
+
+    /**
      * When a BaseClaEid is stopped, it should stop creating any new ClaChannelSpi and terminate the
      * observable. It is an implementation specific decision wether or not to close all the
      * underlying CLAChannels that were previously openned.

@@ -427,6 +427,12 @@ public class SimpleStorage extends CoreComponent {
 
     static void closeSilently(OutputStream s) {
         try {
+            s.flush();
+        } catch (IOException io) {
+            /* ignore */
+        }
+
+        try {
             s.close();
         } catch (IOException io) {
             /* ignore */

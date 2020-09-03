@@ -17,9 +17,7 @@ import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
-import io.disruptedsystems.libdtn.core.storage.EventListener;
 import io.marlinski.librxbus.RxBus;
-import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -133,16 +131,16 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     private void replaceApiMe(Bundle bundle) {
         if (bundle.getSource() instanceof ApiEid) {
-            bundle.setSource(core.getLocalEid().nodeId().copy().copyDemux(
-                    ((ApiEid) bundle.getSource())));
+            bundle.setSource(((ApiEid) bundle.getSource().copy())
+                    .swapName(core.getLocalEid().nodeId()));
         }
         if (bundle.getReportto() instanceof ApiEid) {
-            bundle.setReportto(core.getLocalEid().nodeId().copy().copyDemux(
-                    ((ApiEid) bundle.getSource())));
+            bundle.setReportto(((ApiEid) bundle.getReportto().copy())
+                    .swapName(core.getLocalEid().nodeId()));
         }
         if (bundle.getDestination() instanceof ApiEid) {
-            bundle.setDestination(core.getLocalEid().nodeId().copy().copyDemux(
-                    ((ApiEid) bundle.getSource())));
+            bundle.setDestination(((ApiEid) bundle.getDestination().copy())
+                    .swapName(core.getLocalEid().nodeId()));
         }
     }
 
@@ -305,46 +303,6 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     /* ------  DeliveryApi is the contract facing CoreApi ------- */
 
-    /**
-     * DeliveryListener listen for active registration and forward matching undelivered bundle.
-     */
-    public class DeliveryListener extends EventListener<String> {
-        DeliveryListener(CoreApi core) {
-            super(core);
-        }
-
-        @Override
-        public String getComponentName() {
-            return "DeliveryListener";
-        }
-
-        /**
-         * React to RegistrationActive event and forward the relevent bundles.
-         *
-         * @param event active registration event
-         */
-        @Subscribe
-        public void onEvent(RegistrationActive event) {
-            /* deliver every bundle of interest */
-            getBundlesOfInterest(event.eid).subscribe(
-                    bundleID -> {
-                        /* retrieve the bundle */
-                        core.getStorage().get(bundleID).subscribe(
-                                /* deliver it */
-                                bundle -> event.cb.recv(bundle).subscribe(
-                                        () -> {
-                                            listener.unwatch(event.eid, bundle.bid);
-                                            core.getBundleProtocol()
-                                                    .bundleLocalDeliverySuccessful(bundle);
-                                        },
-                                        e -> core.getBundleProtocol()
-                                                .bundleLocalDeliveryFailure(bundle, LocalEidApi.LocalEid.registered(event.eid), e)),
-                                e -> {
-                                });
-                    });
-        }
-    }
-
     @Override
     public Completable deliver(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
         if (!isEnabled()) {
@@ -357,25 +315,27 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return deliverToRegistration(reg, bundle);
         }
 
-        // if the device was detected to be local because of a registration, then it must have
-        // been unregistered by then (should be very rare).
+        // if the device was detected to be local and it matched with a registration, then it must
+        // have been unregistered by then (should be very rare).
         if (localMatch instanceof LocalEidApi.Registered) {
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
         // this bundle have been detected to be local because it matched
-        // against either a node id or a CLA. So last chance is to try swaping with api:me
-        // which is only applicable for dtn-eid
+        // against either a node id, an alias or a CLA. So we try swaping the node-name with api:me
+        // which is only applicable for dtn-eid. If it is not a dtn-eid we reject.
         if (!(bundle.getDestination() instanceof DtnEid)) {
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
         try {
-            ApiEid newEid = new ApiEid(((DtnEid) bundle.getDestination()).getDemux());
+            ApiEid newEid = new ApiEid(((DtnEid) bundle.getDestination()).getPath());
             reg = registrations.get(newEid.getEidString());
             if (reg != null) {
                 return deliverToRegistration(reg, bundle);
             }
+
+            // we couldn't find a registration
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         } catch (EidFormatException e) {
             /* cannot happen */
@@ -396,8 +356,9 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     public void deliverLater(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
-        listener.watch("todo", bundle.bid);
+        listener.watch(bundle);
     }
+
 
     /* passive registration */
     private static ActiveRegistrationCallback passiveRegistration

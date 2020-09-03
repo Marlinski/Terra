@@ -56,7 +56,7 @@ public class LdcpServer {
                                                             .wrap(res)
                                                             .send(con),
                                                     e -> LdcpResponse.ERROR()
-                                                            .setBody(e.getMessage())
+                                                            .setBody(e.getClass().getSimpleName() + ":" + e.getMessage())
                                                             .send(con)
                                             );
                                         }

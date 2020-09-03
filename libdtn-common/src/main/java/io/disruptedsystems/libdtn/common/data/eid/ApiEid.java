@@ -18,7 +18,22 @@ public class ApiEid extends BaseDtnEid {
         nodeName = "api:me";
     }
 
+    public ApiEid(ApiEid o) {
+        super(o);
+    }
+
     public ApiEid(String demux) throws EidFormatException{
         super("api:me", demux);
+    }
+
+    public DtnEid swapName(DtnEid other) {
+        this.nodeName = other.getNodeName();
+        updateSsp();
+        return this;
+    }
+
+    @Override
+    public ApiEid copy() {
+        return new ApiEid(this);
     }
 }
