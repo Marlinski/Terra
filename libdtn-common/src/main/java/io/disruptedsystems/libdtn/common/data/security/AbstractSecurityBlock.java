@@ -1,8 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
 import io.disruptedsystems.libdtn.common.data.ExtensionBlock;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 
+import java.net.URI;
 import java.util.LinkedList;
 
 /**
@@ -15,7 +15,7 @@ public abstract class AbstractSecurityBlock extends ExtensionBlock implements Se
     public LinkedList<Integer> securityTargets;
     public int cipherSuiteId;
     public int securityBlockFlag;
-    public Eid securitySource;
+    public URI securitySource;
     public LinkedList<LinkedList<SecurityResult>> securityResults;
 
 
@@ -41,7 +41,7 @@ public abstract class AbstractSecurityBlock extends ExtensionBlock implements Se
     }
 
     @Override
-    public Eid getSecuritySource() {
+    public URI getSecuritySource() {
         return securitySource;
     }
 
@@ -55,7 +55,7 @@ public abstract class AbstractSecurityBlock extends ExtensionBlock implements Se
         return cipherSuiteId;
     }
 
-    public void setSecuritySource(Eid source) {
+    public void setSecuritySource(URI source) {
         this.securitySource = source;
         setSaFlag(SecurityBlockFlags.SECURITY_SOURCE_PRESENT, true);
     }

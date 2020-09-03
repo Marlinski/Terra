@@ -1,8 +1,8 @@
 package io.disruptedsystems.libdtn.common.data;
 
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import java.net.URI;
+
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 
 /**
  * PreviousNodeBlock holds information about the previous node holding this bundle.
@@ -13,14 +13,14 @@ public class PreviousNodeBlock extends CanonicalBlock {
 
     public static final int PREVIOUS_NODE_BLOCK_TYPE = 7;
 
-    public Eid previous;
+    public URI previous;
 
     public PreviousNodeBlock() {
         super(PREVIOUS_NODE_BLOCK_TYPE);
-        previous = DtnEid.nullEid();
+        previous = Dtn.nullEid();
     }
 
-    public PreviousNodeBlock(Eid previous) {
+    public PreviousNodeBlock(URI previous) {
         super(7);
         this.previous = previous;
     }
@@ -29,7 +29,7 @@ public class PreviousNodeBlock extends CanonicalBlock {
     public String toString() {
         StringBuilder sb = new StringBuilder("PreviousNodeBlock");
         if (previous != null) {
-            sb.append(": previous node=").append(previous.getEidString());
+            sb.append(": previous node=").append(previous.toString());
         } else {
             sb.append(": previous node is unset");
         }

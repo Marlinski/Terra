@@ -1,36 +1,33 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import static io.disruptedsystems.libdtn.common.data.eid.DtnEid.EID_DTN_IANA_VALUE;
-import static io.disruptedsystems.libdtn.common.data.eid.IpnEid.EID_IPN_IANA_VALUE;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
-import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
-import io.disruptedsystems.libdtn.common.data.eid.UnknowEid;
+
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.EID_DTN_IANA_VALUE;
+import static io.disruptedsystems.libdtn.common.data.eid.Ipn.EID_IPN_IANA_VALUE;
 
 /**
- * EidItem is a CborParser.ParseableItem for an {@link Eid}.
+ * EidItem is a CborParser.ParseableItem for an eid
  *
  * @author Lucien Loiseau on 04/11/18.
  */
 public class EidItem implements CborParser.ParseableItem {
 
-    public EidItem(EidFactory eidFactory, Log logger) {
-        this.eidFactory = eidFactory;
+    public EidItem(Log logger) {
         this.logger = logger;
     }
 
-    private EidFactory eidFactory;
     private Log logger;
 
-    public Eid eid;
+    public URI eid;
     public int ianaNumber;
+    private long node;
 
     @Override
     public CborParser getItemParser() {
@@ -54,13 +51,19 @@ public class EidItem implements CborParser.ParseableItem {
 
     private CborParser parseIpn = CBOR.parser()
             .cbor_open_array(2)
-            .cbor_parse_int((p, t, node) -> eid = new IpnEid((int) node, 0))
-            .cbor_parse_int((p, t, service) -> ((IpnEid) eid).serviceNumber = (int) service);
+            .cbor_parse_int((p, t, node) -> {
+                logger.v(BundleV7Item.TAG, ".. ipn_node =" + node);
+                this.node = node;
+            })
+            .cbor_parse_int((p, t, service) -> {
+                logger.v(BundleV7Item.TAG, ".. ipn_service =" + service);
+                eid = URI.create("ipn:" + node + "." + service);
+            });
 
     private CborParser parseDtn = CBOR.parser()
             .cbor_or(
                     CBOR.parser().cbor_parse_int((p, t, i) -> {
-                        eid = DtnEid.nullEid();
+                        eid = Dtn.nullEid();
                     }),
                     CBOR.parser().cbor_parse_text_string_full(
                             (p, t, size) -> {
@@ -71,9 +74,9 @@ public class EidItem implements CborParser.ParseableItem {
                             (p, str) -> {
                                 logger.v(BundleV7Item.TAG, ".. dtn_ssp=" + str);
                                 try {
-                                    eid = eidFactory.create("dtn", str);
-                                } catch (EidFormatException efe) {
-                                    throw new RxParserException("DtnEid is not an URI: " + efe);
+                                    eid = new URI("dtn", str, null);
+                                } catch (URISyntaxException efe) {
+                                    throw new RxParserException("invalid eid: " + efe);
                                 }
                             }));
 
@@ -86,19 +89,10 @@ public class EidItem implements CborParser.ParseableItem {
                     },
                     (p, ssp) -> {
                         try {
-                            String scheme = eidFactory.getIanaScheme(ianaNumber);
-                            eid = eidFactory.create(scheme, ssp);
-                            logger.v(BundleV7Item.TAG, ".. eid scheme=" + scheme + " ssp=" + ssp);
-                        } catch (EidFactory.UnknownIanaNumber | EidFactory.UnknownEidScheme uin) {
-                            logger.v(BundleV7Item.TAG, ".. unknown Eid=" + ianaNumber + " ssp=" + ssp);
-                            try {
-                                eid = new UnknowEid(ianaNumber, ssp);
-                            } catch (EidFormatException efe) {
-                                throw new RxParserException("error parsing Eid: "
-                                        + efe.getMessage());
-                            }
-                        } catch (EidFormatException efe) {
-                            throw new RxParserException("error parsing Eid: " + efe.getMessage());
+                            eid = new URI(ianaNumber+":"+ssp);
+                            logger.v(BundleV7Item.TAG, ".. eid scheme=" + ianaNumber + " ssp=" + ssp);
+                        } catch (URISyntaxException efe) {
+                            throw new RxParserException("error parsing eid: " + efe.getMessage());
                         }
                     });
 }

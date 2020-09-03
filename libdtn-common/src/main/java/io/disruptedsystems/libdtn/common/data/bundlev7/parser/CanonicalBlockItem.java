@@ -24,7 +24,7 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
 
     /**
      * A BundleItem requires a toolbox to be able to parse extension {@link Block} and
-     * extension {@link Eid}. It also need a BlobFactory to create a new Blob to hold the payload.
+     * extension eid. It also need a BlobFactory to create a new Blob to hold the payload.
      *
      * @param logger      to output parsing information
      * @param toolbox     for the data structure factory
@@ -78,7 +78,7 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
                                 (int) i,
                                 block,
                                 blobFactory,
-                                toolbox.getEidFactory(), logger);
+                                logger);
                     } catch (BlockDataParserFactory.UnknownBlockTypeException ubte) {
                         payloadParser = BlockBlobParser.getParser(
                                 (BlockBlob) block, blobFactory, logger);

@@ -9,7 +9,6 @@ import io.marlinski.libcbor.rxparser.RxParserException;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.Crc;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 
 import java.nio.ByteBuffer;
 
@@ -20,12 +19,10 @@ import java.nio.ByteBuffer;
  */
 public class PrimaryBlockItem implements CborParser.ParseableItem {
 
-    public PrimaryBlockItem(EidFactory eidFactory, Log logger) {
-        this.eidFactory = eidFactory;
+    public PrimaryBlockItem(Log logger) {
         this.logger = logger;
     }
 
-    private EidFactory eidFactory;
     private Log logger;
 
     public Bundle bundle;
@@ -83,16 +80,16 @@ public class PrimaryBlockItem implements CborParser.ParseableItem {
                             throw new RxParserException("wrong Crc PAYLOAD_BLOCK_TYPE");
                     }
                 })
-                .cbor_parse_custom_item(() -> new EidItem(eidFactory, logger), (p, t, item) -> {
-                    logger.v(TAG, ". destination=" + item.eid.getEidString());
+                .cbor_parse_custom_item(() -> new EidItem(logger), (p, t, item) -> {
+                    logger.v(TAG, ". destination=" + item.eid.toString());
                     bundle.setDestination(item.eid);
                 })
-                .cbor_parse_custom_item(() -> new EidItem(eidFactory, logger), (p, t, item) -> {
-                    logger.v(TAG, ". source=" + item.eid.getEidString());
+                .cbor_parse_custom_item(() -> new EidItem(logger), (p, t, item) -> {
+                    logger.v(TAG, ". source=" + item.eid.toString());
                     bundle.setSource(item.eid);
                 })
-                .cbor_parse_custom_item(() -> new EidItem(eidFactory, logger), (p, t, item) -> {
-                    logger.v(TAG, ". reportto=" + item.eid.getEidString());
+                .cbor_parse_custom_item(() -> new EidItem(logger), (p, t, item) -> {
+                    logger.v(TAG, ". reportto=" + item.eid.toString());
                     bundle.setReportto(item.eid);
                 })
                 .cbor_open_array(2)

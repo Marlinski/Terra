@@ -5,7 +5,6 @@ import io.disruptedsystems.libdtn.common.data.security.SecurityBlock;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 
 import java.util.LinkedList;
 
@@ -16,7 +15,7 @@ import java.util.LinkedList;
  */
 public class SecurityBlockParser {
 
-    static CborParser getParser(AbstractSecurityBlock block, EidFactory eidFactory, Log logger) {
+    static CborParser getParser(AbstractSecurityBlock block, Log logger) {
         return CBOR.parser()
                 .cbor_open_array(5)
                 .cbor_parse_linear_array(
@@ -42,10 +41,10 @@ public class SecurityBlockParser {
                         (p) -> block.getSaFlag(
                                 SecurityBlock.SecurityBlockFlags.SECURITY_SOURCE_PRESENT),
                         CBOR.parser().cbor_parse_custom_item(
-                                () -> new EidItem(eidFactory, logger),
+                                () -> new EidItem(logger),
                                 (p, t, item) -> {
                                     logger.v(BundleV7Item.TAG, ".. securitySource="
-                                            + item.eid.getEidString());
+                                            + item.eid.toString());
                                     block.securitySource = item.eid;
                                 }))
                 .cbor_parse_linear_array(

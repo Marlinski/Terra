@@ -20,8 +20,8 @@ public class BundleV7Item implements CborParser.ParseableItem {
     static final String TAG = "BundleV7Item";
 
     /**
-     * A Bundle Item requires a toolbox to be able to parse extension {@link Block} and
-     * extension {@link Eid}. It also need a BlobFactory to create a new Blob to hold the payload.
+     * A Bundle Item requires a toolbox to be able to parse extension block and
+     * extension eid. It also need a BlobFactory to create a new Blob to hold the payload.
      *
      * @param logger      to output parsing information
      * @param toolbox     for the data structure factory
@@ -48,7 +48,7 @@ public class BundleV7Item implements CborParser.ParseableItem {
                     logger.v(TAG, "[+] parsing new bundle");
                 })
                 .cbor_parse_custom_item(
-                        () -> new PrimaryBlockItem(toolbox.getEidFactory(), logger),
+                        () -> new PrimaryBlockItem(logger),
                         (parser, tags, item) -> {
                             logger.v(TAG, "-> primary block parsed");
                             bundle = item.bundle;

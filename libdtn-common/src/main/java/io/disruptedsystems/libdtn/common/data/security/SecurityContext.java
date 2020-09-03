@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -24,16 +23,16 @@ public interface SecurityContext {
         }
     }
 
-    MessageDigest initDigestForIntegrity(int cipherSuiteId, Eid securitySource)
+    MessageDigest initDigestForIntegrity(int cipherSuiteId, URI securitySource)
             throws NoSecurityContextFound, NoSuchAlgorithmException, NoSuchPaddingException;
 
-    MessageDigest initDigestForVerification(int cipherSuiteId, Eid securitySource)
+    MessageDigest initDigestForVerification(int cipherSuiteId, URI securitySource)
             throws NoSecurityContextFound, NoSuchAlgorithmException, NoSuchPaddingException;
 
-    Cipher initCipherForEncryption(int cipherSuiteId, Eid securitySource)
+    Cipher initCipherForEncryption(int cipherSuiteId, URI securitySource)
             throws NoSecurityContextFound, NoSuchAlgorithmException, NoSuchPaddingException;
 
-    Cipher initCipherForDecryption(int cipherSuiteId, Eid securitySource)
+    Cipher initCipherForDecryption(int cipherSuiteId, URI securitySource)
             throws NoSecurityContextFound, NoSuchAlgorithmException, NoSuchPaddingException;
 
 }

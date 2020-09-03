@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.common.data;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +38,7 @@ public class StatusReport extends AdministrativeRecord {
 
     public Map<StatusAssertion, Long> statusInformation;
     public ReasonCode code;
-    public Eid source;
+    public URI source;
     public Long creationTimestamp;
 
     public boolean subjectBundleIsFragment = false;

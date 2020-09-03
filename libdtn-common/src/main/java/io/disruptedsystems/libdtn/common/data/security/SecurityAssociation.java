@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import java.net.URI;
 
 /**
  * SecurityAssociation describes a cipher as described in BPSec.
@@ -19,10 +19,10 @@ public class SecurityAssociation {
 
     int securityAssociationId;
     int securityAssociationFlag;
-    Eid[] eidScope;
+    URI[] eidScope;
     int[] blockTypeScope;
     int cipherSuiteId;
-    Eid securitySource;
+    URI securitySource;
     SecurityAssociationParameter[] securityAssociationParameters;
 
 
@@ -55,7 +55,7 @@ public class SecurityAssociation {
      *
      * @param source Eid of the security source
      */
-    public void setSecuritySource(Eid source) {
+    public void setSecuritySource(URI source) {
         this.securitySource = source;
         setSaFlag(SecurityAssociationFlags.SECURITY_SOURCE_PRESENT, true);
     }

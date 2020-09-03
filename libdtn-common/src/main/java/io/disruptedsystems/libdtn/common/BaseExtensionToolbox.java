@@ -7,24 +7,15 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProces
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.BlockFactory;
 
 /**
- * BaseExtensionToolbox implements the ExtensionToolbox ApiEid and provide
- * factory for all the base {@link Block} and {@link Eid} classes.
+ * BaseExtensionToolbox implements the ExtensionToolbox  and provide
+ * factory for all the base Blocks
  *
  * @author Lucien Loiseau on 28/11/18.
  */
 public class BaseExtensionToolbox implements ExtensionToolbox {
-
-    @Override
-    public EidFactory getEidFactory() {
-        return new BaseEidFactory(new BaseDtnEidFactory(new BaseClaEidFactory()));
-    }
 
     @Override
     public BlockFactory getBlockFactory() {

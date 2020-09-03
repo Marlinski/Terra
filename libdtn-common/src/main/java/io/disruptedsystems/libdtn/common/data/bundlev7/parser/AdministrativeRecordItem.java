@@ -6,7 +6,6 @@ import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
 import io.disruptedsystems.libdtn.common.data.AdministrativeRecord;
 import io.disruptedsystems.libdtn.common.data.StatusReport;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 
 /**
  * Parser for an {@link AdministrativeRecord}.
@@ -17,14 +16,13 @@ public class AdministrativeRecordItem implements CborParser.ParseableItem {
 
     static final String TAG = "AdministrativeRecordItem";
 
-    public AdministrativeRecordItem(EidFactory eidFactory, Log logger) {
+    public AdministrativeRecordItem(Log logger) {
         this.logger = logger;
     }
 
     public AdministrativeRecord record;
 
     private Log logger;
-    private EidFactory eidFactory;
     private CborParser body;
 
     @Override
@@ -42,7 +40,7 @@ public class AdministrativeRecordItem implements CborParser.ParseableItem {
                         case StatusReport.STATUS_REPORT_ADM_TYPE:
                             record = new StatusReport();
                             body = StatusReportParser
-                                    .getParser((StatusReport) record, eidFactory, logger);
+                                    .getParser((StatusReport) record, logger);
                             break;
                         default:
                             throw new RxParserException("administrative record type unknown: " + i);

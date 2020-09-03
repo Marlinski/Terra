@@ -16,7 +16,6 @@ import io.disruptedsystems.libdtn.common.data.RoutingBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
 import io.disruptedsystems.libdtn.common.data.UnknownExtensionBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 
 /**
  * BaseBlockDataParserFactory implements BlockDataParserFactory
@@ -30,7 +29,6 @@ public class BaseBlockDataParserFactory implements BlockDataParserFactory {
     public CborParser create(int type,
                              CanonicalBlock block,
                              BlobFactory blobFactory,
-                             EidFactory eidFactory,
                              Log logger) throws UnknownBlockTypeException {
         switch (type) {
             case PayloadBlock.PAYLOAD_BLOCK_TYPE:
@@ -47,7 +45,7 @@ public class BaseBlockDataParserFactory implements BlockDataParserFactory {
                         .getParser((FlowLabelBlock) block, logger);
             case PreviousNodeBlock.PREVIOUS_NODE_BLOCK_TYPE:
                 return PreviousNodeBlockParser
-                        .getParser((PreviousNodeBlock) block, eidFactory, logger);
+                        .getParser((PreviousNodeBlock) block, logger);
             case AgeBlock.AGE_BLOCK_TYPE:
                 return AgeBlockParser
                         .getParser((AgeBlock) block, logger);
@@ -56,13 +54,13 @@ public class BaseBlockDataParserFactory implements BlockDataParserFactory {
                         .getParser((ScopeControlHopLimitBlock) block, logger);
             case BlockAuthenticationBlock.BLOCK_AUTHENTICATION_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockAuthenticationBlock) block, eidFactory, logger);
+                        .getParser((BlockAuthenticationBlock) block, logger);
             case BlockIntegrityBlock.BLOCK_INTEGRITY_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockIntegrityBlock) block, eidFactory, logger);
+                        .getParser((BlockIntegrityBlock) block, logger);
             case BlockConfidentialityBlock.BLOCK_CONFIDENTIALITY_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockConfidentialityBlock) block, eidFactory, logger);
+                        .getParser((BlockConfidentialityBlock) block, logger);
             default:
                 if (block instanceof UnknownExtensionBlock) {
                     return BlockBlobParser

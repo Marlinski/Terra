@@ -1,9 +1,9 @@
 package io.disruptedsystems.libdtn.common.data;
 
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import java.net.URI;
+
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 
 /**
  * PrimaryBlock is the first block of a {@link Bundle}, there can be only one per Bundle.
@@ -80,9 +80,9 @@ public class PrimaryBlock extends Block {
     private int version;
     private long procV7Flags;
     private CrcFieldType crcType;
-    private Eid destination;
-    private Eid source;
-    private Eid reportto;
+    private URI destination;
+    private URI source;
+    private URI reportto;
     private long creationTimestamp;
     private long sequenceNumber;
     private long lifetime;
@@ -98,9 +98,9 @@ public class PrimaryBlock extends Block {
     public PrimaryBlock() {
         this.procV7Flags = 0;
         this.crcType = CrcFieldType.NO_CRC;
-        this.destination = DtnEid.nullEid();
-        this.source = ApiEid.me();
-        this.reportto = DtnEid.nullEid();
+        this.destination = Dtn.nullEid();
+        this.source = Api.me();
+        this.reportto = Dtn.nullEid();
         this.creationTimestamp = System.currentTimeMillis();
         this.sequenceNumber = sequence_counter++;
         bid = BundleId.create(this);
@@ -113,7 +113,7 @@ public class PrimaryBlock extends Block {
      * @param destination Eid of this Bundle
      * @param lifetime    of this Bundle
      */
-    public PrimaryBlock(Eid destination, long lifetime) {
+    public PrimaryBlock(URI destination, long lifetime) {
         this();
         this.lifetime = lifetime;
         this.destination = destination;
@@ -159,15 +159,15 @@ public class PrimaryBlock extends Block {
         return crcType;
     }
 
-    public Eid getDestination() {
+    public URI getDestination() {
         return destination;
     }
 
-    public Eid getSource() {
+    public URI getSource() {
         return source;
     }
 
-    public Eid getReportto() {
+    public URI getReportto() {
         return reportto;
     }
 
@@ -221,16 +221,16 @@ public class PrimaryBlock extends Block {
         this.crcType = crcType;
     }
 
-    public void setDestination(Eid destination) {
+    public void setDestination(URI destination) {
         this.destination = destination;
     }
 
-    public void setSource(Eid source) {
+    public void setSource(URI source) {
         this.source = source;
         this.bid = BundleId.create(this);
     }
 
-    public void setReportto(Eid reportto) {
+    public void setReportto(URI reportto) {
         this.reportto = reportto;
     }
 

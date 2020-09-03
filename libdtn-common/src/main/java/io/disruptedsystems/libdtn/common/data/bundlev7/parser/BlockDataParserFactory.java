@@ -3,7 +3,6 @@ package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.marlinski.libcbor.CborParser;
 
 /**
@@ -21,8 +20,7 @@ public interface BlockDataParserFactory {
      *
      * @param type block type
      * @param block block to parse
-     * @param blobFactory {@link Blob} factory
-     * @param eidFactory {@link Eid} factory
+     * @param blobFactory Blob} factory
      * @param logger logger
      * @return CborParser
      * @throws UnknownBlockTypeException if type is unknown
@@ -30,7 +28,6 @@ public interface BlockDataParserFactory {
     CborParser create(int type,
                       CanonicalBlock block,
                       BlobFactory blobFactory,
-                      EidFactory eidFactory,
                       Log logger) throws UnknownBlockTypeException;
 
 

@@ -1,10 +1,10 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.security.CipherSuites;
 import io.disruptedsystems.libdtn.common.data.security.SecurityContext;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -33,19 +33,19 @@ public class SecurityContextTest {
             String initVector = "testInitVector--";
 
             @Override
-            public MessageDigest initDigestForIntegrity(int cipherSuiteId, Eid securitySource)
+            public MessageDigest initDigestForIntegrity(int cipherSuiteId, URI securitySource)
                     throws NoSuchAlgorithmException {
                 return CipherSuites.fromId(cipherSuiteId).getMessageDigest();
             }
 
             @Override
-            public MessageDigest initDigestForVerification(int cipherSuiteId, Eid securitySource)
+            public MessageDigest initDigestForVerification(int cipherSuiteId, URI securitySource)
                     throws NoSuchAlgorithmException {
                 return CipherSuites.fromId(cipherSuiteId).getMessageDigest();
             }
 
             @Override
-            public Cipher initCipherForEncryption(int cipherSuiteId, Eid securitySource) throws
+            public Cipher initCipherForEncryption(int cipherSuiteId, URI securitySource) throws
                     NoSecurityContextFound,
                     NoSuchAlgorithmException,
                     NoSuchPaddingException {
@@ -72,7 +72,7 @@ public class SecurityContextTest {
             }
 
             @Override
-            public Cipher initCipherForDecryption(int cipherSuiteId, Eid securitySource) throws
+            public Cipher initCipherForDecryption(int cipherSuiteId, URI securitySource) throws
                     NoSecurityContextFound,
                     NoSuchAlgorithmException,
                     NoSuchPaddingException {

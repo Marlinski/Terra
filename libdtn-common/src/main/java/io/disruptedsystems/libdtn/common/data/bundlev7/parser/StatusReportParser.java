@@ -7,7 +7,6 @@ import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
 import io.disruptedsystems.libdtn.common.data.StatusReport;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 
 /**
  * StatusReportParser parses a StatusReport.
@@ -17,7 +16,7 @@ import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 public class StatusReportParser {
 
     // CHECKSTYLE IGNORE LineLength
-    static CborParser getParser(StatusReport report, EidFactory eidFactory, Log logger) {
+    static CborParser getParser(StatusReport report, Log logger) {
         return CBOR.parser()
                 .cbor_open_array((p, t, i) -> {
                     logger.v(TAG, ".. status_report_array size=" + i);
@@ -71,8 +70,8 @@ public class StatusReportParser {
                         report.code = StatusReport.ReasonCode.values()[(int) error];
                     }
                 })
-                .cbor_parse_custom_item(() -> new EidItem(eidFactory, logger), (p, t, item) -> {
-                    logger.v(TAG, ".. subject_source_EID=" + item.eid.getEidString());
+                .cbor_parse_custom_item(() -> new EidItem(logger), (p, t, item) -> {
+                    logger.v(TAG, ".. subject_source_eid=" + item.eid.toString());
                     report.source = item.eid;
                 })
                 .cbor_parse_int((p, t, timestamp) -> {

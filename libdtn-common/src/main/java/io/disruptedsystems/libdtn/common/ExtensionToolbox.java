@@ -3,7 +3,6 @@ package io.disruptedsystems.libdtn.common;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BlockDataParserFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.data.BlockFactory;
 
 /**
@@ -53,12 +52,5 @@ public interface ExtensionToolbox {
      * @return BlockProcessorFactory
      */
     BlockProcessorFactory getBlockProcessorFactory();
-
-    /**
-     * get the Eid factory.
-     *
-     * @return EidFactory
-     */
-    EidFactory getEidFactory();
 
 }

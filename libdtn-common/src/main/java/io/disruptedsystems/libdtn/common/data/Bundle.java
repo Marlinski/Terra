@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.common.data;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -43,7 +42,7 @@ public class Bundle extends PrimaryBlock implements BundleApi {
      *
      * @param destination of the bundle
      */
-    public Bundle(Eid destination) {
+    public Bundle(URI destination) {
         super();
         this.setDestination(destination);
     }
@@ -55,7 +54,7 @@ public class Bundle extends PrimaryBlock implements BundleApi {
      * @param destination of the bundle
      * @param lifetime    of the bundle
      */
-    public Bundle(Eid destination, long lifetime) {
+    public Bundle(URI destination, long lifetime) {
         super(destination, lifetime);
     }
 

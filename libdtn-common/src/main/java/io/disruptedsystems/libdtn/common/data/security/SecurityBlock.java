@@ -1,7 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 
 /**
  * SecurityBlock Interface for ExtensionBlock described in BPSec.
@@ -59,14 +60,14 @@ public interface SecurityBlock {
      *
      * @param source Eid.
      */
-    void setSecuritySource(Eid source);
+    void setSecuritySource(URI source);
 
     /**
      * get the security source to this SecurityBlock.
      *
      * @return Eid security source
      */
-    Eid getSecuritySource();
+    URI getSecuritySource();
 
     /**
      * Get the state of a specific {@link SecurityBlockFlags} from this SecurityBlock.

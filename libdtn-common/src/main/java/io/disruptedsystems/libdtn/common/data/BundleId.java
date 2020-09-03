@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.common.data;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -45,12 +44,12 @@ public class BundleId {
      * @param sequence of the bundle
      * @return a new BundleId object.
      */
-    public static BundleId create(Eid source, long timestamp, long sequence) {
+    public static BundleId create(URI source, long timestamp, long sequence) {
         String[] algorithms = {"SHA-256", "SHA-512", "SHA-384", "SHA-1", "MD5"};
         for (String algo : algorithms) {
             try {
                 MessageDigest md = MessageDigest.getInstance(algo);
-                md.update(source.getEidString().getBytes());
+                md.update(source.toString().getBytes());
                 md.update(String.valueOf(timestamp).getBytes());
                 md.update(String.valueOf(sequence).getBytes());
                 String bid = UUID.nameUUIDFromBytes(md.digest()).toString();
@@ -62,7 +61,7 @@ public class BundleId {
 
         // no algorithm were found so we make something up (that should never happen though)
         // FIXME this method provides a unique bid but can be long, should probably use some XOR
-        String sb = "s=" + source.getEidString()
+        String sb = "s=" + source.toString()
                 + "t=" + timestamp
                 + "s=" + sequence;
         String bid = Base64.getEncoder().encodeToString(sb.getBytes());
