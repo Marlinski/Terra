@@ -29,11 +29,11 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     public static final int MAIN_ROUTING_STRATEGY_ID = 1;
 
     private CoreApi core;
-    private EventListenerApi directListener;
+    private DirectRoutingListener directListener;
 
-    public DirectRoutingStrategy(CoreApi core, EventListenerApi directListener) {
+    public DirectRoutingStrategy(CoreApi core) {
         this.core = core;
-        this.directListener = directListener;
+        this.directListener = new DirectRoutingListener(core);
     }
 
     @Override
@@ -69,10 +69,10 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     private Observable<ClaChannelSpi> findOpenedChannelTowards(URI destination) {
         return Observable.concat(
-                core.getLinkLocalTable().findCla(destination)
+                core.getLinkLocalTable().lookupCla(destination)
                         .toObservable(),
                 core.getRoutingTable().resolveEid(destination)
-                        .map(core.getLinkLocalTable()::findCla)
+                        .map(core.getLinkLocalTable()::lookupCla)
                         .flatMap(Maybe::toObservable))
                 .distinct();
     }
@@ -99,19 +99,20 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     }
 
     @Override
-    public Single<RoutingStrategyResult> routeLater(final Bundle bundle) {
+    public Single<RoutingStrategyResult> forwardLater(final Bundle bundle) {
         if (!bundle.isTagged("in_storage")) {
             return core.getStorage()
                     .store(bundle)
-                    .flatMap(this::forwardLater);
+                    .flatMap(this::routeLaterFromStorage);
         } else {
-            return forwardLater(bundle);
+            return routeLaterFromStorage(bundle);
         }
     }
 
-    private Single<RoutingStrategyResult> forwardLater(Bundle bundle) {
+    private Single<RoutingStrategyResult> routeLaterFromStorage(Bundle bundle) {
         final BundleId bid = bundle.bid;
         final URI destination = bundle.getDestination();
+
         Observable<URI> potentialClas = core.getRoutingTable().resolveEid(destination);
         core.getLogger().v(TAG, "forward later: "
                 + bundle.bid.getBidString() + " -> "
@@ -119,9 +120,10 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
         /* register a listener that will listen for LinkLocalEntryUp event
          * and pull the bundle from storage if there is a match */
-        // watch bundle for all potential ClaEid
+
+        // watch bundle for all potential cla-eid
         potentialClas
-                .map(claeid -> directListener.watch(Cla.getClaParametersUnsafe(claeid), bid))
+                .map(claeid -> directListener.watchBundle(claeid, bundle))
                 .subscribe();
 
         // then try to force an opportunity

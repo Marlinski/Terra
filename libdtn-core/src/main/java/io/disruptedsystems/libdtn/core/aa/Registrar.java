@@ -10,6 +10,7 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
@@ -157,7 +158,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         checkArgumentNotNull(cb);
 
         Registration registration = new Registration(eid, cb);
-        if (registrations.putIfAbsent(eid, registration) == null) {
+        if (registrations.putIfAbsent(Eid.getEndpoint(eid), registration) == null) {
             core.getLogger().i(TAG, "sink registered: " + eid
                     + " (cookie=" + registration.cookie + ") - "
                     + (cb == passiveRegistration ? "passive" : "active"));
@@ -298,7 +299,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         }
 
         // first we check if there's an AA that registered to the bundle destination EID.
-        Registration reg = registrations.get(bundle.getDestination());
+        Registration reg = registrations.get(Eid.getEndpoint(bundle.getDestination()));
         if (reg != null) {
             return deliverToRegistration(reg, bundle);
         }
@@ -309,18 +310,20 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
-        // this bundle have been detected to be local because it matched
-        // against either a node id, an alias or a CLA. So we try swaping the node-name with api:me
-        // which is only applicable for dtn-eid. If it is not a dtn-eid we reject.
+        // if the eid is not a dtn we cannot do anything at this point
         if (!Dtn.isDtnEid(bundle.getDestination())) {
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
+        // some registration may have used the api:me authority so we try to
+        // use it and see if it matches
         URI newEid = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
-        reg = registrations.get(newEid);
+        reg = registrations.get(Eid.getEndpoint(newEid));
         if (reg != null) {
             return deliverToRegistration(reg, bundle);
         }
+
+        // todo should we do prefix matching ?
 
         // we couldn't find a registration
         return Completable.error(new DeliveryFailure(UnregisteredEid));

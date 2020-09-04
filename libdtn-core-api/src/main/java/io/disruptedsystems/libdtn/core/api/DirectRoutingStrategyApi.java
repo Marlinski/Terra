@@ -17,6 +17,6 @@ public interface DirectRoutingStrategyApi extends RoutingStrategyApi {
      * @param bundle to route
      * @return a routing decision
      */
-    Single<RoutingStrategyResult> routeLater(final Bundle bundle);
+    Single<RoutingStrategyResult> forwardLater(final Bundle bundle);
 
 }

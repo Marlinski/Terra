@@ -5,6 +5,7 @@ import java.net.URI;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
@@ -55,18 +56,18 @@ public class DeliveryListener extends EventListener<URI> {
 
 
     public void watch(Bundle bundle) {
-        watch(bundle.getDestination(), bundle.bid);
+        watch(Eid.getEndpoint(bundle.getDestination()), bundle.bid);
         if (Dtn.isDtnEid(bundle.getDestination())) {
             URI apiMeSwap = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
-            watch(apiMeSwap, bundle.bid);
+            watch(Eid.getEndpoint(apiMeSwap), bundle.bid);
         }
     }
 
     public void unwatch(Bundle bundle) {
-        unwatch(bundle.getDestination(), bundle.bid);
+        unwatch(Eid.getEndpoint(bundle.getDestination()), bundle.bid);
         if (Dtn.isDtnEid(bundle.getDestination())) {
             URI apiMeSwap = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
-            unwatch(apiMeSwap, bundle.bid);
+            unwatch(Eid.getEndpoint(apiMeSwap), bundle.bid);
         }
     }
 

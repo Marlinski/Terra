@@ -1,7 +1,5 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import java.net.URI;
-
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.reactivex.rxjava3.core.Completable;
 

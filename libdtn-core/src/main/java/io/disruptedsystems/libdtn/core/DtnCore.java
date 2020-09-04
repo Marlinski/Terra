@@ -77,8 +77,7 @@ public class DtnCore implements CoreApi {
         /* routing */
         this.linkLocalRouting = new LinkLocalTable(this);
         this.routingTable = new RoutingTable(this);
-        this.directListener = new DirectRoutingListener(this);
-        this.directRouting = new DirectRoutingStrategy(this, directListener);
+        this.directRouting = new DirectRoutingStrategy(this);
         this.routingEngine = new RoutingEngine(this, directRouting);
         this.registrar = new Registrar(this);
 

@@ -54,7 +54,8 @@ public interface RoutingTableApi extends CoreComponentApi {
     void addRoute(URI to, URI nextHop);
 
     /**
-     * Resolve an Eid using this Routing Table.
+     * Resolve an Eid using this Routing Table and return an observable of cla-eid.
+     *
      * @param destination Eid of destination
      * @return Observable of BaseClaEid-Eid that can make forward progress toward destination
      */

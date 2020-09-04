@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LinkLocalTableApi;
@@ -84,9 +85,11 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
         if (!isEnabled()) {
             return null;
         }
-
+        if(Cla.isClaEid(eid)) {
+            return null;
+        }
         for (ClaChannelSpi cla : linkLocalTable) {
-            if (Eid.hasSameAuthority(cla.localEid(), eid)) {
+            if (Eid.matchAuthority(cla.localEid(), eid)) {
                 return cla.localEid();
             }
         }
@@ -94,11 +97,13 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
     }
 
     @Override
-    public Maybe<ClaChannelSpi> findCla(URI destination) {
+    public Maybe<ClaChannelSpi> lookupCla(URI destination) {
         if (!isEnabled()) {
             return Maybe.error(new ComponentIsDownException(TAG));
         }
-
+        if(Cla.isClaEid(destination)) {
+            return Maybe.empty();
+        }
         return Observable.fromIterable(linkLocalTable)
                 .filter(c -> Eid.hasSameAuthority(c.channelEid(), destination))
                 .lastElement();
@@ -108,7 +113,6 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
     public Set<ClaChannelSpi> dumpTable() {
         return Collections.unmodifiableSet(linkLocalTable);
     }
-
 
     @Subscribe
     public void onEvent(ChannelOpened event) {

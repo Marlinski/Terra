@@ -2,6 +2,10 @@ package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
 import java.net.URI;
 
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.storage.EventListener;
@@ -13,7 +17,7 @@ import io.marlinski.librxbus.Subscribe;
  *
  * @author Lucien Loiseau on 19/01/19.
  */
-public class DirectRoutingListener extends EventListener<URI> {
+public class DirectRoutingListener extends EventListener<String> {
 
     public static final String TAG = "DirectRoutingListener";
 
@@ -36,7 +40,7 @@ public class DirectRoutingListener extends EventListener<URI> {
     public void onEvent(LinkLocalEntryUp event) {
         /* deliver every bundle of interest */
         core.getLogger().i(TAG, "step 1: get all bundleOfInterest " + event.channel.channelEid());
-        getBundlesOfInterest(event.channel.channelEid()).subscribe(
+        getBundlesOfInterest(event.channel.channelEid().getAuthority()).subscribe(
                 bundleID -> {
                     core.getLogger().v(TAG, "step 1.1: pull from storage "
                             + bundleID.getBidString());
@@ -67,5 +71,11 @@ public class DirectRoutingListener extends EventListener<URI> {
                 });
     }
     // CHECKSTYLE END IGNORE LineLength
+
+    // we only watch the authority part of the cla-eid
+    public boolean watchBundle(URI claEid, Bundle bundle) {
+        watch(claEid.getAuthority(), bundle.bid);
+        return true;
+    }
 }
 

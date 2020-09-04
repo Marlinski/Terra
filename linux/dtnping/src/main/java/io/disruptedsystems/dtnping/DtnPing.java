@@ -99,19 +99,19 @@ public class DtnPing implements Callable<Void> {
                 Completable.create(s -> {
                     URI dest = recvbundle.getDestination();
 
-                    final String regex = "/dtnping/([0-9a-fA-F]+)?seq=([0-9]+)&ts=([0-9]+)";
+                    final String regex = "^/dtnping/([0-9a-fA-F]+)\\?seq=([0-9]+)&ts=([0-9]+)$";
                     Pattern r = Pattern.compile(regex);
-                    Matcher m = r.matcher(dest.getPath());
-                    if (!m.find()) {
-                        System.err.println("received malformed echo response:" + dest);
+                    Matcher m = r.matcher(Eid.getDemux(dest));
+                    if (!m.matches()) {
+                        System.err.println("received malformed echo response: " + dest);
+                        System.err.println(Eid.getDemux(dest));
                         s.onComplete();
                         return;
                     }
 
-                    String eid = m.group(1);
-                    String recvSessionId = m.group(2);
-                    int seq = Integer.parseInt(m.group(3));
-                    long timestamp = Long.parseLong(m.group(4));
+                    String recvSessionId = m.group(1);
+                    int seq = Integer.parseInt(m.group(2));
+                    long timestamp = Long.parseLong(m.group(3));
 
                     if (!recvSessionId.equals(sessionId)) {
                         System.err.println("received echo response from another session:"

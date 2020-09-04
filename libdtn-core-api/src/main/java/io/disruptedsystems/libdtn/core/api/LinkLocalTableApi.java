@@ -28,7 +28,7 @@ public interface LinkLocalTableApi extends CoreComponentApi {
      * @param destination eid to find
      * @return Maybe observable with the matching ClaChannelSpi
      */
-    Maybe<ClaChannelSpi> findCla(URI destination);
+    Maybe<ClaChannelSpi> lookupCla(URI destination);
 
     /**
      * Dump all channel from the link local table.

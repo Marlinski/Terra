@@ -90,7 +90,7 @@ public class RoutingEngine implements RoutingEngineApi {
             return findAlternateStrategy(bundle).route(bundle);
         } catch (NoAlternateStrategyFound nasf) {
             core.getLogger().d(TAG, "no alternate strategy found, route later: "+ bundle.bid.getBidString());
-            return directStrategy.routeLater(bundle);
+            return directStrategy.forwardLater(bundle);
         }
     }
 
