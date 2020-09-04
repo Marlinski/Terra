@@ -20,7 +20,6 @@ public class VolatileMemory {
         memoryLimit = limit;
     }
 
-
     /**
      * request to spend more volatile memory. Throws an exception if the array given as an
      * argument is bigger than the authorized memory remaining. Otherwise it returns a

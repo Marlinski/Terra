@@ -1,13 +1,11 @@
 package io.disruptedsystems.libdtn.core.spi;
 
-
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Set;
 
-import io.disruptedsystems.libdtn.common.data.eid.Cla;
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -17,6 +15,14 @@ import io.reactivex.rxjava3.core.Single;
  * @author Lucien Loiseau on 16/10/18.
  */
 public interface ConvergenceLayerSpi extends ModuleSpi {
+
+    /**
+     * query the convergence layer to check if a given URI is to be treated as local.
+     *
+     * @param uri
+     * @return true if uri is local, false otherwise.
+     */
+    boolean isLocalURI(URI uri);
 
     /**
      * When a BaseURIis started it should return an Observable of ClaChannelSpi used to

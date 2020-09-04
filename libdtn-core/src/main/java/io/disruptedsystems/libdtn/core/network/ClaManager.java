@@ -32,6 +32,16 @@ public class ClaManager implements ClaManagerApi {
     }
 
     @Override
+    public boolean isURILocal(URI eid) {
+        for(ConvergenceLayerSpi cla : clas) {
+            if(cla.isLocalURI(eid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void addCla(ConvergenceLayerSpi cla) {
         clas.add(cla);
         cla.start(core.getConf(), core.getLogger()).subscribe(

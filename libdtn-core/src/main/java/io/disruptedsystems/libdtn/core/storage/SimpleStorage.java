@@ -182,10 +182,6 @@ public class SimpleStorage extends CoreComponent {
              * preparing the parser. We just parse the file header and the primary block of
              * the bundle and then build a MetaBundle that will be use for processing
              */
-            BundleV7Item bundleParser = new BundleV7Item(
-                    core.getLogger(),
-                    core.getExtensionManager(),
-                    null);
             CborParser parser = CBOR.parser()
                     .cbor_open_array(2)
                     .cbor_parse_custom_item(
@@ -199,8 +195,7 @@ public class SimpleStorage extends CoreComponent {
                             () -> new PrimaryBlockItem(core.getLogger()),
                             (p, t, item) -> {
                                 MetaBundle meta = new MetaBundle(item.bundle);
-                                Storage.IndexEntry entry
-                                        = metaStorage.getEntryOrCreate(meta.bid, meta);
+                                Storage.IndexEntry entry = metaStorage.getEntryOrCreate(meta.bid, meta);
                                 entry.bundlePath = file.getAbsolutePath();
                                 entry.hasBlob = p.<FileHeaderItem>getReg(0).hasBlob;
                                 entry.blobPath = p.<FileHeaderItem>getReg(0).blobPath;

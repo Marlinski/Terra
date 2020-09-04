@@ -211,6 +211,7 @@ public class FileBlob extends Tag implements Blob {
 
         @Override
         public int write(ByteBuffer buffer) throws IOException {
+            open();
             int length = buffer.remaining();
             while (buffer.hasRemaining()) {
                 int b = buffer.get();

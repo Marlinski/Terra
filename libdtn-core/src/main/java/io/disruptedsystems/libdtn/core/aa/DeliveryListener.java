@@ -48,7 +48,7 @@ public class DeliveryListener extends EventListener<URI> {
                                                 .bundleLocalDeliverySuccessful(bundle);
                                     },
                                     e -> core.getBundleProtocol()
-                                            .bundleLocalDeliveryFailure(bundle, LocalEidApi.LocalEid.registered(event.eid), e)),
+                                            .bundleLocalDeliveryFailure(bundle, e)),
                             e -> {
                             });
                 });

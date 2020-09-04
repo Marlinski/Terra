@@ -39,7 +39,7 @@ public class DirectRoutingListener extends EventListener<String> {
     @Subscribe
     public void onEvent(LinkLocalEntryUp event) {
         /* deliver every bundle of interest */
-        core.getLogger().i(TAG, "step 1: get all bundleOfInterest " + event.channel.channelEid());
+        core.getLogger().i(TAG, "step 1: get all bundle for -> " + event.channel.channelEid().getAuthority());
         getBundlesOfInterest(event.channel.channelEid().getAuthority()).subscribe(
                 bundleID -> {
                     core.getLogger().v(TAG, "step 1.1: pull from storage "

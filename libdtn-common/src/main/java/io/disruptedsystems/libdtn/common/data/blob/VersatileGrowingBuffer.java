@@ -64,7 +64,7 @@ public class VersatileGrowingBuffer extends VolatileBlob {
                 .map(Blob::size)
                 .reduce(
                         0L,
-                        (a, b) -> a + b)
+                        Long::sum)
                 .blockingGet();
     }
 
@@ -103,11 +103,7 @@ public class VersatileGrowingBuffer extends VolatileBlob {
     @Override
     public WritableBlob getWritableBlob() {
         return new WritableBlob() {
-            {
-                {
-                    cur = blobs.getLast().getWritableBlob();
-                }
-            }
+            {{ cur = blobs.getLast().getWritableBlob(); }}
 
             private WritableBlob cur;
 

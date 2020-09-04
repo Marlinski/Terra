@@ -82,7 +82,7 @@ public class PrimaryBlock extends Block {
     private CrcFieldType crcType;
     private URI destination;
     private URI source;
-    private URI reportto;
+    private URI reportTo;
     private long creationTimestamp;
     private long sequenceNumber;
     private long lifetime;
@@ -100,7 +100,7 @@ public class PrimaryBlock extends Block {
         this.crcType = CrcFieldType.NO_CRC;
         this.destination = Dtn.nullEid();
         this.source = Api.me();
-        this.reportto = Dtn.nullEid();
+        this.reportTo = Dtn.nullEid();
         this.creationTimestamp = System.currentTimeMillis();
         this.sequenceNumber = sequence_counter++;
         bid = BundleId.create(this);
@@ -128,7 +128,7 @@ public class PrimaryBlock extends Block {
         this.procV7Flags = other.procV7Flags;
         this.source = other.source;
         this.destination = other.destination;
-        this.reportto = other.reportto;
+        this.reportTo = other.reportTo;
         this.creationTimestamp = other.creationTimestamp;
         this.sequenceNumber = other.sequenceNumber;
         this.lifetime = other.lifetime;
@@ -168,7 +168,7 @@ public class PrimaryBlock extends Block {
     }
 
     public URI getReportTo() {
-        return reportto;
+        return reportTo;
     }
 
     public long getCreationTimestamp() {
@@ -231,7 +231,7 @@ public class PrimaryBlock extends Block {
     }
 
     public void setReportTo(URI reportto) {
-        this.reportto = reportto;
+        this.reportTo = reportto;
     }
 
     public void setCreationTimestamp(long creationTimestamp) {

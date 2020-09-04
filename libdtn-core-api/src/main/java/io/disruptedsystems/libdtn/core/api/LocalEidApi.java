@@ -11,42 +11,11 @@ import java.util.Set;
  */
 public interface LocalEidApi {
 
-    abstract class LocalEid {
-        public URI eid;
-
-        LocalEid(URI eid) {
-            this.eid = eid;
-        }
-
-        public static Registered registered(URI eid) {
-            return new Registered(eid);
-        }
-
-        public static NodeId alias(URI eid) {
-            return new NodeId(eid);
-        }
-
-        public static LinkLocal link(URI eid) {
-            return new LinkLocal(eid);
-        }
-    }
-
-    class Registered extends LocalEid {
-        public Registered(URI eid) {
-            super(eid);
-        }
-    }
-
-    class NodeId extends LocalEid {
-        public NodeId(URI eid) {
-            super(eid);
-        }
-    }
-
-    class LinkLocal extends LocalEid {
-        public LinkLocal(URI eid) {
-            super(eid);
-        }
+    enum LookUpResult {
+        eidIsNotLocal,
+        eidMatchAARegistration,
+        eidMatchNodeId,
+        eidMatchCla,
     }
 
     /**
@@ -64,7 +33,7 @@ public interface LocalEidApi {
     Set<URI> aliases();
 
     /**
-     * Check if an EID is a node id (either local node-id or an alias).
+     * Check if an EID is one of the current node-id (either local node-id or an alias).
      *
      * @return true if eid is a local node id, false otherwise.
      */
@@ -72,12 +41,12 @@ public interface LocalEidApi {
 
     /**
      * check if an Eid is local. It checks if the eid
-     * - matches one of the local node-id or aliases
      * - matches a registered eid by an application agent
-     * - matches a CLA Eid in the link-local table.
+     * - matches one of the local node-id or aliases
+     * - matches a cla-eid in the link-local table.
      *
      * @param eid to check
-     * @return true if eid is local, false otherwise.
+     * @return the result of the lookup
      */
-    LocalEid isEidLocal(URI eid);
+    LookUpResult isEidLocal(URI eid);
 }

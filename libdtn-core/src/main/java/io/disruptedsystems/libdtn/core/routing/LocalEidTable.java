@@ -49,11 +49,11 @@ public class LocalEidTable implements LocalEidApi {
     // an EID is local if it matches a registration or if the authority
     // falls within local node namespace.
     @Override
-    public LocalEid isEidLocal(URI eid) {
+    public LocalEidApi.LookUpResult isEidLocal(URI eid) {
         try {
             // returns an eid if it matches with a registration
             if (core.getRegistrar().isRegistered(eid)) {
-                return new Registered(eid);
+                return LookUpResult.eidMatchAARegistration;
             }
         } catch (RegistrarApi.NullArgument
                 | RegistrarApi.RegistrarDisabled
@@ -64,15 +64,20 @@ public class LocalEidTable implements LocalEidApi {
         // returns true if it matches a node-id or an aliases
         URI nodeId = isEidNodeId(eid);
         if (nodeId != null) {
-            return new NodeId(nodeId);
+            return LookUpResult.eidMatchNodeId;
+        }
+
+        // returns true if it matches with an alias created by a CLA
+        if (core.getClaManager().isURILocal(eid)) {
+            return LookUpResult.eidMatchCla;
         }
 
         // returns true if it matches with link local table
         URI claEid = core.getLinkLocalTable().isEidLinkLocal(eid);
         if (claEid != null) {
-            return new LinkLocal(claEid);
+            return LookUpResult.eidMatchCla;
         }
 
-        return null;
+        return LookUpResult.eidIsNotLocal;
     }
 }

@@ -36,15 +36,13 @@ public interface DeliveryApi extends CoreComponentApi {
      * @param bundle     to deliver
      * @return completable that completes upon successful delivery, onerror otherwise.
      */
-    Completable deliver(LocalEidApi.LocalEid localMatch, Bundle bundle);
+    Completable deliver(LocalEidApi.LookUpResult localMatch, Bundle bundle);
 
     /**
      * take care of this bundle for later delivery.
-     * todo: probably not an ApiEid of delivery
      *
-     * @param localMatch to deliver the bundle to
      * @param bundle     to deliver
      */
-    void deliverLater(LocalEidApi.LocalEid localMatch, final Bundle bundle);
+    void deliverLater(final Bundle bundle);
 
 }

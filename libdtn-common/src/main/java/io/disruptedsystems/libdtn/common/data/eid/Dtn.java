@@ -17,13 +17,14 @@ public interface Dtn {
     /**
      * a dtn-eid is of the form:
      * <p>
-     * dtn-uri  = "dtn:" dtn-hier-part
-     * /= "dtn:none"
-     * <p>
-     * dtn-hier-part = "//" node-name name-delim demux ; a path-rootless
-     * node-name = 1*VCHAR
-     * name-delim = "/"
-     * demux = *VCHAR
+     *  dtn-uri  = "dtn:" dtn-hier-part
+     *          |= "dtn:none"
+     *
+     *  dtn-hier-part = "//" node-name name-delim demux ; a path-rootless
+     *  node-name     = 1*VCHAR
+     *  name-delim    = "/"
+     *  demux         = *VCHAR
+     * </p>
      *
      * @param uri
      * @throws InvalidDtnEid

@@ -83,9 +83,9 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.3 - step 1 */
         core.getLogger().v(TAG, "5.3-1: " + bundle.bid.getBidString());
-        LocalEidApi.LocalEid localMatch = core.getLocalEidTable().isEidLocal(bundle.getDestination());
-        if (localMatch != null) {
-            bundleLocalDelivery(localMatch, bundle);
+        LocalEidApi.LookUpResult isLocal = core.getLocalEidTable().isEidLocal(bundle.getDestination());
+        if (isLocal != LocalEidApi.LookUpResult.eidIsNotLocal) {
+            bundleLocalDelivery(isLocal, bundle);
             return;
         }
 
@@ -207,7 +207,7 @@ public class BundleProtocol implements BundleProtocolApi {
     }
 
     /* 5.7 */
-    private void bundleLocalDelivery(LocalEidApi.LocalEid localMatch, Bundle bundle) {
+    private void bundleLocalDelivery(LocalEidApi.LookUpResult localMatch, Bundle bundle) {
         bundle.tag("delivery_pending");
         /* 5.7 - step 1 */
         core.getLogger().v(TAG, "5.7-1 " + bundle.bid.getBidString());
@@ -217,7 +217,7 @@ public class BundleProtocol implements BundleProtocolApi {
         core.getLogger().v(TAG, "5.7-2 " + bundle.bid.getBidString());
         core.getDelivery().deliver(localMatch, bundle).subscribe(
                 () -> bundleLocalDeliverySuccessful(bundle),
-                deliveryFailure -> bundleLocalDeliveryFailure(bundle, localMatch, deliveryFailure));
+                deliveryFailure -> bundleLocalDeliveryFailure(bundle, deliveryFailure));
 
     }
 
@@ -234,10 +234,9 @@ public class BundleProtocol implements BundleProtocolApi {
 
     /* 5.7 - step 2 - delivery failure */
     @Override
-    public void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid localMatch, Throwable reason) {
+    public void bundleLocalDeliveryFailure(Bundle bundle, Throwable reason) {
         core.getLogger().i(TAG, "bundle could not be delivered to: "
                 + bundle.getDestination()
-                + " -- localMatch=" + localMatch.eid.toString()
                 + "  reason=" + ((reason instanceof DeliveryApi.DeliveryFailure)
                     ? ((DeliveryApi.DeliveryFailure)reason).reason.name()
                     : reason.getMessage())
@@ -247,7 +246,7 @@ public class BundleProtocol implements BundleProtocolApi {
             core.getStorage().store(bundle).subscribe(
                     b -> {
                         /* register for event and deliver later */
-                        core.getDelivery().deliverLater(localMatch, bundle);
+                        core.getDelivery().deliverLater(bundle);
                         endProcessing(bundle);
                     },
                     storageFailure -> {
@@ -259,7 +258,7 @@ public class BundleProtocol implements BundleProtocolApi {
             );
         } else {
             /* register for event and deliver later */
-            core.getDelivery().deliverLater(localMatch, bundle);
+            core.getDelivery().deliverLater(bundle);
         }
     }
 

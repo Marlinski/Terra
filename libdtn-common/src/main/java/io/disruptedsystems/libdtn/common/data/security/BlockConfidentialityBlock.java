@@ -156,7 +156,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
 
                     int encodedSize = encoder.observe(1024)
                             .map(ByteBuffer::remaining)
-                            .reduce(0, (a, b) -> a + b)
+                            .reduce(0, Integer::sum)
                             .blockingGet();
 
                     // malloc space for the new encrypted block

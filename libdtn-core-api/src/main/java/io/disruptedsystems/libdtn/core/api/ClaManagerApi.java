@@ -14,6 +14,15 @@ import io.reactivex.rxjava3.core.Single;
 public interface ClaManagerApi {
 
     /**
+     * return true if a eid is a node alias set by an underlying
+     * convergence-layer adapter (CLA).
+     *
+     * @param eid to query
+     * @return true if local, false otherwise
+     */
+    boolean isURILocal(URI eid);
+
+    /**
      * Add a new convergence-layer adapter (CLA).
      *
      * @param cla convergence layer adapter to add
@@ -27,5 +36,7 @@ public interface ClaManagerApi {
      * @return a single observable to the created {@link ClaChannelSpi}
      */
     Single<ClaChannelSpi> createOpportunity(URI eid);
+
+
 
 }

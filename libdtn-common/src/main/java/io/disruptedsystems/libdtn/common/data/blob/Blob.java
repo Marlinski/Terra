@@ -47,9 +47,9 @@ public interface Blob extends Taggable {
              Supplier<ByteBuffer> close) throws Exception;
 
     /**
-     * new {@link WritableBlob} from this VolatileBlob. The WritableBlob will lock the
-     * VolatileBlob for write-only operations. calling close() on the WritableBlob will unlock the
-     * VolatileBlob. Only one WritableBlob can be acquired from this single VolatileBlob at any
+     * new {@link WritableBlob} from this Blob. The WritableBlob will lock the
+     * Blob for write-only operations. calling close() on the WritableBlob will unlock the
+     * Blob. Only one WritableBlob can be acquired from this single Blob at any
      * given time.
      *
      * @return WritableBlob

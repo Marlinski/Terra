@@ -1,7 +1,13 @@
 package io.disruptedsystems.libdtn.module.cla.stcp;
 
-import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT;
-import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.Enumeration;
 
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
@@ -28,9 +34,8 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
+import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT;
+import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_LISTENING_PORT_DEFAULT;
 
 /**
  * Simple TCP (ClaStcpEid) is a TCP Convergence Layer Adapter (BaseClaEid) for the Bundle Protocol.
@@ -71,6 +76,46 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     public ConvergenceLayerStcp() {
     }
 
+    @Override
+    public boolean isLocalURI(URI uri) {
+        // check if uri is stcp-cla-eid
+        if (!ClaStcp.isClaStcpEid(uri)) {
+            return false;
+        }
+
+        // check if same port
+        int port = ClaStcp.getStcpPortUnsafe(uri);
+        if(port != this.port) {
+            return false;
+        }
+
+        // check if local host
+        String host = ClaStcp.getStcpHostUnsafe(uri);
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+
+            // check if 127.0.0.1
+            if (addr.isLoopbackAddress()) {
+                return true;
+            }
+
+            // otherwise we check if it matches any of our interface
+            Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+            while (e.hasMoreElements()) {
+                NetworkInterface n = (NetworkInterface) e.nextElement();
+                Enumeration<InetAddress> ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    if(ee.nextElement().equals(addr)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (SocketException | UnknownHostException ex) {
+            /* ignore */
+        }
+        return false;
+    }
+
     /**
      * set the remote tcp port for the STCP connection.
      *
@@ -91,6 +136,7 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         }
         server = new RxTCP.Server<>(port);
         logger.i(TAG, "starting a stcp server on port " + port);
+
         return server.start()
                 .map(tcpcon -> new Channel(tcpcon, false));
     }
@@ -146,7 +192,7 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
                 localEid = ClaStcp.create(tcpcon.getLocalHost(), tcpcon.getLocalPort());
                 logger.i(TAG, "new stcp channel openned (initiated="
                         + initiator + "): " + channelEid);
-            } catch(URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid e) {
+            } catch (URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid e) {
                 logger.e(TAG, "could not create stcp eid: " + e.toString());
                 close();
                 throw e;

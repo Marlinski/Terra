@@ -50,6 +50,11 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
         return "bows";
     }
 
+    @Override
+    public boolean isLocalURI(URI uri) {
+        return false;
+    }
+
     /**
      * Default constructor.
      */

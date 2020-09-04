@@ -34,10 +34,9 @@ public interface BundleProtocolApi {
      * Call this method if another component attempted to deliver a bundle but failed.
      *
      * @param bundle to process
-     * @param localMatch to deliver the bundle to
      * @param reason of the failure
      */
-    void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid localMatch, Throwable reason);
+    void bundleLocalDeliveryFailure(Bundle bundle,  Throwable reason);
 
     /**
      * Process Bundle that is expired.

@@ -293,7 +293,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     /* ------  DeliveryApi is the contract facing CoreApi ------- */
 
     @Override
-    public Completable deliver(LocalEidApi.LocalEid localMatch, Bundle bundle) {
+    public Completable deliver(LocalEidApi.LookUpResult localMatch, Bundle bundle) {
         if (!isEnabled()) {
             return Completable.error(new DeliveryFailure(DeliveryDisabled));
         }
@@ -304,9 +304,9 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return deliverToRegistration(reg, bundle);
         }
 
-        // if the device was detected to be local and it matched with a registration, then it must
+        // if the device was detected to be registration local, then the AA must
         // have been unregistered by then (should be very rare).
-        if (localMatch instanceof LocalEidApi.Registered) {
+        if (localMatch == LocalEidApi.LookUpResult.eidMatchAARegistration) {
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
@@ -341,7 +341,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public void deliverLater(LocalEidApi.LocalEid localMatch, Bundle bundle) {
+    public void deliverLater(Bundle bundle) {
         listener.watch(bundle);
     }
 
