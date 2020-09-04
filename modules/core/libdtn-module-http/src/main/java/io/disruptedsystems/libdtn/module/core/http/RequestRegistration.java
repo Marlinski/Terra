@@ -1,9 +1,9 @@
 package io.disruptedsystems.libdtn.module.core.http;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
@@ -34,18 +34,18 @@ public class RequestRegistration {
                         content+buff.toString(Charset.defaultCharset()))
                 .flatMap((sink) -> {
                     try {
-                        if (core.getRegistrar().isRegistered(sink)) {
+                        if (core.getRegistrar().isRegistered(new URI(sink))) {
                             return res.setStatus(HttpResponseStatus.CONFLICT)
                                     .writeString(just("sink is already registered: " + sink))
                                     .writeString(just(core.getRegistrar().printTable()));
                         } else {
-                            String cookie = core.getRegistrar().register(sink);
+                            String cookie = core.getRegistrar().register(new URI(sink));
                             return res.setStatus(HttpResponseStatus.OK)
                                     .writeString(just("sink registered: " + sink))
                                     .writeString(just("registration cookie: " + cookie))
                                     .writeString(just(core.getRegistrar().printTable()));
                         }
-                    } catch(RegistrarApi.RegistrarException re) {
+                    } catch(RegistrarApi.RegistrarException | URISyntaxException re) {
                         return res.setStatus(HttpResponseStatus.BAD_REQUEST)
                                 .writeString(just("sink is not valid"));
                     }
@@ -58,11 +58,11 @@ public class RequestRegistration {
                 .flatMap((sink) -> {
                     try {
                         // todo fix cookie parameter
-                        core.getRegistrar().unregister(sink, sink);
+                        core.getRegistrar().unregister(new URI(sink), sink);
                         return res.setStatus(HttpResponseStatus.OK)
                                 .writeString(just("sink unregistered: " + sink))
                                 .writeString(just(core.getRegistrar().printTable()));
-                    } catch(RegistrarApi.RegistrarException re) {
+                    } catch(RegistrarApi.RegistrarException | URISyntaxException re) {
                         return res.setStatus(HttpResponseStatus.BAD_REQUEST)
                                 .writeString(just("request not valid"));
                     }

@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.module.core.http;
 
+import java.net.URI;
 import java.util.Set;
 
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -24,16 +25,16 @@ public class RequestConfiguration {
     }
 
     private Action confLocalEID = (params, req, res) -> {
-        final String localeid = core.getLocalEid().nodeId().getEidString();
+        final URI localeid = core.getLocalEidTable().nodeId();
         return res.setStatus(HttpResponseStatus.OK).writeString(just("localeid=" + localeid));
     };
 
     private Action confAliases = (params, req, res) -> {
-        final Set<Eid> aliases = core.getLocalEid().aliases();
+        final Set<URI> aliases = core.getLocalEidTable().aliases();
 
         return res.setStatus(HttpResponseStatus.OK).writeString(
                 Observable.from(aliases)
-                        .flatMap((a) -> just(a.getEidString() + "\n")));
+                        .flatMap((a) -> just(a + "\n")));
     };
 
     private Action dumpConfiguration = (params, req, res) ->

@@ -11,6 +11,7 @@ import static io.disruptedsystems.libdtn.common.data.security.CipherSuites.BCB_A
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -41,7 +42,7 @@ public class BundleEncryptionTest {
     @Test
     public void testSimpleBundleEncryption() {
         System.out.println("[+] bundle: testing encryption");
-        Log logger = new SimpleLogger();
+        Log logger = new NullLogger();
         Bundle[] bundles = {
                 testBundle1(),
                 testBundle2(),

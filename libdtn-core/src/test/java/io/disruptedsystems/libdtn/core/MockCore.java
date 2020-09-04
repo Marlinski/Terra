@@ -23,10 +23,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProces
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessor;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidSspParser;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.api.ClaManagerApi;
@@ -50,18 +46,13 @@ public class MockCore implements CoreApi {
     }
 
     @Override
-    public LocalEidApi getLocalEid() {
+    public LocalEidApi getLocalEidTable() {
         return null;
     }
 
     @Override
     public ExtensionManagerApi getExtensionManager() {
         return new ExtensionManagerApi() {
-            @Override
-            public EidFactory getEidFactory() {
-                return new BaseEidFactory();
-            }
-
             @Override
             public BlockFactory getBlockFactory() {
                 return null;
@@ -84,14 +75,6 @@ public class MockCore implements CoreApi {
 
             @Override
             public void addExtensionBlock(int type, Supplier<CanonicalBlock> block, Supplier<CborParser> parser, Supplier<CborEncoder> serializer, Supplier<BlockProcessor> processor) throws BlockTypeAlreadyManaged {
-            }
-
-            @Override
-            public void addExtensionClaEid(String clName, ClaEidParser parser) {
-            }
-
-            @Override
-            public void addExtensionEid(int schemeId, String schemeStr, EidSspParser ssPparser) {
             }
         };
     }

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -22,7 +23,6 @@ import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
 
 import org.junit.Test;
 
@@ -49,7 +49,7 @@ public class BundleV7Test {
         Bundle bundle = new Bundle();
         bundle.setDestination(URI.create("ipn:5.12"));
         bundle.setSource(makeSourceEid());
-        bundle.setReportto(Dtn.nullEid());
+        bundle.setReportTo(Dtn.nullEid());
         bundle.bid = BundleId.create(bundle);
         return bundle;
     }

@@ -1,10 +1,8 @@
 package io.disruptedsystems.libdtn.core.api;
 
+import java.net.URI;
 import java.util.Set;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 
 /**
  * API to request the local Eid of the node.
@@ -13,40 +11,40 @@ import io.disruptedsystems.libdtn.common.data.eid.Eid;
  */
 public interface LocalEidApi {
 
-    abstract class LocalEid<T> {
-        public T eid;
+    abstract class LocalEid {
+        public URI eid;
 
-        LocalEid(T eid) {
+        LocalEid(URI eid) {
             this.eid = eid;
         }
 
-        public static Registered registered(String eid) {
+        public static Registered registered(URI eid) {
             return new Registered(eid);
         }
 
-        public static NodeId alias(Eid eid) {
+        public static NodeId alias(URI eid) {
             return new NodeId(eid);
         }
 
-        public static LinkLocal link(ClaEid eid) {
+        public static LinkLocal link(URI eid) {
             return new LinkLocal(eid);
         }
     }
 
-    class Registered extends LocalEid<String> {
-        public Registered(String eid) {
+    class Registered extends LocalEid {
+        public Registered(URI eid) {
             super(eid);
         }
     }
 
-    class NodeId extends LocalEid<Eid> {
-        public NodeId(Eid eid) {
+    class NodeId extends LocalEid {
+        public NodeId(URI eid) {
             super(eid);
         }
     }
 
-    class LinkLocal extends LocalEid<ClaEid> {
-        public LinkLocal(ClaEid eid) {
+    class LinkLocal extends LocalEid {
+        public LinkLocal(URI eid) {
             super(eid);
         }
     }
@@ -56,21 +54,21 @@ public interface LocalEidApi {
      *
      * @return local Eid
      */
-    DtnEid nodeId();
+    URI nodeId();
 
     /**
      * Return the set of all aliases for current node.
      *
      * @return Set of Eid
      */
-    Set<Eid> aliases();
+    Set<URI> aliases();
 
     /**
      * Check if an EID is a node id (either local node-id or an alias).
      *
      * @return true if eid is a local node id, false otherwise.
      */
-    Eid isEidNodeId(Eid eid);
+    URI isEidNodeId(URI eid);
 
     /**
      * check if an Eid is local. It checks if the eid
@@ -81,5 +79,5 @@ public interface LocalEidApi {
      * @param eid to check
      * @return true if eid is local, false otherwise.
      */
-    LocalEid isEidLocal(Eid eid);
+    LocalEid isEidLocal(URI eid);
 }

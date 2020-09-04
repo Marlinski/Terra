@@ -1,16 +1,18 @@
 package io.disruptedsystems.libdtn.core.spi;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 
 /**
  * A ClaChannelSpi is an abstraction of the underlying transport protocol used by a CLA
- * and should be able to receive and send DtnEid Bundles.
+ * and should be able to receive and send Bundles.
  *
  * @author Lucien Loiseau on 04/09/18.
  */
@@ -35,14 +37,14 @@ public interface ClaChannelSpi {
      *
      * @return Eid of this channel
      */
-    ClaEid channelEid();
+    URI channelEid();
 
     /**
      * return the Eid that represents the local host for this specific Channel.
      *
      * @return Eid of this channel
      */
-    ClaEid localEid();
+    URI localEid();
 
     /**
      * Receive a deserialized stream of Bundle from this Convergence Layer.

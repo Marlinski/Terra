@@ -2,17 +2,19 @@ package io.disruptedsystems.libdtn.module.cla.stcp;
 
 import static junit.framework.TestCase.fail;
 
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -65,10 +67,10 @@ public class ConvergenceLayerStcpTest {
         Bundle[] recv = {null, null, null, null, null, null};
         int[] i = {0};
 
-        BaseClaEid eid = null;
+        URI eid = null;
         try {
-            eid = new ClaStcpEid("127.0.0.1", 4591, "/test");
-        } catch (EidFormatException efe) {
+            eid = ClaStcp.create("127.0.0.1", 4591, "/test");
+        } catch (URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid efe) {
             fail();
         }
         new ConvergenceLayerStcp()
@@ -142,10 +144,10 @@ public class ConvergenceLayerStcpTest {
 
         CountDownLatch lock = new CountDownLatch(10);
 
-        BaseClaEid eid = null;
+        URI eid = null;
         try {
-            eid = new ClaStcpEid("127.0.0.1", 4592, "/test");
-        } catch (EidFormatException efe) {
+            eid = ClaStcp.create("127.0.0.1", 4592, "/test");
+        } catch (URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid efe) {
             fail();
         }
         new ConvergenceLayerStcp()

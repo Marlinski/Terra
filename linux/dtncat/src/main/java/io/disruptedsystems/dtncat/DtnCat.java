@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 
 import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
@@ -19,9 +21,7 @@ import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.reactivex.rxjava3.core.Completable;
@@ -122,10 +122,10 @@ public class DtnCat implements Callable<Void> {
         return bundle;
     }
 
-    private void listenBundle() {
+    private void listenBundle() throws URISyntaxException {
         ActiveRegistrationCallback cb = (recvbundle) ->
                 Completable.create(s -> {
-                    logger.i(TAG, "bundle received from: " + recvbundle.getSource().getEidString());
+                    logger.i(TAG, "bundle received from: " + recvbundle.getSource());
                     try {
                         BufferedOutputStream bos = new BufferedOutputStream(System.out);
                         recvbundle.getPayloadBlock().data.observe().subscribe(
@@ -149,7 +149,7 @@ public class DtnCat implements Callable<Void> {
 
         agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory, logger);
         if (cookie == null) {
-            agent.register(eid, cb).subscribe(
+            agent.register(new URI(eid), cb).subscribe(
                     cookie -> {
                         logger.i(TAG, "eid registered. cookie: " + cookie);
                     },
@@ -160,7 +160,7 @@ public class DtnCat implements Callable<Void> {
                     });
         } else {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
-            agent.reAttach(eid, cookie, cb).subscribe(
+            agent.reAttach(new URI(eid), cookie, cb).subscribe(
                     b -> logger.i(TAG, "re-attach to registered eid"),
                     e -> {
                         logger.e(TAG, "could not re-attach to eid: " + eid + " - "
@@ -175,11 +175,11 @@ public class DtnCat implements Callable<Void> {
             if (deid == null) {
                 throw new IOException("destination must be set");
             }
-            Eid destination = new BaseEidFactory().create(deid);
+            URI destination = new URI(deid);
             Bundle bundle = new Bundle(destination, lifetime);
             if (report != null) {
-                Eid reportTo = new BaseEidFactory().create(report);
-                bundle.setReportto(reportTo);
+                URI reportTo = new URI(report);
+                bundle.setReportTo(reportTo);
             }
 
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, null, logger);
@@ -201,7 +201,7 @@ public class DtnCat implements Callable<Void> {
                         logger.e(TAG, "error: " + err.getMessage());
                         System.exit(1);
                     });
-        } catch (IOException | WritableBlob.BlobOverflowException | EidFormatException e) {
+        } catch (IOException | WritableBlob.BlobOverflowException | URISyntaxException e) {
             /* ignore */
             logger.e(TAG, "sending error: " + e.getMessage());
         }

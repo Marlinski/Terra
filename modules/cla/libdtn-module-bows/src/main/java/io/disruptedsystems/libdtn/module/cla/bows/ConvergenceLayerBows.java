@@ -5,6 +5,7 @@ import com.neovisionaries.ws.client.WebSocketExtension;
 import com.neovisionaries.ws.client.WebSocketFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
@@ -12,9 +13,8 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -57,11 +57,6 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     }
 
     @Override
-    public ClaEidParser getClaEidParser() {
-        return new ClaBowsEidParser();
-    }
-
-    @Override
     public Observable<ClaChannelSpi> start(ConfigurationApi conf, Log logger) {
         return Observable.error(new Throwable("operation not supported"));
     }
@@ -76,15 +71,15 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     }
 
     @Override
-    public Single<ClaChannelSpi> open(ClaEid peer) {
-        if (peer instanceof ClaBowsEid) {
-            return open(((ClaBowsEid) peer).getUri());
+    public Single<ClaChannelSpi> open(URI peer)  {
+        if (ClaBows.isClaBowsEid(peer)) {
+            return openWebSocket(ClaBows.getWebsocketUrlUnsafe(peer));
         } else {
             return Single.error(new Throwable("peer is not a ConvergenceLayerStcp peer"));
         }
     }
 
-    private Single<ClaChannelSpi> open(URI webSocketUrl) {
+    private Single<ClaChannelSpi> openWebSocket(URI webSocketUrl) {
         return Single.just(webSocketUrl)
                 .map(uri -> new WebSocketFactory()
                         .createSocket(uri)
@@ -98,19 +93,19 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     public class Channel implements ClaChannelSpi {
 
         WebSocket ws;
-        ClaBowsEid channelEid;
+        URI channelEid;
 
         /**
          * Constructor.
          *
          * @param ws a connected websocket
          */
-        public Channel(WebSocket ws) throws EidFormatException {
+        public Channel(WebSocket ws) throws Cla.InvalidClaEid, Dtn.InvalidDtnEid, URISyntaxException {
             this.ws = ws;
             try {
-                channelEid = new ClaBowsEid(ws.getURI());
-                logger.i(TAG, "new bows channel openned: " + channelEid.getEidString());
-            } catch(EidFormatException e) {
+                channelEid = ClaBows.create(ws.getURI());
+                logger.i(TAG, "new bows channel openned: " + channelEid);
+            } catch(URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid e) {
                 logger.i(TAG, "could not create bows eid: " + e.toString());
                 close();
                 throw e;
@@ -123,12 +118,12 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
         }
 
         @Override
-        public ClaBowsEid channelEid() {
+        public URI channelEid() {
             return channelEid;
         }
 
         @Override
-        public ClaBowsEid localEid() {
+        public URI localEid() {
             return null;
         }
 

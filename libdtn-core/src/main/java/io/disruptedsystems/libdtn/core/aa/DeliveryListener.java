@@ -1,9 +1,10 @@
 package io.disruptedsystems.libdtn.core.aa;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
@@ -13,7 +14,7 @@ import io.marlinski.librxbus.Subscribe;
 /**
  * DeliveryListener listen for active registration and forward matching undelivered bundle.
  */
-public class DeliveryListener extends EventListener<String> {
+public class DeliveryListener extends EventListener<URI> {
 
     private static final String TAG = "DeliveryListener";
 
@@ -54,32 +55,18 @@ public class DeliveryListener extends EventListener<String> {
 
 
     public void watch(Bundle bundle) {
-        watch(bundle.getDestination().getEidString(), bundle.bid);
-        if (bundle.getDestination() instanceof DtnEid) {
-            try {
-                ApiEid apiMeSwap = new ApiEid(((DtnEid) bundle.getDestination()).getPath());
-                watch(apiMeSwap.getEidString(), bundle.bid);
-            } catch (EidFormatException e) {
-                core.getLogger().e(TAG, "couldn't swap api:me name for this eid: "
-                        + bundle.getDestination().getEidString()
-                        + " -- " + bundle.bid.getBidString());
-                /* ignore */
-            }
+        watch(bundle.getDestination(), bundle.bid);
+        if (Dtn.isDtnEid(bundle.getDestination())) {
+            URI apiMeSwap = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
+            watch(apiMeSwap, bundle.bid);
         }
     }
 
     public void unwatch(Bundle bundle) {
-        unwatch(bundle.getDestination().getEidString(), bundle.bid);
-        if (bundle.getDestination() instanceof DtnEid) {
-            try {
-                ApiEid apiMeSwap = new ApiEid(((DtnEid) bundle.getDestination()).getPath());
-                unwatch(apiMeSwap.getEidString(), bundle.bid);
-            } catch (EidFormatException e) {
-                core.getLogger().e(TAG, "couldn't swap api:me name for this eid: "
-                        + bundle.getDestination().getEidString()
-                        + " -- " + bundle.bid.getBidString());
-                /* ignore */
-            }
+        unwatch(bundle.getDestination(), bundle.bid);
+        if (Dtn.isDtnEid(bundle.getDestination())) {
+            URI apiMeSwap = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
+            unwatch(apiMeSwap, bundle.bid);
         }
     }
 

@@ -1,13 +1,12 @@
 package io.disruptedsystems.libdtn.core.routing;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import java.net.URI;
+import java.util.Set;
+
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
-import java.util.Set;
 
 /**
  * LocalEidTable keeps track of current node local Eid and aliases.
@@ -22,57 +21,56 @@ public class LocalEidTable implements LocalEidApi {
 
     public LocalEidTable(CoreApi core) {
         this.core = core;
-        core.getLogger().i(TAG, "localEid=" + nodeId().getEidString());
+        core.getLogger().i(TAG, "localEid=" + nodeId().toString());
     }
 
-    public DtnEid nodeId() {
-        return core.getConf().<DtnEid>get(ConfigurationApi.CoreEntry.LOCAL_EID)
-                .value().copy();
+    public URI nodeId() {
+        return core.getConf().<URI>get(ConfigurationApi.CoreEntry.LOCAL_EID)
+                .value();
     }
 
-    public Set<Eid> aliases() {
-        return core.getConf().<Set<Eid>>get(ConfigurationApi.CoreEntry.ALIASES).value();
+    public Set<URI> aliases() {
+        return core.getConf().<Set<URI>>get(ConfigurationApi.CoreEntry.ALIASES).value();
     }
 
     @Override
-    public Eid isEidNodeId(Eid eid) {
-        if (nodeId().isAuthoritativeOver(eid)) {
+    public URI isEidNodeId(URI eid) {
+        if (nodeId().getAuthority().equals(eid.getAuthority())) {
             return nodeId();
         }
-        for (Eid alias : aliases()) {
-            if (alias.isAuthoritativeOver(eid)) {
+        for (URI alias : aliases()) {
+            if (alias.getAuthority().equals(eid.getAuthority())) {
                 return alias;
             }
         }
         return null;
     }
 
-    // all local EIDs and aliases are singleton
-    // We assume that such singleton creates a namespace for which any
-    // eid with such prefix belongs to.
+    // an EID is local if it matches a registration or if the authority
+    // falls within local node namespace.
     @Override
-    public LocalEid isEidLocal(Eid eid) {
+    public LocalEid isEidLocal(URI eid) {
         try {
             // returns an eid if it matches with a registration
-            if(core.getRegistrar().isRegistered(eid.getEidString())) {
-                return new Registered(eid.getEidString());
+            if (core.getRegistrar().isRegistered(eid)) {
+                return new Registered(eid);
             }
-        } catch(RegistrarApi.NullArgument
+        } catch (RegistrarApi.NullArgument
                 | RegistrarApi.RegistrarDisabled
                 | RegistrarApi.InvalidEid ignored) {
             // do nothing
         }
 
         // returns true if it matches a node-id or an aliases
-        Eid nodeId = isEidNodeId(eid);
-        if(nodeId != null) {
+        URI nodeId = isEidNodeId(eid);
+        if (nodeId != null) {
             return new NodeId(nodeId);
         }
 
         // returns true if it matches with link local table
-        ClaEid claId = core.getLinkLocalTable().isEidLinkLocal(eid);
-        if(claId != null) {
-            return new LinkLocal(claId);
+        URI claEid = core.getLinkLocalTable().isEidLinkLocal(eid);
+        if (claEid != null) {
+            return new LinkLocal(claEid);
         }
 
         return null;

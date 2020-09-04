@@ -14,7 +14,8 @@ import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.AdministrativeRecordSerializer;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.core.api.BundleProtocolApi;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -63,9 +64,9 @@ public class BundleProtocol implements BundleProtocolApi {
     public void bundleTransmission(Bundle bundle) {
         /* 5.2 - step 1 */
         core.getLogger().v(TAG, "5.2-1 " + bundle.bid.getBidString());
-        if (!bundle.getSource().equals(DtnEid.nullEid())
-                && (core.getLocalEid().isEidNodeId(bundle.getSource()) != null)) {
-            bundle.setSource(core.getLocalEid().nodeId());
+        if (!Dtn.isNullEid(bundle.getSource())
+                && (core.getLocalEidTable().isEidNodeId(bundle.getSource()) != null)) {
+            bundle.setSource(core.getLocalEidTable().nodeId());
         }
         bundle.tag("dispatch_pending");
 
@@ -78,11 +79,11 @@ public class BundleProtocol implements BundleProtocolApi {
     @Override
     public void bundleDispatching(Bundle bundle) {
         core.getLogger().i(TAG, "dispatching bundle: " + bundle.bid.getBidString()
-                + " to Eid: " + bundle.getDestination().getEidString());
+                + " to Eid: " + bundle.getDestination());
 
         /* 5.3 - step 1 */
         core.getLogger().v(TAG, "5.3-1: " + bundle.bid.getBidString());
-        LocalEidApi.LocalEid<?> localMatch = core.getLocalEid().isEidLocal(bundle.getDestination());
+        LocalEidApi.LocalEid localMatch = core.getLocalEidTable().isEidLocal(bundle.getDestination());
         if (localMatch != null) {
             bundleLocalDelivery(localMatch, bundle);
             return;
@@ -142,7 +143,7 @@ public class BundleProtocol implements BundleProtocolApi {
 
         /* 5.4.2 - step 2 */
         core.getLogger().v(TAG, "5.4.2-2 " + bundle.bid.getBidString());
-        if (core.getLocalEid().isEidLocal(bundle.getDestination()) != null) {
+        if (core.getLocalEidTable().isEidLocal(bundle.getDestination()) != null) {
             bundle.removeTag("forward_pending");
             bundleDiscarding(bundle);
         } else {
@@ -233,9 +234,9 @@ public class BundleProtocol implements BundleProtocolApi {
 
     /* 5.7 - step 2 - delivery failure */
     @Override
-    public void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid<?> localMatch, Throwable reason) {
+    public void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid localMatch, Throwable reason) {
         core.getLogger().i(TAG, "bundle could not be delivered to: "
-                + bundle.getDestination().getEidString()
+                + bundle.getDestination()
                 + " -- localMatch=" + localMatch.eid.toString()
                 + "  reason=" + ((reason instanceof DeliveryApi.DeliveryFailure)
                     ? ((DeliveryApi.DeliveryFailure)reason).reason.name()
@@ -303,8 +304,8 @@ public class BundleProtocol implements BundleProtocolApi {
             List<Bundle> reports = bundle.getTagAttachment("status-reports");
             for (Bundle report : reports) {
                 core.getLogger().i(TAG, "sending status report to: "
-                        + report.getDestination().getEidString());
-                report.setSource(core.getLocalEid().nodeId());
+                        + report.getDestination());
+                report.setSource(core.getLocalEidTable().nodeId());
                 bundleDispatching(report);
             }
         }
@@ -314,7 +315,7 @@ public class BundleProtocol implements BundleProtocolApi {
     private void createStatusReport(StatusReport.StatusAssertion assertion,
                                     Bundle bundle,
                                     StatusReport.ReasonCode reasonCode) {
-        if (bundle.getReportto().equals(DtnEid.nullEid())) {
+        if (Dtn.isNullEid(bundle.getReportTo())) {
             return;
         }
 
@@ -342,7 +343,7 @@ public class BundleProtocol implements BundleProtocolApi {
         }
 
         /* create the bundle that will carry this status report back to the reporting node */
-        Bundle report = new Bundle(bundle.getReportto());
+        Bundle report = new Bundle(bundle.getReportTo());
 
         /* get size of status report for the payload */
         CborEncoder enc = AdministrativeRecordSerializer.encode(statusReport);

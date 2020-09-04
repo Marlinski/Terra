@@ -6,9 +6,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Ipn;
 
+import static io.disruptedsystems.libdtn.common.data.eid.Api.isApiEid;
+import static io.disruptedsystems.libdtn.common.data.eid.Api.swapApiMe;
+import static io.disruptedsystems.libdtn.common.data.eid.Cla.isClaEid;
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.isDtnEid;
+import static io.disruptedsystems.libdtn.common.data.eid.Ipn.isIpnEid;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -20,134 +26,152 @@ import static org.junit.Assert.fail;
  * @author Lucien Loiseau on 20/09/18.
  */
 public class EidTest {
-
-    @Test
-    public void testApiEid() {
-        System.out.println("[+] eid: testing ApiEid Scheme");
-        try {
-            URI apiEid2 = Api.me();
-            assertEquals("dtn://api:me/", apiEid2.toString());
-            assertEquals("dtn", apiEid2.getScheme());
-            assertEquals("//api:me/", apiEid2.getSchemeSpecificPart());
-            assertEquals("api:me", apiEid2.getAuthority());
-            assertEquals("/", apiEid2.getPath());
-
-            URI apiEid3 = new URI("");
-            assertEquals("dtn://api:me/", apiEid3.toString());
-            assertEquals("dtn", apiEid3.getScheme());
-            assertEquals("//api:me/", apiEid3.getSchemeSpecificPart());
-            assertEquals("api:me", apiEid3.getAuthority());
-            assertEquals("/", apiEid3.getPath());
-
-            URI apiEid4 = new URI("/");
-            assertEquals("dtn://api:me/", apiEid4.toString());
-            assertEquals("dtn", apiEid4.getScheme());
-            assertEquals("//api:me/", apiEid4.getSchemeSpecificPart());
-            assertEquals("api:me", apiEid4.getAuthority());
-            assertEquals("", apiEid4.getPath());
-
-            URI apiEid5 = new URI("/hello");
-            assertEquals("dtn://api:me/hello", apiEid5.toString());
-            assertEquals("dtn", apiEid5.getScheme());
-            assertEquals("//api:me/hello", apiEid5.getSchemeSpecificPart());
-            assertEquals("api:me", apiEid5.getAuthority());
-            assertEquals("hello", apiEid5.getPath());
-
-            URI apiEid6 = new URI("/hello/world");
-            assertEquals("dtn://api:me/hello/world", apiEid6.toString());
-            assertEquals("dtn", apiEid6.getScheme());
-            assertEquals("//api:me/hello/world", apiEid6.getSchemeSpecificPart());
-            assertEquals("api:me", apiEid6.getAuthority());
-            assertEquals("hello/world", apiEid6.getPath());
-
-            URI eid = new URI("dtn://api:me/null/");
-            assertEquals("dtn://api:me/null/", eid.toString());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
     @Test
     public void testIpnEid() {
         try {
             System.out.println("[+] eid: testing IpnEid Scheme");
-            URI ipnEid = new URI("ipn:0.0");
-            assertEquals("ipn:0.0", ipnEid.toString());
-            assertEquals(0, Ipn.getNodeNumber(ipnEid));
-            assertEquals(0, Ipn.getServiceNumber(ipnEid));
+            URI ipn = new URI("ipn:0.0");
+            assertEquals("ipn:0.0", ipn.toString());
+            assertEquals(0, Ipn.getNodeNumber(ipn));
+            assertEquals(0, Ipn.getServiceNumber(ipn));
+            assertEquals(0, Ipn.getNodeNumberUnsafe(ipn));
+            assertEquals(0, Ipn.getServiceNumberUnsafe(ipn));
 
-            ipnEid = new URI("ipn:15.32");
-            assertEquals("ipn:15.32", ipnEid.toString());
-            assertEquals(15, Ipn.getNodeNumber(ipnEid));
-            assertEquals(32, Ipn.getServiceNumber(ipnEid));
-        } catch (URISyntaxException | Ipn.InvalidIpnEid eid) {
-            fail(eid.getMessage());
+            ipn = new URI("ipn:5.12");
+            assertEquals("ipn:5.12", ipn.toString());
+            assertEquals(5, Ipn.getNodeNumber(ipn));
+            assertEquals(12, Ipn.getServiceNumber(ipn));
+            assertEquals(5, Ipn.getNodeNumberUnsafe(ipn));
+            assertEquals(12, Ipn.getServiceNumberUnsafe(ipn));
+
+            ipn = new URI("ipn:node.32");
+            assertEquals("ipn:node.32", ipn.toString());
+            assertFalse(isIpnEid(ipn));
+        } catch (URISyntaxException | Ipn.InvalidIpnEid e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+
+        try {
+            URI ipn = new URI("ipn:node.32");
+            int x = Ipn.getNodeNumber(ipn);
+            fail();
+        } catch (URISyntaxException | Ipn.InvalidIpnEid e) {
+            assertTrue(true);
+        }
+
+        try {
+            URI ipn = new URI("ipn:node.32");
+            int x = Ipn.getServiceNumber(ipn);
+            fail();
+        } catch (URISyntaxException | Ipn.InvalidIpnEid e) {
+            assertTrue(true);
         }
     }
 
     @Test
     public void testDtnEid() {
-        System.out.println("[+] eid: testing DtnEid Scheme");
+        System.out.println("[+] eid: testing dtn Scheme");
         try {
-            URI dtnnone = Dtn.nullEid();
-            assertEquals("dtn:none", dtnnone.toString());
-            assertEquals(true, Dtn.isNullEid(dtnnone));
+            URI dtn = Dtn.nullEid();
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertTrue(Dtn.isNullEid(dtn));
+            assertEquals("dtn:none", dtn.toString());
 
+            dtn = Dtn.generate();
+            assertTrue(Dtn.isDtnEid(dtn));
 
-            URI dtnping = new URI("dtn", "//marsOrbital/pingservice/", null);
-            assertEquals("dtn://marsOrbital/pingservice/", dtnping.toString());
-            assertTrue(Dtn.isSingleton(dtnping));
-            assertEquals("pingservice", dtnping.getPath());
-/*
-            URI dtnall = new URI("marsOrbital", "~all");
-            assertEquals("dtn://marsOrbital/~all", dtnall.toString());
-            assertFalse(dtnall.isSingleton());
-            assertEquals("~all", dtnall.getPath());
+            dtn = Dtn.create("com.example");
+            assertEquals("dtn://com.example/", dtn.toString());
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertEquals("/", dtn.getPath());
+            assertTrue(Dtn.isSingleton(dtn));
 
-            URI colonyall = new URI("nasa.gov", "~mars/colony/1/all");
-            assertEquals("dtn://nasa.gov/~mars/colony/1/all", colonyall.toString());
-            assertFalse(colonyall.isSingleton());
-            assertEquals("~mars/colony/1/all", colonyall.getPath());
+            dtn = Dtn.create("com.example", "/sink");
+            assertEquals("dtn://com.example/sink", dtn.toString());
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertTrue(Dtn.isSingleton(dtn));
 
-            URI testParse = eidFactory.create("dtn://nasa.gov/~mars/colony/1/all");
-            assertEquals("dtn://nasa.gov/~mars/colony/1/all", testParse.toString());
-            assertFalse(colonyall.isSingleton());
-            assertEquals("~mars/colony/1/all", colonyall.getPath());
+            dtn = Dtn.create("com.example", "/sink", "x=1&y=2");
+            assertEquals("dtn://com.example/sink?x=1&y=2", dtn.toString());
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertTrue(Dtn.isSingleton(dtn));
 
-            URI testParse2 = eidFactory.create("dtn://[stcp:1.2.3.4:5]/hello");
-            assertEquals("dtn://[stcp:1.2.3.4:5]/hello", testParse2.toString());
-            assertTrue(testParse2 instanceof DtnEid);
-            assertTrue(testParse2 instanceof ClaEid);
-            assertEquals("hello", ((DtnEid) testParse2).getPath());
+            dtn = Dtn.create("com.example", "/sink", "x=1&y=2", "fragment1");
+            assertEquals("dtn://com.example/sink?x=1&y=2#fragment1", dtn.toString());
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertTrue(Dtn.isSingleton(dtn));
 
-            URI testParse3 = eidFactory.create("dtn://[:]/hello");
-            assertEquals("dtn://[:]/hello", testParse3.toString());
-            assertTrue(testParse3 instanceof DtnEid);
-            assertFalse(testParse3 instanceof ClaEid);
-            assertEquals("hello", ((DtnEid) testParse3).getPath());
-
-            URI testParse4 = eidFactory.create("dtn://node1/dtnping?seq=12&timestamp=6572657653");
-            assertEquals("dtn://node1/dtnping?seq=12&timestamp=6572657653", testParse4.toString());
-            assertTrue(testParse4 instanceof DtnEid);
-            assertEquals("dtnping?seq=12&timestamp=6572657653", ((DtnEid) testParse4).getPath());
-
-            URI testParse5 = eidFactory.create("dtn://node1/dtnping?seq=12&timestamp=6572657653#fragment");
-            assertEquals("dtn://node1/dtnping?seq=12&timestamp=6572657653#fragment", testParse5.toString());
-            assertTrue(testParse5 instanceof DtnEid);
-            assertEquals("dtnping?seq=12&timestamp=6572657653#fragment", ((DtnEid) testParse5).getPath());
-
-            URI testParse6 = eidFactory.create("dtn://[stcp:1.2.3.4:8080]/dtnping?seq=12&timestamp=6572657653#fragment");
-            assertEquals("dtn://[stcp:1.2.3.4:8080]/dtnping?seq=12&timestamp=6572657653#fragment", testParse6.toString());
-            assertTrue(testParse6 instanceof DtnEid);
-            assertEquals("[stcp:1.2.3.4:8080]", ((DtnEid) testParse6).getAuthority());
-            assertEquals("dtnping?seq=12&timestamp=6572657653#fragment", ((DtnEid) testParse6).getPath());
-
- */
-        } catch (URISyntaxException efe) {
+            dtn = Dtn.create("com.example", "/~group", "x=1&y=2", "fragment1");
+            assertEquals("dtn://com.example/~group?x=1&y=2#fragment1", dtn.toString());
+            assertTrue(Dtn.isDtnEid(dtn));
+            assertFalse(Dtn.isSingleton(dtn));
+        } catch (URISyntaxException | Dtn.InvalidDtnEid efe) {
             efe.printStackTrace();
             fail(efe.getMessage());
         }
     }
+
+
+    @Test
+    public void testApiEid() {
+        System.out.println("[+] eid: testing api-dtn eid");
+
+        try {
+            URI api = Api.me();
+            assertEquals("dtn://api:me/", api.toString());
+            assertTrue(isApiEid(api));
+
+            api = Api.me("/path");
+            assertEquals("dtn://api:me/path", api.toString());
+            assertTrue(isApiEid(api));
+
+            URI dtn = URI.create("dtn://node1/path2/path3");
+            assertFalse(isApiEid(dtn));
+
+            api = swapApiMe(api, dtn);
+            assertEquals("dtn://node1/path", api.toString());
+            assertFalse(isApiEid(api));
+            assertTrue(isDtnEid(api));
+        } catch (URISyntaxException | Dtn.InvalidDtnEid | Api.InvalidApiEid e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // cannot swap api:me with non-dtn URI
+        try {
+            URI api = Api.me("/path");
+            api = swapApiMe(api, URI.create("ipn:0.1"));
+            fail();
+        } catch (URISyntaxException | Dtn.InvalidDtnEid | Api.InvalidApiEid e) {
+            assertTrue(true);
+        }
+    }
+
+    @Test
+    public void testClaEid() {
+        System.out.println("[+] eid: testing cla-dtn eid");
+        try {
+            URI cla = Cla.create("camera", "");
+            assertEquals("dtn://@camera/", cla.toString());
+            assertTrue(isClaEid(cla));
+            assertEquals("camera", Cla.getClaScheme(cla));
+            assertEquals(null, Cla.getClaParameters(cla));
+
+            cla = Cla.create("stcp", "1.2.3.4:8118");
+            assertEquals("dtn://@stcp:1.2.3.4:8118/", cla.toString());
+            assertTrue(isClaEid(cla));
+            assertEquals("stcp", Cla.getClaScheme(cla));
+            assertEquals("1.2.3.4:8118", Cla.getClaParameters(cla));
+
+            cla = Cla.create("stcp", "1.2.3.4:8118", "/sink");
+            assertEquals("dtn://@stcp:1.2.3.4:8118/sink", cla.toString());
+            assertTrue(isClaEid(cla));
+        } catch (URISyntaxException | Cla.InvalidClaEid | Dtn.InvalidDtnEid e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
 
 }

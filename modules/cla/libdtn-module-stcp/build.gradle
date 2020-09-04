@@ -17,7 +17,7 @@ jar {
         serviceInterface 'io.disruptedsystems.libdtn.core.spi.ClaChannelSpi'
         serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ConvergenceLayerStcp'
         serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ConvergenceLayerStcp$Channel'
-        serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ClaStcpEid'
+        serviceInterface 'io.disruptedsystems.libdtn.module.cla.stcp.ClaStcp'
     }
 
     // fat jar dependency, exclude those already in libdtn-core

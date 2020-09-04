@@ -167,7 +167,7 @@ public class PrimaryBlock extends Block {
         return source;
     }
 
-    public URI getReportto() {
+    public URI getReportTo() {
         return reportto;
     }
 
@@ -230,7 +230,7 @@ public class PrimaryBlock extends Block {
         this.bid = BundleId.create(this);
     }
 
-    public void setReportto(URI reportto) {
+    public void setReportTo(URI reportto) {
         this.reportto = reportto;
     }
 

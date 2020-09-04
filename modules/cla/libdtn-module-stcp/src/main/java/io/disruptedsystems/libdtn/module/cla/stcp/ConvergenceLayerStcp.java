@@ -9,9 +9,8 @@ import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -29,6 +28,8 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
 /**
@@ -56,7 +57,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
 
     private static final String TAG = "ConvergenceLayerStcp";
 
-    private ClaEid convergenceLayerEid = null;
     private RxTCP.Server<RxTCP.Connection> server;
     private int port = 0;
     private Log logger = new NullLogger();
@@ -80,11 +80,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     public ConvergenceLayerStcp setPort(int port) {
         this.port = port;
         return this;
-    }
-
-    @Override
-    public ClaEidParser getClaEidParser() {
-        return new ClaStcpEidParser();
     }
 
     @Override
@@ -122,9 +117,9 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     }
 
     @Override
-    public Single<ClaChannelSpi> open(ClaEid peer) {
-        if (peer instanceof ClaStcpEid) {
-            return open(((ClaStcpEid) peer).host, ((ClaStcpEid) peer).port);
+    public Single<ClaChannelSpi> open(URI peer) {
+        if (ClaStcp.isClaStcpEid(peer)) {
+            return open(ClaStcp.getStcpHostUnsafe(peer), ClaStcp.getStcpPortUnsafe(peer));
         } else {
             return Single.error(new Throwable("peer is not a ConvergenceLayerStcp peer"));
         }
@@ -133,8 +128,8 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     public class Channel implements ClaChannelSpi {
 
         RxTCP.Connection tcpcon;
-        ClaStcpEid channelEid;
-        ClaStcpEid localEid;
+        URI channelEid;
+        URI localEid;
         boolean initiator;
 
         /**
@@ -143,15 +138,15 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
          * @param tcpcon    tcp connection
          * @param initiator true if current node initiated the connection, false otherwise
          */
-        public Channel(RxTCP.Connection tcpcon, boolean initiator) throws EidFormatException {
+        public Channel(RxTCP.Connection tcpcon, boolean initiator) throws URISyntaxException, Dtn.InvalidDtnEid, Cla.InvalidClaEid {
             this.tcpcon = tcpcon;
             this.initiator = initiator;
             try {
-                channelEid = new ClaStcpEid(tcpcon.getRemoteHost(), tcpcon.getRemotePort());
-                localEid = new ClaStcpEid(tcpcon.getLocalHost(), tcpcon.getLocalPort());
+                channelEid = ClaStcp.create(tcpcon.getRemoteHost(), tcpcon.getRemotePort());
+                localEid = ClaStcp.create(tcpcon.getLocalHost(), tcpcon.getLocalPort());
                 logger.i(TAG, "new stcp channel openned (initiated="
-                        + initiator + "): " + channelEid.getEidString());
-            } catch(EidFormatException e) {
+                        + initiator + "): " + channelEid);
+            } catch(URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid e) {
                 logger.e(TAG, "could not create stcp eid: " + e.toString());
                 close();
                 throw e;
@@ -164,12 +159,12 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         }
 
         @Override
-        public ClaStcpEid channelEid() {
+        public URI channelEid() {
             return channelEid;
         }
 
         @Override
-        public ClaStcpEid localEid() {
+        public URI localEid() {
             return localEid;
         }
 

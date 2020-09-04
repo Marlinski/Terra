@@ -4,6 +4,7 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.reactivex.rxjava3.core.Single;
 
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -56,7 +57,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Boolean> isRegistered(String eid);
+    Single<Boolean> isRegistered(URI eid);
 
     /**
      * Register a passive pull-based registration. A cookie is returned that can be used
@@ -69,7 +70,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<String> register(String eid);
+    Single<String> register(URI eid);
 
     /**
      * Register an active registration. The cookie for this registration is returned.
@@ -82,7 +83,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cb is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<String> register(String eid, ActiveRegistrationCallback cb);
+    Single<String> register(URI eid, ActiveRegistrationCallback cb);
 
     /**
      * Unregister an application agent.
@@ -96,7 +97,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid is null or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Boolean> unregister(String eid, String cookie);
+    Single<Boolean> unregister(URI eid, String cookie);
 
     /**
      * Send data using the services of the Bundle Protocol from a registered application-agent.
@@ -111,7 +112,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid is null or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Boolean> send(String eid, String cookie, Bundle bundle);
+    Single<Boolean> send(URI eid, String cookie, Bundle bundle);
 
     /**
      * Send data using the services of the Bundle Protocol from an anonymous application-agent.
@@ -133,7 +134,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Set<BundleId> checkInbox(String eid, String cookie);
+    Set<BundleId> checkInbox(URI eid, String cookie);
 
     /**
      * get a specific bundle but does not mark it as delivered.
@@ -149,7 +150,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Bundle> get(String eid, String cookie, BundleId bundleId);
+    Single<Bundle> get(URI eid, String cookie, BundleId bundleId);
 
     /**
      * fetch a specific bundle and mark it as delivered.
@@ -165,7 +166,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Bundle> fetch(String eid, String cookie, BundleId bundleId);
+    Single<Bundle> fetch(URI eid, String cookie, BundleId bundleId);
 
     /**
      * Turn a registration active. If the registration was already active it does nothing,
@@ -182,7 +183,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Boolean> reAttach(String eid, String cookie, ActiveRegistrationCallback cb);
+    Single<Boolean> reAttach(URI eid, String cookie, ActiveRegistrationCallback cb);
 
     /**
      * Turn a registration passive. If the registration was already passive it does nothing,
@@ -197,6 +198,6 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Boolean> setPassive(String eid, String cookie);
+    Single<Boolean> setPassive(URI eid, String cookie);
 }
 

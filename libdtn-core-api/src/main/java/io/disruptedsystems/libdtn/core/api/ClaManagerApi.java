@@ -1,6 +1,7 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.disruptedsystems.libdtn.core.spi.ConvergenceLayerSpi;
 import io.reactivex.rxjava3.core.Single;
@@ -25,6 +26,6 @@ public interface ClaManagerApi {
      * @param eid to create an opportunity to
      * @return a single observable to the created {@link ClaChannelSpi}
      */
-    Single<ClaChannelSpi> createOpportunity(ClaEid eid);
+    Single<ClaChannelSpi> createOpportunity(URI eid);
 
 }

@@ -196,9 +196,7 @@ public class SimpleStorage extends CoreComponent {
                     .cbor_open_array((p, t, s) -> {
                     }) /* we are just parsing the primary block */
                     .cbor_parse_custom_item(
-                            () -> new PrimaryBlockItem(
-                                    core.getExtensionManager().getEidFactory(),
-                                    core.getLogger()),
+                            () -> new PrimaryBlockItem(core.getLogger()),
                             (p, t, item) -> {
                                 MetaBundle meta = new MetaBundle(item.bundle);
                                 Storage.IndexEntry entry

@@ -12,13 +12,13 @@ public interface Ipn {
 
     int EID_IPN_IANA_VALUE = 2;
 
-    String  IPN_AUTHORITY_FORMAT = "^[0-9]+\\.[0-9]+$";
+    String IPN_AUTHORITY_FORMAT = "^([0-9]+)\\.([0-9]+)$";
 
-    class InvalidIpnEid extends Exception{
+    class InvalidIpnEid extends Exception {
     }
 
     static void checkIpnSchemeAndPath(URI uri) throws InvalidIpnEid {
-        if (uri.getScheme().equals("ipn")) {
+        if (!uri.getScheme().equals("ipn")) {
             throw new InvalidIpnEid();
         }
         if (uri.getPath() != null) {
@@ -27,14 +27,14 @@ public interface Ipn {
     }
 
     static void checkIpnAuthority(Matcher matcher) throws InvalidIpnEid {
-        if(!matcher.matches()) {
+        if (!matcher.matches()) {
             throw new InvalidIpnEid();
         }
     }
 
     static void checkValidIpnEid(URI uri) throws InvalidIpnEid {
         checkIpnSchemeAndPath(uri);
-        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getAuthority());
+        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getSchemeSpecificPart());
         checkIpnAuthority(matcher);
     }
 
@@ -50,29 +50,37 @@ public interface Ipn {
 
     static int getNodeNumber(URI uri) throws InvalidIpnEid {
         checkIpnSchemeAndPath(uri);
-        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getAuthority());
+        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getSchemeSpecificPart());
         checkIpnAuthority(matcher);
         return Integer.parseInt(matcher.group(1));
     }
 
-    static int getNodeNumberUnsafe(URI uri)  {
-        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getAuthority());
-        return Integer.parseInt(matcher.group(1));
+    static int getNodeNumberUnsafe(URI uri) {
+        try {
+            return getNodeNumber(uri);
+        } catch (InvalidIpnEid e) {
+            throw new IllegalArgumentException();
+        }
     }
 
     static int getServiceNumber(URI uri) throws InvalidIpnEid {
         checkIpnSchemeAndPath(uri);
-        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getAuthority());
+        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getSchemeSpecificPart());
         checkIpnAuthority(matcher);
         return Integer.parseInt(matcher.group(2));
     }
 
     static int getServiceNumberUnsafe(URI uri) {
-        Matcher matcher = Pattern.compile(IPN_AUTHORITY_FORMAT).matcher(uri.getAuthority());
-        return Integer.parseInt(matcher.group(2));
+        try {
+            return getServiceNumber(uri);
+        } catch (InvalidIpnEid e) {
+            throw new IllegalArgumentException();
+        }
     }
 
-    static URI create(int node, int service) throws URISyntaxException {
-        return new URI("ipn:"+node +"."+service);
+    static URI create(int node, int service) throws URISyntaxException, InvalidIpnEid {
+        URI uri = new URI("ipn:" + node + "." + service);
+        checkValidIpnEid(uri);
+        return uri;
     }
 }

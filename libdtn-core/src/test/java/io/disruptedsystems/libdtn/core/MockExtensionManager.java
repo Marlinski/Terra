@@ -11,19 +11,11 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BlockDataParserFac
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessor;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidSspParser;
 
 /**
  * @author Lucien Loiseau on 26/11/18.
  */
 public class MockExtensionManager implements ExtensionManagerApi {
-    @Override
-    public EidFactory getEidFactory() {
-        return null;
-    }
-
     @Override
     public BlockFactory getBlockFactory() {
         return null;
@@ -50,13 +42,5 @@ public class MockExtensionManager implements ExtensionManagerApi {
                                   Supplier<CborParser> parser,
                                   Supplier<CborEncoder> serializer,
                                   Supplier<BlockProcessor> processor) throws BlockTypeAlreadyManaged {
-    }
-
-    @Override
-    public void addExtensionClaEid(String clName, ClaEidParser parser) {
-    }
-
-    @Override
-    public void addExtensionEid(int schemeId, String schemeStr, EidSspParser ssPparser) {
     }
 }

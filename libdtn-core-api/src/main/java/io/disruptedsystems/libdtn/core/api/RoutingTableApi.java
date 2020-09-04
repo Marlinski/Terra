@@ -1,9 +1,8 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.reactivex.rxjava3.core.Observable;
 
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -14,10 +13,10 @@ import java.util.Set;
 public interface RoutingTableApi extends CoreComponentApi {
 
     class TableEntry {
-        public Eid to;
-        public Eid next;
+        public URI to;
+        public URI next;
 
-        public TableEntry(Eid to, Eid next) {
+        public TableEntry(URI to, URI next) {
             this.to = to;
             this.next = next;
         }
@@ -33,17 +32,17 @@ public interface RoutingTableApi extends CoreComponentApi {
             return false;
         }
 
-        public Eid getTo() {
+        public URI getTo() {
             return to;
         }
 
-        public Eid getNext() {
+        public URI getNext() {
             return next;
         }
 
         @Override
         public int hashCode() {
-            return next.getEidString().concat(to.getEidString()).hashCode();
+            return next.toString().concat(to.toString()).hashCode();
         }
     }
 
@@ -52,14 +51,14 @@ public interface RoutingTableApi extends CoreComponentApi {
      * @param to Eid of destination
      * @param nextHop Eid of Next-Hop
      */
-    void addRoute(Eid to, Eid nextHop);
+    void addRoute(URI to, URI nextHop);
 
     /**
      * Resolve an Eid using this Routing Table.
      * @param destination Eid of destination
      * @return Observable of BaseClaEid-Eid that can make forward progress toward destination
      */
-    Observable<ClaEid> resolveEid(Eid destination);
+    Observable<URI> resolveEid(URI destination);
 
     /**
      * Dump all entries from the Routing Table.

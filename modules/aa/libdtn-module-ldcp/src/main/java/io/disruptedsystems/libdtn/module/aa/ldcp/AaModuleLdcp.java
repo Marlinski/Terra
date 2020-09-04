@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.module.aa.ldcp;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import io.disruptedsystems.ldcp.LdcpRequest;
 import io.disruptedsystems.ldcp.LdcpServer;
 import io.disruptedsystems.ldcp.RequestHandler;
@@ -90,7 +93,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
         return req.fields.get(key);
     }
 
-    private ActiveRegistrationCallback deliverCallback(String eid, String host, int port) {
+    private ActiveRegistrationCallback deliverCallback(URI eid, String host, int port) {
         return (bundle) ->
                 LdcpRequest.POST(ApiPaths.DaemonToClientLdcpPathVersion1.DELIVER.path)
                         .setBundle(bundle)
@@ -112,12 +115,12 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler isregistered = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     res.setCode(registrar.isRegistered(eid)
                             ? ResponseMessage.ResponseCode.OK
                             : ResponseMessage.ResponseCode.ERROR);
                     s.onComplete();
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });
@@ -125,7 +128,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler register = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     boolean active = checkField(req, "active").equals("true");
 
                     if (active) {
@@ -142,7 +145,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         res.setHeader("cookie", cookie);
                         s.onComplete();
                     }
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });
@@ -151,7 +154,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler update = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     String cookie = checkField(req, "cookie");
                     boolean active = checkField(req, "active").equals("true");
 
@@ -167,7 +170,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         res.setCode(ResponseMessage.ResponseCode.OK);
                         s.onComplete();
                     }
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });
@@ -175,14 +178,14 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler unregister = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     String cookie = checkField(req, "cookie");
 
                     res.setCode(registrar.unregister(eid, cookie)
                             ? ResponseMessage.ResponseCode.OK
                             : ResponseMessage.ResponseCode.ERROR);
                     s.onComplete();
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });
@@ -190,7 +193,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler get = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     String cookie = checkField(req, "cookie");
                     String bid = checkField(req, "bundle-id");
 
@@ -202,7 +205,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         res.setCode(ResponseMessage.ResponseCode.ERROR);
                     }
                     s.onComplete();
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });
@@ -210,7 +213,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
     private RequestHandler fetch = (req, res) ->
             Completable.create(s -> {
                 try {
-                    String eid = checkField(req, "eid");
+                    URI eid = new URI(checkField(req, "eid"));
                     String cookie = checkField(req, "cookie");
                     String bid = checkField(req, "bundle-id");
 
@@ -222,7 +225,7 @@ public class AaModuleLdcp implements ApplicationAgentAdapterSpi {
                         res.setCode(ResponseMessage.ResponseCode.ERROR);
                     }
                     s.onComplete();
-                } catch (RegistrarApi.RegistrarException | RequestException re) {
+                } catch (RegistrarApi.RegistrarException | RequestException | URISyntaxException re) {
                     s.onError(re);
                 }
             });

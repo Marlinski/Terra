@@ -1,6 +1,9 @@
 package io.disruptedsystems.libdtn.module.core.http;
 
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Dispatch;
@@ -8,10 +11,8 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -130,7 +131,7 @@ public class RequestBundle {
                         core.getBundleProtocol().bundleDispatching(bundle);
                         return res;
                     });
-        } catch (BadRequestException | EidFormatException | NumberFormatException bre) {
+        } catch (BadRequestException | NumberFormatException | URISyntaxException bre) {
             core.getLogger().i(TAG, req.getDecodedPath() + " - bad request: " + bre.getMessage());
             return res.setStatus(HttpResponseStatus.BAD_REQUEST);
         }
@@ -139,30 +140,21 @@ public class RequestBundle {
     private Bundle createBundleSkeletonFromHTTPHeaders(String destinationstr,
                                                       String reporttostr,
                                                       String lifetimestr)
-            throws BadRequestException, EidFormatException, NumberFormatException {
-        Eid destination;
-        Eid reportTo;
+            throws BadRequestException, NumberFormatException, URISyntaxException {
+        URI destination;
+        URI reportTo;
         long lifetime;
 
         if (destinationstr == null) {
             throw new BadRequestException("DestinationEID is null");
         }
 
-        destination = new BaseEidFactory().create(destinationstr);
-        if (reporttostr == null) {
-            reportTo = DtnEid.nullEid();
-        } else {
-            reportTo = new BaseEidFactory().create(reporttostr);
-        }
-
-        if (lifetimestr == null) {
-            lifetime = 0;
-        } else {
-            lifetime = Long.valueOf(lifetimestr);
-        }
+        destination = new URI(destinationstr);
+        reportTo = (reporttostr == null) ? Dtn.nullEid() : new URI(reporttostr);
+        lifetime = (lifetimestr == null) ? 0 : Long.valueOf(lifetimestr);
 
         Bundle bundle = new Bundle(destination, lifetime);
-        bundle.setReportto(reportTo);
+        bundle.setReportTo(reportTo);
         return bundle;
     }
 

@@ -1,12 +1,12 @@
 package io.disruptedsystems.terra;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.DtnCore;
@@ -130,9 +130,9 @@ public class Terra implements Callable<Void> {
         /* Terra configuration */
         if (localEid != null) {
             try {
-                Eid eid = new BaseEidFactory().create(localEid);
+                URI eid = new URI(localEid);
                 conf.get(ConfigurationApi.CoreEntry.LOCAL_EID).update(eid);
-            } catch (EidFormatException efe) {
+            } catch (URISyntaxException efe) {
                 throw new Exception("localEid is not a valid Endpoint ID: " + efe.getMessage());
             }
         }

@@ -4,10 +4,9 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
@@ -19,6 +18,8 @@ import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
 /**
@@ -34,7 +35,7 @@ import java.nio.ByteBuffer;
 public class CoreModuleHello implements CoreModuleSpi {
 
     private static final String TAG = "HelloModule";
-    private static final String HELLO_SINK = "api:me/hello/";
+    private static final URI HELLO_SINK = URI.create("dtn://api:me/hello/");
 
     private CoreApi coreApi;
     private Bundle helloBundle;
@@ -46,13 +47,13 @@ public class CoreModuleHello implements CoreModuleSpi {
     }
 
     private void prepareHelloBundle() {
-        HelloMessage hello = new HelloMessage(coreApi.getExtensionManager().getEidFactory());
+        HelloMessage hello = new HelloMessage();
 
         /* add node local Eid */
-        hello.eids.add(coreApi.getLocalEid().nodeId());
+        hello.eids.add(coreApi.getLocalEidTable().nodeId());
 
         /* add aliases */
-        hello.eids.addAll(coreApi.getLocalEid().aliases());
+        hello.eids.addAll(coreApi.getLocalEidTable().aliases());
 
         /* get size of hello message for the payload */
         long size = hello.encode().observe()
@@ -69,7 +70,7 @@ public class CoreModuleHello implements CoreModuleSpi {
                 .subscribe();
 
         /* create Hello Bundle Skeleton */
-        helloBundle = new Bundle(DtnEid.nullEid());
+        helloBundle = new Bundle(Dtn.nullEid());
         helloBundle.addBlock(new PayloadBlock(blobHello));
     }
 
@@ -82,15 +83,14 @@ public class CoreModuleHello implements CoreModuleSpi {
             this.cookie = api.getRegistrar().register(HELLO_SINK, (bundle) -> {
                 if (bundle.getTagAttachment("cla-origin-iid") != null) {
                     coreApi.getLogger().i(TAG, "received hello message from: "
-                            + bundle.getSource().getEidString()
+                            + bundle.getSource()
                             + " on BaseClaEid: "
-                            + bundle.<Eid>getTagAttachment("cla-origin-iid").getEidString());
+                            + bundle.<Eid>getTagAttachment("cla-origin-iid"));
                     CborParser parser = CBOR.parser()
                             .cbor_parse_custom_item(
-                                    () -> new HelloMessage(
-                                            api.getExtensionManager().getEidFactory()),
+                                    HelloMessage::new,
                                     (p, t, item) -> {
-                                        for (Eid eid : item.eids) {
+                                        for (URI eid : item.eids) {
                                             api.getRoutingTable().addRoute(
                                                     eid,
                                                     bundle.getTagAttachment("cla-origin-iid"));
@@ -110,7 +110,7 @@ public class CoreModuleHello implements CoreModuleSpi {
                             });
                 } else {
                     coreApi.getLogger().i(TAG, "received hello message from: "
-                            + bundle.getSource().getEidString()
+                            + bundle.getSource()
                             + " but the BaseClaEid wasn't tagged - ignoring");
                 }
 
@@ -135,8 +135,8 @@ public class CoreModuleHello implements CoreModuleSpi {
     @Subscribe
     public void onEvent(LinkLocalEntryUp up) {
         try {
-            ClaEid eid = up.channel.channelEid().copyWithDemuxSetTo("hello");
-            coreApi.getLogger().i(TAG, "sending hello message to: " + eid.getEidString());
+            URI eid = Api.swapApiMe(Api.me("/hello"), up.channel.channelEid());
+            coreApi.getLogger().i(TAG, "sending hello message to: " + eid);
             helloBundle.setDestination(eid);
             up.channel.sendBundle(helloBundle,
                     coreApi.getExtensionManager().getBlockDataSerializerFactory())
@@ -146,13 +146,13 @@ public class CoreModuleHello implements CoreModuleSpi {
                             },
                             err -> {
                                 coreApi.getLogger().v(TAG, "hello failed to be sent to: "
-                                        + eid.getEidString());
+                                        + eid);
                             },
                             () -> {
                                 coreApi.getLogger().v(TAG, "hello sent to: "
-                                        + eid.getEidString());
+                                        + eid);
                             });
-        } catch (EidFormatException err) {
+        } catch (URISyntaxException | Dtn.InvalidDtnEid | Api.InvalidApiEid err) {
             coreApi.getLogger().e(TAG, "Could not send the hello bundle "
                     + err.getMessage());
         }

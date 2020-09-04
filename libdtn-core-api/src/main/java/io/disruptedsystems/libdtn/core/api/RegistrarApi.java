@@ -5,6 +5,7 @@ import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.reactivex.rxjava3.core.Flowable;
 
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -77,7 +78,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean isRegistered(String eid) throws RegistrarDisabled, InvalidEid, NullArgument;
+    boolean isRegistered(URI eid) throws RegistrarDisabled, InvalidEid, NullArgument;
 
     /**
      * Register a passive pull-based registration. A cookie is returned that can be used
@@ -90,7 +91,7 @@ public interface RegistrarApi {
      * @throws NullArgument          if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    String register(String eid) throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
+    String register(URI eid) throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
 
     /**
      * Register an active registration. It fails If the sink is already registered.
@@ -103,7 +104,7 @@ public interface RegistrarApi {
      * @throws NullArgument          if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    String register(String eid, ActiveRegistrationCallback cb)
+    String register(URI eid, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
 
     /**
@@ -118,7 +119,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean unregister(String eid, String cookie)
+    boolean unregister(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
@@ -135,7 +136,7 @@ public interface RegistrarApi {
      * @throws BundleMalformed   if the bundle can't be serialized
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean send(String eid, String cookie, Bundle bundle)
+    boolean send(URI eid, String cookie, Bundle bundle)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument, BundleMalformed;
 
     /**
@@ -163,7 +164,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    Set<BundleId> checkInbox(String eid, String cookie)
+    Set<BundleId> checkInbox(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
@@ -180,7 +181,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    Bundle get(String eid, String cookie, String bundleId)
+    Bundle get(URI eid, String cookie, String bundleId)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, BundleNotFound, NullArgument;
 
     /**
@@ -197,7 +198,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    Bundle fetch(String eid, String cookie, String bundleId)
+    Bundle fetch(URI eid, String cookie, String bundleId)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, BundleNotFound, NullArgument;
 
     /**
@@ -212,7 +213,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    Flowable<Bundle> fetch(String eid, String cookie)
+    Flowable<Bundle> fetch(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
@@ -230,7 +231,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean setActive(String eid, String cookie, ActiveRegistrationCallback cb)
+    boolean setActive(URI eid, String cookie, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
@@ -246,7 +247,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean setPassive(String eid, String cookie)
+    boolean setPassive(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**
@@ -260,7 +261,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    boolean setPassive(String eid)
+    boolean setPassive(URI eid)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument;
 
 

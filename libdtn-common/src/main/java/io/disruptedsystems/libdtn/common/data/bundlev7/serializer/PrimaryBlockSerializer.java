@@ -29,7 +29,7 @@ public class PrimaryBlockSerializer {
                 .cbor_encode_int(block.getCrcType().ordinal())
                 .merge(EidSerializer.encode(block.getDestination()))
                 .merge(EidSerializer.encode(block.getSource()))
-                .merge(EidSerializer.encode(block.getReportto()))
+                .merge(EidSerializer.encode(block.getReportTo()))
                 .cbor_start_array(2)
                 .cbor_encode_int(block.getCreationTimestamp())
                 .cbor_encode_int(block.getSequenceNumber())

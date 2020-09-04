@@ -90,7 +90,7 @@ public class PrimaryBlockItem implements CborParser.ParseableItem {
                 })
                 .cbor_parse_custom_item(() -> new EidItem(logger), (p, t, item) -> {
                     logger.v(TAG, ". reportto=" + item.eid.toString());
-                    bundle.setReportto(item.eid);
+                    bundle.setReportTo(item.eid);
                 })
                 .cbor_open_array(2)
                 .cbor_parse_int((p, t, i) -> {

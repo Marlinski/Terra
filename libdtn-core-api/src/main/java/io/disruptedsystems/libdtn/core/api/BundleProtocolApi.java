@@ -37,7 +37,7 @@ public interface BundleProtocolApi {
      * @param localMatch to deliver the bundle to
      * @param reason of the failure
      */
-    void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid<?> localMatch, Throwable reason);
+    void bundleLocalDeliveryFailure(Bundle bundle, LocalEidApi.LocalEid localMatch, Throwable reason);
 
     /**
      * Process Bundle that is expired.

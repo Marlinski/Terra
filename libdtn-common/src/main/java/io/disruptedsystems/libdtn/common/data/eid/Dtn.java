@@ -14,14 +14,28 @@ public interface Dtn {
     class InvalidDtnEid extends Exception {
     }
 
+    /**
+     * a dtn-eid is of the form:
+     * <p>
+     * dtn-uri  = "dtn:" dtn-hier-part
+     * /= "dtn:none"
+     * <p>
+     * dtn-hier-part = "//" node-name name-delim demux ; a path-rootless
+     * node-name = 1*VCHAR
+     * name-delim = "/"
+     * demux = *VCHAR
+     *
+     * @param uri
+     * @throws InvalidDtnEid
+     */
     static void checkValidDtnEid(URI uri) throws InvalidDtnEid {
-        if (uri.getScheme().equals("dtn")) {
+        if (!uri.getScheme().equals("dtn")) {
             throw new InvalidDtnEid();
         }
         if (uri.getSchemeSpecificPart().equals("none")) {
             return;
         }
-        if (uri.getPath() == null) {
+        if (uri.getPath() == null || uri.getPath().equals("")) {
             throw new InvalidDtnEid();
         }
     }
@@ -49,18 +63,24 @@ public interface Dtn {
 
     static URI generate() {
         final String uuid = UUID.randomUUID().toString().replace("-", "");
-        return URI.create("dtn://"+uuid+"/");
+        return URI.create("dtn://" + uuid + "/");
+    }
+
+    static URI create(String node) throws URISyntaxException {
+        return new URI("dtn", node, "/", null, null);
     }
 
     static URI create(String node, String path) throws URISyntaxException {
-        return new URI("dtn://"+node+path);
+        return new URI("dtn", node, path, null, null);
     }
 
     static URI create(String node, String path, String query) throws URISyntaxException {
-        return new URI("dtn://"+node+path+"?"+query);
+        return new URI("dtn", node, path, query, null);
     }
 
-    static URI create(String node, String path, String query, String fragment) throws URISyntaxException {
-        return new URI("dtn://"+node+path+"?"+query+"#"+fragment);
+    static URI create(String node, String path, String query, String fragment) throws URISyntaxException, InvalidDtnEid {
+        URI uri = new URI("dtn", node, path, query, fragment);
+        checkValidDtnEid(uri);
+        return uri;
     }
 }

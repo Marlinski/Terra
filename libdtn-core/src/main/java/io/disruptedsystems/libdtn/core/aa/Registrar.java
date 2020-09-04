@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.core.aa;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -7,9 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
@@ -36,7 +36,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     private static final String TAG = "Registrar";
 
     public static class Registration {
-        String registration;
+        URI registration;
         String cookie;
         ActiveRegistrationCallback cb;
 
@@ -44,7 +44,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return cb != passiveRegistration;
         }
 
-        Registration(String eid, ActiveRegistrationCallback cb) {
+        Registration(URI eid, ActiveRegistrationCallback cb) {
             this.registration = eid;
             this.cb = cb;
             this.cookie = UUID.randomUUID().toString();
@@ -52,7 +52,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     private CoreApi core;
-    private Map<String, Registration> registrations;
+    private Map<URI, Registration> registrations;
     private DeliveryListener listener;
 
     /**
@@ -93,19 +93,10 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         }
     }
 
-    private void checkValidEid(String eid) throws InvalidEid {
-        try {
-            core.getExtensionManager().getEidFactory().create(eid);
-        } catch (EidFormatException e) {
-            throw new InvalidEid();
-        }
-    }
-
-    private Registration checkRegisteredSink(String eid)
-            throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument {
+    private Registration checkRegisteredSink(URI eid)
+            throws RegistrarDisabled, EidNotRegistered, NullArgument {
         checkEnable();
         checkArgumentNotNull(eid);
-        checkValidEid(eid);
         Registration registration = registrations.get(eid);
         if (registration == null) {
             throw new EidNotRegistered();
@@ -113,12 +104,11 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         return registration;
     }
 
-    private Registration checkRegisteredSink(String eid, String cookie)
-            throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument {
+    private Registration checkRegisteredSink(URI eid, String cookie)
+            throws RegistrarDisabled, EidNotRegistered, BadCookie, NullArgument {
         checkEnable();
         checkArgumentNotNull(eid);
         checkArgumentNotNull(cookie);
-        checkValidEid(eid);
         Registration registration = registrations.get(eid);
         if (registration == null) {
             throw new EidNotRegistered();
@@ -130,43 +120,41 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     private void replaceApiMe(Bundle bundle) {
-        if (bundle.getSource() instanceof ApiEid) {
-            bundle.setSource(((ApiEid) bundle.getSource().copy())
-                    .swapName(core.getLocalEid().nodeId()));
+        if (Api.isApiEid(bundle.getSource())) {
+            bundle.setSource(Api
+                    .swapApiMeUnsafe(bundle.getSource(), core.getLocalEidTable().nodeId()));
         }
-        if (bundle.getReportto() instanceof ApiEid) {
-            bundle.setReportto(((ApiEid) bundle.getReportto().copy())
-                    .swapName(core.getLocalEid().nodeId()));
+        if (Api.isApiEid(bundle.getReportTo())) {
+            bundle.setReportTo(Api
+                    .swapApiMeUnsafe(bundle.getReportTo(), core.getLocalEidTable().nodeId()));
         }
-        if (bundle.getDestination() instanceof ApiEid) {
-            bundle.setDestination(((ApiEid) bundle.getDestination().copy())
-                    .swapName(core.getLocalEid().nodeId()));
+        if (Api.isApiEid(bundle.getDestination())) {
+            bundle.setDestination(Api
+                    .swapApiMeUnsafe(bundle.getDestination(), core.getLocalEidTable().nodeId()));
         }
     }
 
     /* ------  RegistrarApi  is the contract facing ApplicationAgentAdapter ------- */
 
     @Override
-    public boolean isRegistered(String eid) throws RegistrarDisabled, InvalidEid, NullArgument {
+    public boolean isRegistered(URI eid) throws RegistrarDisabled, InvalidEid, NullArgument {
         checkEnable();
         checkArgumentNotNull(eid);
-        checkValidEid(eid);
         return registrations.containsKey(eid);
     }
 
     @Override
-    public String register(String eid)
+    public String register(URI eid)
             throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument {
         return register(eid, passiveRegistration);
     }
 
     @Override
-    public String register(String eid, ActiveRegistrationCallback cb)
+    public String register(URI eid, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument {
         checkEnable();
         checkArgumentNotNull(eid);
         checkArgumentNotNull(cb);
-        checkValidEid(eid);
 
         Registration registration = new Registration(eid, cb);
         if (registrations.putIfAbsent(eid, registration) == null) {
@@ -181,7 +169,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean unregister(String eid, String cookie)
+    public boolean unregister(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument {
         checkRegisteredSink(eid, cookie);
 
@@ -203,7 +191,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean send(String eid, String cookie, Bundle bundle)
+    public boolean send(URI eid, String cookie, Bundle bundle)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument, BundleMalformed {
         checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundle);
@@ -213,7 +201,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public Set<BundleId> checkInbox(String eid, String cookie)
+    public Set<BundleId> checkInbox(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkRegisteredSink(eid, cookie);
         // todo: call storage service
@@ -221,16 +209,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public Bundle get(String eid, String cookie, String bundleId)
-            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
-        checkRegisteredSink(eid, cookie);
-        checkArgumentNotNull(bundleId);
-        // todo: call storage service
-        return null;
-    }
-
-    @Override
-    public Bundle fetch(String eid, String cookie, String bundleId)
+    public Bundle get(URI eid, String cookie, String bundleId)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundleId);
@@ -239,7 +218,16 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public Flowable<Bundle> fetch(String eid, String cookie)
+    public Bundle fetch(URI eid, String cookie, String bundleId)
+            throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkRegisteredSink(eid, cookie);
+        checkArgumentNotNull(bundleId);
+        // todo: call storage service
+        return null;
+    }
+
+    @Override
+    public Flowable<Bundle> fetch(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkRegisteredSink(eid, cookie);
         // todo: call storage service
@@ -247,7 +235,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean setActive(String eid, String cookie, ActiveRegistrationCallback cb)
+    public boolean setActive(URI eid, String cookie, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkArgumentNotNull(cb);
         Registration registration = checkRegisteredSink(eid, cookie);
@@ -258,7 +246,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean setPassive(String eid)
+    public boolean setPassive(URI eid)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument {
         Registration registration = checkRegisteredSink(eid);
         registration.cb = passiveRegistration;
@@ -267,7 +255,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public boolean setPassive(String eid, String cookie)
+    public boolean setPassive(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = passiveRegistration;
@@ -304,13 +292,13 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     /* ------  DeliveryApi is the contract facing CoreApi ------- */
 
     @Override
-    public Completable deliver(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
+    public Completable deliver(LocalEidApi.LocalEid localMatch, Bundle bundle) {
         if (!isEnabled()) {
             return Completable.error(new DeliveryFailure(DeliveryDisabled));
         }
 
         // first we check if there's an AA that registered to the bundle destination EID.
-        Registration reg = registrations.get(bundle.getDestination().getEidString());
+        Registration reg = registrations.get(bundle.getDestination());
         if (reg != null) {
             return deliverToRegistration(reg, bundle);
         }
@@ -324,23 +312,18 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         // this bundle have been detected to be local because it matched
         // against either a node id, an alias or a CLA. So we try swaping the node-name with api:me
         // which is only applicable for dtn-eid. If it is not a dtn-eid we reject.
-        if (!(bundle.getDestination() instanceof DtnEid)) {
+        if (!Dtn.isDtnEid(bundle.getDestination())) {
             return Completable.error(new DeliveryFailure(UnregisteredEid));
         }
 
-        try {
-            ApiEid newEid = new ApiEid(((DtnEid) bundle.getDestination()).getPath());
-            reg = registrations.get(newEid.getEidString());
-            if (reg != null) {
-                return deliverToRegistration(reg, bundle);
-            }
-
-            // we couldn't find a registration
-            return Completable.error(new DeliveryFailure(UnregisteredEid));
-        } catch (EidFormatException e) {
-            /* cannot happen */
-            return Completable.error(e);
+        URI newEid = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
+        reg = registrations.get(newEid);
+        if (reg != null) {
+            return deliverToRegistration(reg, bundle);
         }
+
+        // we couldn't find a registration
+        return Completable.error(new DeliveryFailure(UnregisteredEid));
     }
 
     private Completable deliverToRegistration(Registration registration, Bundle bundle) {
@@ -355,7 +338,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public void deliverLater(LocalEidApi.LocalEid<?> localMatch, Bundle bundle) {
+    public void deliverLater(LocalEidApi.LocalEid localMatch, Bundle bundle) {
         listener.watch(bundle);
     }
 

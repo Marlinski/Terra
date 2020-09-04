@@ -18,8 +18,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProces
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
@@ -84,11 +82,6 @@ public class SimpleStorageTest {
                     @Override
                     public BlockFactory getBlockFactory() {
                         return new BaseBlockFactory();
-                    }
-
-                    @Override
-                    public EidFactory getEidFactory() {
-                        return new BaseEidFactory();
                     }
 
                     @Override

@@ -1,12 +1,12 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -50,7 +50,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         core.getConf().<Boolean>get(ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STATIC_ROUTING).observe().subscribe(
                 b -> staticIsEnabled = b
         );
-        core.getConf().<Map<Eid, Eid>>get(ConfigurationApi.CoreEntry.STATIC_ROUTE_CONFIGURATION).observe().subscribe(
+        core.getConf().<Map<URI, URI>>get(ConfigurationApi.CoreEntry.STATIC_ROUTE_CONFIGURATION).observe().subscribe(
                 m -> {
                     staticRoutingTable.clear();
                     m.forEach((to, from) -> staticRoutingTable.add(
@@ -63,20 +63,19 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     }
 
     @Override
-    public Observable<ClaEid> resolveEid(Eid destination) {
+    public Observable<URI> resolveEid(URI destination) {
         if (!isEnabled()) {
             return Observable.error(new ComponentIsDownException(getComponentName()));
         }
         return resolveEid(destination, Observable.empty());
     }
 
-    private Observable<ClaEid> resolveEid(Eid destination, Observable<Eid> path) {
+    private Observable<URI> resolveEid(URI destination, Observable<URI> path) {
         return Observable.concat(
                 lookupPotentialNextHops(destination) // we add all next hops that are cla-eid
-                        .filter(eid -> eid instanceof ClaEid)
-                        .map(eid -> (ClaEid) eid),
+                        .filter(Cla::isClaEid),
                 lookupPotentialNextHops(destination) // otherwise we try to resolve them to cla-eids
-                        .filter(eid -> !(eid instanceof ClaEid))
+                        .filter(eid -> !(Cla.isClaEid(eid)))
                         .flatMap(candidate -> path.contains(candidate).flatMapObservable((b) -> {
                             if (!b) {
                                 return resolveEid(candidate,
@@ -87,11 +86,11 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
                         })));
     }
 
-    private Observable<Eid> lookupPotentialNextHops(Eid destination) {
+    private Observable<URI> lookupPotentialNextHops(URI destination) {
         return Observable.concat(
-                Observable.just(destination).filter(eid -> destination instanceof ClaEid),
+                Observable.just(destination).filter(Cla::isClaEid),
                 compoundTableObservable()
-                        .filter(entry -> (entry.to == destination) || entry.to.isAuthoritativeOver(destination))
+                        .filter(entry -> (entry.to == destination)) // todo || entry.to.isAuthoritative(destination))
                         .map(entry -> entry.next));
     }
 
@@ -106,13 +105,13 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
 
 
     @Override
-    public void addRoute(Eid to, Eid nextHop) {
+    public void addRoute(URI to, URI nextHop) {
         if (!isEnabled()) {
             return;
         }
 
-        core.getLogger().i(TAG, "adding a new Route: " + to.getEidString() + " -> "
-                + nextHop.getEidString());
+        core.getLogger().i(TAG, "adding a new Route: " + to.toString() + " -> "
+                + nextHop.toString());
         routingTable.add(new TableEntry(to, nextHop));
     }
 

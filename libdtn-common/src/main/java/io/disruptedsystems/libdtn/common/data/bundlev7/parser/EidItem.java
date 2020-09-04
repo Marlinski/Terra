@@ -44,7 +44,7 @@ public class EidItem implements CborParser.ParseableItem {
                             p.insert_now(parseDtn);
                             break;
                         default:
-                            p.insert_now(parseEid);
+                            throw new RxParserException("error parsing eid, unknown iana value");
                     }
                 });
     }

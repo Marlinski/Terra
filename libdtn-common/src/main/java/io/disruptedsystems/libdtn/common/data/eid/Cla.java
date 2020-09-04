@@ -1,6 +1,7 @@
 package io.disruptedsystems.libdtn.common.data.eid;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,7 +12,7 @@ import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkValidDtnEid;
  */
 public interface Cla {
 
-    String CLA_AUTHORITY_FORMAT = "^@([^:])+(:.+)?";
+    String CLA_AUTHORITY_FORMAT = "^@([^:]+)(:(.+))?";
 
     class InvalidClaEid extends Exception {
     }
@@ -45,11 +46,50 @@ public interface Cla {
         return matcher.group(1);
     }
 
+    static String getClaSchemeUnsafe(URI uri) {
+        try {
+            Matcher matcher = Pattern.compile(CLA_AUTHORITY_FORMAT).matcher(uri.getAuthority());
+            checkClaAuthority(matcher);
+            return matcher.group(1);
+        } catch(InvalidClaEid e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+
     static String getClaParameters(URI uri) throws Dtn.InvalidDtnEid, InvalidClaEid {
         checkValidClaEid(uri);
         Matcher matcher = Pattern.compile(CLA_AUTHORITY_FORMAT).matcher(uri.getAuthority());
         checkClaAuthority(matcher);
-        return matcher.group(2);
+        return matcher.group(3);
     }
 
+    static String getClaParametersUnsafe(URI uri) {
+        try {
+            Matcher matcher = Pattern.compile(CLA_AUTHORITY_FORMAT).matcher(uri.getAuthority());
+            checkClaAuthority(matcher);
+            return matcher.group(3);
+        } catch(InvalidClaEid e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static URI create(String claScheme, String claSsp) throws URISyntaxException, Dtn.InvalidDtnEid, InvalidClaEid {
+        return create(claScheme, claSsp, "/", null, null);
+    }
+
+    static URI create(String claScheme, String claSsp, String path) throws URISyntaxException, Dtn.InvalidDtnEid, InvalidClaEid {
+        return create(claScheme, claSsp, path, null, null);
+    }
+
+    static URI create(String claScheme, String claSsp, String path, String query) throws URISyntaxException, Dtn.InvalidDtnEid, InvalidClaEid {
+        return create(claScheme, claSsp, path, query, null);
+    }
+
+    static URI create(String claScheme, String claSsp, String path, String query, String fragment) throws URISyntaxException, Dtn.InvalidDtnEid, InvalidClaEid {
+        claSsp = (claSsp == null || claSsp.equals("")) ? "" : ":" + claSsp;
+        URI uri = Dtn.create("@"+claScheme+claSsp, path, query, fragment);
+        checkValidClaEid(uri);
+        return uri;
+    }
 }

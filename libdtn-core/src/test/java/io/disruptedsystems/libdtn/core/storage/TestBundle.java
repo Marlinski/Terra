@@ -1,5 +1,7 @@
 package io.disruptedsystems.libdtn.core.storage;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
 import io.disruptedsystems.libdtn.common.data.Bundle;
@@ -9,10 +11,7 @@ import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
-import io.disruptedsystems.libdtn.common.data.eid.IpnEid;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 
 import static org.junit.Assert.assertEquals;
 
@@ -23,19 +22,11 @@ public class TestBundle {
 
     public static String testPayload = "This is a test for bundle serialization";
 
-    private static DtnEid createSourceEid() {
-        try {
-            return new BaseDtnEid("source");
-        } catch (EidFormatException e) {
-            return DtnEid.nullEid();
-        }
-    }
-
     public static Bundle testBundle0() {
         Bundle bundle = new Bundle();
-        bundle.setDestination(new IpnEid(5, 12));
-        bundle.setSource(createSourceEid());
-        bundle.setReportto(DtnEid.nullEid());
+        bundle.setDestination(URI.create("ipn:5.12"));
+        bundle.setSource(URI.create("dtn://source/"));
+        bundle.setReportTo(Dtn.nullEid());
         bundle.bid = BundleId.create(bundle);
         return bundle;
     }
@@ -63,7 +54,7 @@ public class TestBundle {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
         bundle.addBlock(new ScopeControlHopLimitBlock());
-        bundle.addBlock(new PreviousNodeBlock(DtnEid.generate()));
+        bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         return bundle;
     }
 
@@ -72,7 +63,7 @@ public class TestBundle {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
         bundle.addBlock(new ScopeControlHopLimitBlock());
-        bundle.addBlock(new PreviousNodeBlock(DtnEid.generate()));
+        bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         bundle.setCrcType(PrimaryBlock.CrcFieldType.CRC_32);
         return bundle;
     }

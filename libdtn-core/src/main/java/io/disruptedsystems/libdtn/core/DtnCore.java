@@ -120,7 +120,7 @@ public class DtnCore implements CoreApi {
     }
 
     @Override
-    public LocalEidApi getLocalEid() {
+    public LocalEidApi getLocalEidTable() {
         return localEidTable;
     }
 

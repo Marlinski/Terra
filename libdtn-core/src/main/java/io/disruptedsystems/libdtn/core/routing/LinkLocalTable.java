@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LinkLocalTableApi;
 import io.disruptedsystems.libdtn.core.events.ChannelClosed;
@@ -7,14 +8,14 @@ import io.disruptedsystems.libdtn.core.events.ChannelOpened;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryDown;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -60,9 +61,9 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
                     .subscribe(
                             b -> {
                                 core.getLogger().i(TAG, "channel "
-                                        + channel.channelEid().getEidString()
+                                        + channel.channelEid()
                                         + " received a new bundle from "
-                                        + b.getSource().getEidString());
+                                        + b.getSource());
                                 b.tag("cla-origin-iid", channel.channelEid());
                                 core.getBundleProtocol().bundleReception(b);
                             },
@@ -79,13 +80,13 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
     }
 
     @Override
-    public ClaEid isEidLinkLocal(Eid eid) {
+    public URI isEidLinkLocal(URI eid) {
         if (!isEnabled()) {
             return null;
         }
 
         for (ClaChannelSpi cla : linkLocalTable) {
-            if (cla.localEid().isAuthoritativeOver(eid)) {
+            if (Eid.hasSameAuthority(cla.localEid(), eid)) {
                 return cla.localEid();
             }
         }
@@ -93,13 +94,13 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
     }
 
     @Override
-    public Maybe<ClaChannelSpi> findCla(Eid destination) {
+    public Maybe<ClaChannelSpi> findCla(URI destination) {
         if (!isEnabled()) {
             return Maybe.error(new ComponentIsDownException(TAG));
         }
 
         return Observable.fromIterable(linkLocalTable)
-                .filter(c -> c.channelEid().isAuthoritativeOver(destination))
+                .filter(c -> Eid.hasSameAuthority(c.channelEid(), destination))
                 .lastElement();
     }
 

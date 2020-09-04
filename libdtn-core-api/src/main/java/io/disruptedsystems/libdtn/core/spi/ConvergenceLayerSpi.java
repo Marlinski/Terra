@@ -1,7 +1,11 @@
 package io.disruptedsystems.libdtn.core.spi;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.ClaEidParser;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.reactivex.rxjava3.core.Observable;
@@ -15,17 +19,10 @@ import io.reactivex.rxjava3.core.Single;
 public interface ConvergenceLayerSpi extends ModuleSpi {
 
     /**
-     * get the CLA-Eid parser for this convergence layer. The CL name for which
-     * this module is relevant MUST be the module name.
-     * @return ClaEidParser
-     */
-    ClaEidParser getClaEidParser();
-
-    /**
-     * When a BaseClaEid is started it should return an Observable of ClaChannelSpi used to
+     * When a BaseURIis started it should return an Observable of ClaChannelSpi used to
      * actually send and receive bundles.
      *
-     * @param api configuration
+     * @param api    configuration
      * @param logger logger instance
      */
     Observable<ClaChannelSpi> start(ConfigurationApi api, Log logger);
@@ -36,7 +33,7 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
     boolean isStarted();
 
     /**
-     * When a BaseClaEid is stopped, it should stop creating any new ClaChannelSpi and terminate the
+     * When a BaseURIis stopped, it should stop creating any new ClaChannelSpi and terminate the
      * observable. It is an implementation specific decision wether or not to close all the
      * underlying CLAChannels that were previously openned.
      */
@@ -48,6 +45,6 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
      * @param eid of the peer to open a channel too, must be Cla-specific
      * @return Single of ClaChannelSpi if successful, error otherwise
      */
-    Single<ClaChannelSpi> open(ClaEid eid);
+    Single<ClaChannelSpi> open(URI eid);
 
 }

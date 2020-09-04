@@ -16,7 +16,7 @@ public class ChannelClosed implements DtnEvent {
 
     @Override
     public String toString() {
-        return "Channel closed: local=" + channel.localEid().getEidString()
-                + " peer=" + channel.channelEid().getEidString();
+        return "Channel closed: local=" + channel.localEid().toString()
+                + " peer=" + channel.channelEid().toString();
     }
 }

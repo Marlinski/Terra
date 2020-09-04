@@ -11,15 +11,15 @@ import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.NullBlob;
-import io.disruptedsystems.libdtn.common.data.eid.ApiEid;
-import io.disruptedsystems.libdtn.common.data.eid.BaseEidFactory;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.data.eid.EidFactory;
-import io.disruptedsystems.libdtn.common.data.eid.EidFormatException;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.reactivex.rxjava3.core.Completable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,14 +94,14 @@ public class DtnPing implements Callable<Void> {
         return ((float) ((int) ((tmp - (int) tmp) >= 0.5f ? tmp + 1 : tmp))) / pow;
     }
 
-    private void receiveEchoResponse() {
+    private void receiveEchoResponse() throws Api.InvalidApiEid, Dtn.InvalidDtnEid, URISyntaxException {
         ActiveRegistrationCallback cb = (recvbundle) ->
                 Completable.create(s -> {
-                    String dest = recvbundle.getDestination().getEidString();
+                    URI dest = recvbundle.getDestination();
 
-                    final String regex = "(.*)/dtnping/([0-9a-fA-F]+)?seq=([0-9]+)&ts=([0-9]+)";
+                    final String regex = "/dtnping/([0-9a-fA-F]+)?seq=([0-9]+)&ts=([0-9]+)";
                     Pattern r = Pattern.compile(regex);
-                    Matcher m = r.matcher(dest);
+                    Matcher m = r.matcher(dest.getPath());
                     if (!m.find()) {
                         System.err.println("received malformed echo response:" + dest);
                         s.onComplete();
@@ -110,8 +110,8 @@ public class DtnPing implements Callable<Void> {
 
                     String eid = m.group(1);
                     String recvSessionId = m.group(2);
-                    int seq = Integer.valueOf(m.group(3));
-                    long timestamp = Long.valueOf(m.group(4));
+                    int seq = Integer.parseInt(m.group(3));
+                    long timestamp = Long.parseLong(m.group(4));
 
                     if (!recvSessionId.equals(sessionId)) {
                         System.err.println("received echo response from another session:"
@@ -122,7 +122,7 @@ public class DtnPing implements Callable<Void> {
 
                     long timeElapsed = System.nanoTime() - timestamp;
                     System.err.println("echo response from "
-                            + recvbundle.getSource().getEidString()
+                            + recvbundle.getSource()
                             + " seq=" + seq + " time=" + round((timeElapsed / 1000000.0f), 2)
                             + " ms");
 
@@ -133,7 +133,7 @@ public class DtnPing implements Callable<Void> {
         BlobFactory factory = new BaseBlobFactory().enableVolatile(10000);
         if (cookie == null) {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory, logger);
-            agent.register(sink, cb).subscribe(
+            agent.register(Api.me(sink), cb).subscribe(
                     cookie -> {
                         System.err.println("sink registered. cookie: " + cookie);
                     },
@@ -144,7 +144,7 @@ public class DtnPing implements Callable<Void> {
                     });
         } else {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory);
-            agent.reAttach(sink, cookie, cb).subscribe(
+            agent.reAttach(Api.me(sink), cookie, cb).subscribe(
                     b -> System.err.println("re-attach to registered sink"),
                     e -> {
                         System.err.println("could not re-attach to sink: " + sink + " - "
@@ -159,7 +159,7 @@ public class DtnPing implements Callable<Void> {
         if (sessionId == null) {
             sessionId = Long.toHexString(Double.doubleToLongBits(Math.random()));
         }
-        sink = "dtn://api:me/dtnping/" + sessionId;
+        sink = "/dtnping/" + sessionId;
 
         logger = new SimpleLogger();
         switch (verbose.length) {
@@ -183,10 +183,9 @@ public class DtnPing implements Callable<Void> {
         dtneid = fixEid(dtneid);
 
         /* create ping bundle */
-        EidFactory eidFactory = new BaseEidFactory();
-        Eid destination = eidFactory.create(dtneid);
+        URI destination = new URI(dtneid);
         Bundle bundle = new Bundle(destination);
-        bundle.setSource(ApiEid.me());
+        bundle.setSource(Api.me());
         bundle.setV7Flag(PrimaryBlock.BundleV7Flags.DELIVERY_REPORT, true);
         bundle.addBlock(new PayloadBlock(new NullBlob()));
 
@@ -197,8 +196,8 @@ public class DtnPing implements Callable<Void> {
             try {
                 /* update ping seq number */
                 long timestamp = System.nanoTime();
-                String reportto = sink + "?seq="+seq.get() + "&ts=" + timestamp;
-                bundle.setReportto(eidFactory.create(reportto));
+                URI reportto = Api.me(sink, "seq="+seq.get() + "&ts=" + timestamp,null);
+                bundle.setReportTo(reportto);
                 bundle.setCreationTimestamp(timestamp);
                 agent.send(bundle).subscribe(
                         b -> {
@@ -216,7 +215,7 @@ public class DtnPing implements Callable<Void> {
                             System.err.println("error: " + e.getMessage());
                             System.exit(1);
                         });
-            } catch (EidFormatException efe) {
+            } catch (URISyntaxException | Dtn.InvalidDtnEid | Api.InvalidApiEid efe) {
                 /* ignore */
                 System.err.println("eid error: " + efe.getMessage());
                 System.exit(1);

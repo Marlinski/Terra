@@ -20,6 +20,6 @@ public class BundlePulled implements DtnEvent {
     public String toString() {
         return "Bundle pulled: triger=" + trigger.getClass().getName()
                 + " bid=" + bundle.bid.getBidString() + " to: "
-                + bundle.getDestination().getEidString();
+                + bundle.getDestination().toString();
     }
 }

@@ -18,7 +18,7 @@ public interface CoreApi {
 
     Log getLogger();
 
-    LocalEidApi getLocalEid();
+    LocalEidApi getLocalEidTable();
 
     ExtensionManagerApi getExtensionManager();
 

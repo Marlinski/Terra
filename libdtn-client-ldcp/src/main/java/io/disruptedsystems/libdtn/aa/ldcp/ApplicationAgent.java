@@ -16,6 +16,7 @@ import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.reactivex.rxjava3.core.Single;
 
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -152,23 +153,23 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> isRegistered(String eid) {
+    public Single<Boolean> isRegistered(URI eid) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.ISREGISTERED.path)
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .send(host, port, toolbox, factory, logger)
                 .map(res -> res.code == ResponseMessage.ResponseCode.OK);
     }
 
     @Override
-    public Single<String> register(String sink) {
+    public Single<String> register(URI sink) {
         return register(sink, null);
     }
 
     @Override
-    public Single<String> register(String eid, ActiveRegistrationCallback cb) {
+    public Single<String> register(URI eid, ActiveRegistrationCallback cb) {
         if (startServer(cb)) {
             return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.REGISTER.path)
-                    .setHeader("eid", eid)
+                    .setHeader("eid", eid.toString())
                     .setHeader("active", cb == null ? "false" : "true")
                     .setHeader("active-host", "127.0.0.1")
                     .setHeader("active-port", "" + server.getPort())
@@ -188,23 +189,23 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> unregister(String eid, String cookie) {
+    public Single<Boolean> unregister(URI eid, String cookie) {
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UNREGISTER.path)
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
                 .send(host, port, toolbox, factory, logger)
                 .map(res -> res.code == ResponseMessage.ResponseCode.OK);
     }
 
     @Override
-    public Set<BundleId> checkInbox(String sink, String cookie) {
+    public Set<BundleId> checkInbox(URI sink, String cookie) {
         return null;
     }
 
     @Override
-    public Single<Bundle> get(String eid, String cookie, BundleId bundleId) {
+    public Single<Bundle> get(URI eid, String cookie, BundleId bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.GETBUNDLE.path)
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
                 .setHeader("bundle-id", bundleId.getBidString())
                 .send(host, port, toolbox, factory, logger)
@@ -220,9 +221,9 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Bundle> fetch(String eid, String cookie, BundleId bundleId) {
+    public Single<Bundle> fetch(URI eid, String cookie, BundleId bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.FETCHBUNDLE.path)
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
                 .setHeader("bundle-id", bundleId.getBidString())
                 .send(host, port, toolbox, factory, logger)
@@ -238,9 +239,9 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> send(String eid, String cookie, Bundle bundle) {
+    public Single<Boolean> send(URI eid, String cookie, Bundle bundle) {
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.DISPATCH.path)
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
                 .setBundle(bundle)
                 .send(host, port, toolbox, factory, logger)
@@ -256,10 +257,10 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> reAttach(String eid, String cookie, ActiveRegistrationCallback cb) {
+    public Single<Boolean> reAttach(URI eid, String cookie, ActiveRegistrationCallback cb) {
         if (startServer(cb)) {
             return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UPDATE.path)
-                    .setHeader("eid", eid)
+                    .setHeader("eid", eid.toString())
                     .setHeader("cookie", cookie)
                     .setHeader("active", "true")
                     .setHeader("active-host", "127.0.0.1")
@@ -277,11 +278,11 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Boolean> setPassive(String eid, String cookie) {
+    public Single<Boolean> setPassive(URI eid, String cookie) {
         stopServer();
         return LdcpRequest.POST(ApiPaths.ClientToDaemonLdcpPathVersion1.UPDATE.path)
                 .setHeader("active", "false")
-                .setHeader("eid", eid)
+                .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {

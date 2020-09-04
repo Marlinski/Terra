@@ -301,7 +301,7 @@ public class Storage extends CoreComponent implements StorageApi {
         StringBuilder sb = new StringBuilder("current cache:\n");
         sb.append("--------------\n\n");
         index.forEach((bid, entry) -> {
-            String dest = entry.bundle.getDestination().getEidString();
+            String dest = entry.bundle.getDestination().toString();
             String vol = entry.isVolatile ? "V" : "";
             String per = entry.isPersistent ? "P=" + entry.bundlePath : "";
             sb.append(bid.getBidString() + "  -  " + dest + "  -  " + vol + " " + per + "\n");

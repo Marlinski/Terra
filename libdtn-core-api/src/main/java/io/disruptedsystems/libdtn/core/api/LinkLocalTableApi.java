@@ -1,11 +1,11 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+
+import java.net.URI;
+import java.util.Set;
+
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.reactivex.rxjava3.core.Maybe;
-
-import java.util.Set;
 
 /**
  * API for the link-local routing table.
@@ -20,7 +20,7 @@ public interface LinkLocalTableApi extends CoreComponentApi {
      * @param eid to check
      * @return the BaseClaEid-Eid matching this Eid, null otherwise.
      */
-    ClaEid isEidLinkLocal(Eid eid);
+    URI isEidLinkLocal(URI eid);
 
     /**
      * Find an open channel whose channel Eid matches the Eid requested.
@@ -28,7 +28,7 @@ public interface LinkLocalTableApi extends CoreComponentApi {
      * @param destination eid to find
      * @return Maybe observable with the matching ClaChannelSpi
      */
-    Maybe<ClaChannelSpi> findCla(Eid destination);
+    Maybe<ClaChannelSpi> findCla(URI destination);
 
     /**
      * Dump all channel from the link local table.

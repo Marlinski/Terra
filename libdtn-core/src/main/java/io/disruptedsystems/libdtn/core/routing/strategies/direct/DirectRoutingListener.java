@@ -1,5 +1,7 @@
 package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.storage.EventListener;
@@ -11,7 +13,7 @@ import io.marlinski.librxbus.Subscribe;
  *
  * @author Lucien Loiseau on 19/01/19.
  */
-public class DirectRoutingListener extends EventListener<String> {
+public class DirectRoutingListener extends EventListener<URI> {
 
     public static final String TAG = "DirectRoutingListener";
 
@@ -33,9 +35,8 @@ public class DirectRoutingListener extends EventListener<String> {
     @Subscribe
     public void onEvent(LinkLocalEntryUp event) {
         /* deliver every bundle of interest */
-        core.getLogger().i(TAG, "step 1: get all bundleOfInterest "
-                + event.channel.channelEid().getClaParameters());
-        getBundlesOfInterest(event.channel.channelEid().getClaParameters()).subscribe(
+        core.getLogger().i(TAG, "step 1: get all bundleOfInterest " + event.channel.channelEid());
+        getBundlesOfInterest(event.channel.channelEid()).subscribe(
                 bundleID -> {
                     core.getLogger().v(TAG, "step 1.1: pull from storage "
                             + bundleID.getBidString());

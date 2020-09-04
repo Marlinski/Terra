@@ -16,7 +16,7 @@ public class LinkLocalEntryUp {
 
     @Override
     public String toString() {
-        return "New link-local entry: local=" + channel.localEid().getEidString()
-                + " peer=" + channel.channelEid().getEidString();
+        return "New link-local entry: local=" + channel.localEid().toString()
+                + " peer=" + channel.channelEid().toString();
     }
 }

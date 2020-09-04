@@ -2,13 +2,12 @@ package io.disruptedsystems.libdtn.common.data.bundlev7.serializer;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Ipn;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
-
-import static java.lang.Integer.min;
 
 /**
  * EidSerializer serializes an eid.
@@ -24,12 +23,6 @@ public class EidSerializer {
      * @return a Cbor-encoded serialized Eid.
      */
     public static CborEncoder encode(URI eid) {
-        if (eid.equals(Dtn.nullEid())) {
-            return CBOR.encoder()
-                    .cbor_start_array(2)
-                    .cbor_encode_int(Dtn.EID_DTN_IANA_VALUE)
-                    .cbor_encode_int(0);
-        }
         if (Ipn.isIpnEid(eid)) {
             return CBOR.encoder()
                     .cbor_start_array(2)
@@ -38,6 +31,20 @@ public class EidSerializer {
                     .cbor_encode_int(Ipn.getNodeNumberUnsafe(eid))
                     .cbor_encode_int(Ipn.getServiceNumberUnsafe(eid));
         }
+        if (eid.equals(Dtn.nullEid())) {
+            return CBOR.encoder()
+                    .cbor_start_array(2)
+                    .cbor_encode_int(Dtn.EID_DTN_IANA_VALUE)
+                    .cbor_encode_int(0);
+        }
+        if (Dtn.isDtnEid(eid)) {
+            return CBOR.encoder()
+                    .cbor_start_array(2)
+                    .cbor_encode_int(Dtn.EID_DTN_IANA_VALUE)
+                    .cbor_encode_text_string(eid.getSchemeSpecificPart());
+        }
+
+        // todo should probably return an error instead..
         return CBOR.encoder()
                 .cbor_start_array(2)
                 .cbor_encode_int(encodeSchemeToLong(eid.getScheme())) // should encode it in a long
@@ -45,10 +52,11 @@ public class EidSerializer {
     }
 
     private static long encodeSchemeToLong(String str) {
-        ByteBuffer bb = ByteBuffer.allocate(min(8,str.getBytes().length));
-        bb.put(str.getBytes());
-        bb.flip();
-        return bb.getLong() + 65535;
+        byte[] buf = new byte[8];
+        for (int i = 0; i < str.length() && i < 8; i++) {
+            buf[i] = (byte) str.charAt(i);
+        }
+        return (ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).getLong());
     }
 
 }

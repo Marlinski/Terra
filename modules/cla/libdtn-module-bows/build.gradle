@@ -17,7 +17,7 @@ jar {
         serviceInterface 'io.disruptedsystems.libdtn.core.spi.ClaChannelSpi'
         serviceInterface 'io.disruptedsystems.libdtn.module.cla.bows.ConvergenceLayerBows'
         serviceInterface 'io.disruptedsystems.libdtn.module.cla.bows.ConvergenceLayerBows$Channel'
-        serviceInterface 'io.disruptedsystems.libdtn.module.cla.bows.ClaBowsEid'
+        serviceInterface 'io.disruptedsystems.libdtn.module.cla.bows.ClaBows'
     }
 
     // fat jar dependency, exclude those already in libdtn-core

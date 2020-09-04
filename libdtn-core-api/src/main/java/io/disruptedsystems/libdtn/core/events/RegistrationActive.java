@@ -1,5 +1,7 @@
 package io.disruptedsystems.libdtn.core.events;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 
 /**
@@ -9,10 +11,10 @@ import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
  */
 public class RegistrationActive implements DtnEvent {
 
-    public String eid;
+    public URI eid;
     public ActiveRegistrationCallback cb;
 
-    public RegistrationActive(String sink, ActiveRegistrationCallback cb) {
+    public RegistrationActive(URI sink, ActiveRegistrationCallback cb) {
         this.eid = sink;
         this.cb = cb;
     }

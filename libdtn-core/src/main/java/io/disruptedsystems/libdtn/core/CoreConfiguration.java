@@ -1,13 +1,16 @@
 package io.disruptedsystems.libdtn.core;
 
-import io.disruptedsystems.libdtn.common.data.eid.DtnEid;
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-import io.disruptedsystems.libdtn.common.data.eid.BaseDtnEid;
+
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+
+
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -187,8 +190,8 @@ public class CoreConfiguration implements ConfigurationApi {
      */
     public CoreConfiguration() {
         // default configuration
-        this.createCoreEntry(CoreEntry.LOCAL_EID, DtnEid.generate());
-        this.<Eid>createCoreEntrySet(CoreEntry.ALIASES);
+        this.createCoreEntry(CoreEntry.LOCAL_EID, Dtn.generate());
+        this.<URI>createCoreEntrySet(CoreEntry.ALIASES);
         this.createCoreEntry(CoreEntry.MAX_LIFETIME, (long) 0);
         this.createCoreEntry(CoreEntry.MAX_TIMESTAMP_FUTURE, (long) 0);
         this.createCoreEntry(CoreEntry.ALLOW_RECEIVE_ANONYMOUS_BUNDLE, false);

@@ -1,16 +1,18 @@
 package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
-import io.disruptedsystems.libdtn.common.data.eid.ClaEid;
-import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
-import io.disruptedsystems.libdtn.core.api.EventListenerApi;
-import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
+
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.core.api.CoreApi;
+import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
+import io.disruptedsystems.libdtn.core.api.EventListenerApi;
+import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -65,7 +67,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
                 .onErrorReturnItem(RoutingStrategyResult.CustodyRefused);
     }
 
-    private Observable<ClaChannelSpi> findOpenedChannelTowards(Eid destination) {
+    private Observable<ClaChannelSpi> findOpenedChannelTowards(URI destination) {
         return Observable.concat(
                 core.getLinkLocalTable().findCla(destination)
                         .toObservable(),
@@ -78,7 +80,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     private void prepareBundleForTransmission(Bundle bundle, ClaChannelSpi claChannel) {
         core.getLogger().v(TAG, "5.4-4 "
                 + bundle.bid.getBidString() + " -> "
-                + claChannel.channelEid().getEidString());
+                + claChannel.channelEid().toString());
 
         /* call block-specific routine for transmission */
         for (CanonicalBlock block : bundle.getBlocks()) {
@@ -109,17 +111,17 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     private Single<RoutingStrategyResult> forwardLater(Bundle bundle) {
         final BundleId bid = bundle.bid;
-        final Eid destination = bundle.getDestination();
-        Observable<ClaEid> potentialClas = core.getRoutingTable().resolveEid(destination);
+        final URI destination = bundle.getDestination();
+        Observable<URI> potentialClas = core.getRoutingTable().resolveEid(destination);
         core.getLogger().v(TAG, "forward later: "
                 + bundle.bid.getBidString() + " -> "
-                + potentialClas.map(ClaEid::getEidString).reduce((str,eid) -> str+","+eid).blockingGet());
+                + potentialClas.map(URI::toString).reduce((str, eid) -> str + "," + eid).blockingGet());
 
         /* register a listener that will listen for LinkLocalEntryUp event
          * and pull the bundle from storage if there is a match */
         // watch bundle for all potential ClaEid
         potentialClas
-                .map(claeid -> directListener.watch(claeid.getClaParameters(), bid))
+                .map(claeid -> directListener.watch(Cla.getClaParametersUnsafe(claeid), bid))
                 .subscribe();
 
         // then try to force an opportunity
