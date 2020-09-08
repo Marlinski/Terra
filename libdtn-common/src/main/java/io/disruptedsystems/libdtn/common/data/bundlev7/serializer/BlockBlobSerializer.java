@@ -19,6 +19,6 @@ public class BlockBlobSerializer {
      */
     static CborEncoder encode(BlockBlob block) {
         return CBOR.encoder()
-                .cbor_encode_byte_string(block.data.observe());
+                .cbor_encode_byte_string(block.data.size(), block.data.observe());
     }
 }

@@ -7,6 +7,7 @@ import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.SIM
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
@@ -46,7 +47,7 @@ import org.junit.Test;
  * Test class for SimpleStorage.
  * @author Lucien Loiseau on 04/10/18.
  */
-public class SimpleStorageTest {
+public class FileStorageTest {
 
     public static final AtomicReference<CountDownLatch> WAIT_LOCK = new AtomicReference<>(new CountDownLatch(1));
     private Set<String> paths = new HashSet<>();
@@ -55,6 +56,12 @@ public class SimpleStorageTest {
     private File dir = new File(System.getProperty("path") + "/bundle/");
     private Storage storage;
     private CoreApi mockCore = mockCore();
+
+
+    private void cleanup() {
+        File file = new File("/tmp/bundle");
+        file.delete();
+    }
 
     /* mocking the core */
     private CoreApi mockCore() {
@@ -106,111 +113,118 @@ public class SimpleStorageTest {
     @Test
     public void testSimpleStoreBundle() {
         synchronized (StorageTest.LOCK) {
-            System.out.println("[+] SimpleStorage");
-            storage = new Storage(mockCore);
-            storage.initComponent(mockCore.getConf(), COMPONENT_ENABLE_STORAGE, mockCore.getLogger());
+            cleanup();
 
-            System.out.println("[.] clear SimpleStorage");
-            clearStorage();
-            assertStorageSize(0);
-            assertFileStorageSize(0, dir);
+            try {
+                System.out.println("[+] SimpleStorage");
+                storage = new Storage(mockCore);
+                storage.initComponent(mockCore.getConf(), COMPONENT_ENABLE_STORAGE, mockCore.getLogger());
 
-            Bundle[] bundles = {
-                    TestBundle.testBundle1(),
-                    TestBundle.testBundle2(),
-                    TestBundle.testBundle3(),
-                    TestBundle.testBundle4(),
-                    TestBundle.testBundle5(),
-                    TestBundle.testBundle6()
-            };
+                System.out.println("[.] clear SimpleStorage");
+                clearStorage();
+                assertStorageSize(0);
+                assertFileStorageSize(0, dir);
 
-            /* store the bundles in storage */
-            System.out.println("[.] store in SimpleStorage");
-            cockLock();
-            Observable.fromArray(bundles).flatMapCompletable(
-                    b -> Completable.fromSingle(storage.getSimpleStorage().store(b)))
-                    .subscribe(
-                            () -> {
-                                WAIT_LOCK.get().countDown();
-                            },
-                            e -> {
-                                WAIT_LOCK.get().countDown();
-                            });
-            waitFinish();
-            assertStorageSize(bundles.length);
-            assertFileStorageSize(bundles.length, dir);
+                Bundle[] bundles = {
+                        TestBundle.testBundle1(),
+                        TestBundle.testBundle2(),
+                        TestBundle.testBundle3(),
+                        TestBundle.testBundle4(),
+                        TestBundle.testBundle5(),
+                        TestBundle.testBundle6()
+                };
 
-            /* pull the bundles from storage  */
-            System.out.println("[.] pull from SimpleStorage");
-            final LinkedList<Bundle> pulledBundles = new LinkedList<>();
-            cockLock();
-            Observable.fromArray(bundles).flatMapCompletable(
-                    b -> Completable.create(s ->
-                            storage.getSimpleStorage().get(b.bid).subscribe(
-                                    pb -> {
-                                        pulledBundles.add(pb);
-                                        s.onComplete();
-                                    },
-                                    e -> {
-                                        System.out.println("error pulling bundle bid="+b.bid.getBidString()+" reason=" + e.getMessage());
-                                        s.onComplete();
-                                    })))
-                    .subscribe(
-                            () -> WAIT_LOCK.get().countDown(),
-                            e -> WAIT_LOCK.get().countDown());
-            waitFinish();
-            assertEquals(bundles.length, pulledBundles.size());
-            assertFileStorageSize(bundles.length, dir);
+                /* store the bundles in storage */
+                System.out.println("[.] store in SimpleStorage");
+                cockLock();
+                Observable.fromArray(bundles).flatMapCompletable(
+                        b -> storage.getFileStorage().store(b).ignoreElement())
+                        .doOnTerminate(() -> WAIT_LOCK.get().countDown())
+                        .blockingAwait();
 
-            /* check that they are the same */
-            for (Bundle bundle : pulledBundles) {
-                boolean found = false;
-                for (Bundle value : bundles) {
-                    if (value.bid.getBidString().equals(bundle.bid.getBidString())) {
-                        found = true;
-                        assertArrayEquals(
-                                flowableToByteArray(value.getPayloadBlock().data.observe()),
-                                flowableToByteArray(bundle.getPayloadBlock().data.observe()));
-                        bundle.clearBundle();
+                // check it was correctly stored
+                waitFinish();
+                assertStorageSize(bundles.length);
+                assertFileStorageSize(bundles.length, dir);
+
+                /* pull the bundles from storage  */
+                System.out.println("[.] pull from SimpleStorage");
+                final LinkedList<Bundle> pulledBundles = new LinkedList<>();
+                cockLock();
+                Observable.fromArray(bundles).flatMapCompletable(
+                        b -> Completable.create(s ->
+                                storage.getFileStorage().get(b.bid).subscribe(
+                                        pb -> {
+                                            pulledBundles.add(pb);
+                                            s.onComplete();
+                                        },
+                                        e -> {
+                                            System.out.println("error pulling bundle bid=" + b.bid.getBidString() + " reason=" + e.getMessage());
+                                            s.onComplete();
+                                        })))
+                        .doOnTerminate(() -> WAIT_LOCK.get().countDown())
+                        .blockingAwait();
+
+                // check it looks fine
+                waitFinish();
+                assertEquals(bundles.length, pulledBundles.size());
+                assertFileStorageSize(bundles.length, dir);
+
+                /* check that they are the same */
+                for (Bundle bundle : pulledBundles) {
+                    boolean found = false;
+                    for (Bundle value : bundles) {
+                        if (value.bid.getBidString().equals(bundle.bid.getBidString())) {
+                            found = true;
+                            assertArrayEquals(
+                                    flowableToByteArray(value.getPayloadBlock().data.observe()),
+                                    flowableToByteArray(bundle.getPayloadBlock().data.observe()));
+                            bundle.clearBundle();
+                        }
                     }
+                    assertTrue(found);
                 }
-                assertTrue(found);
-            }
 
-            /* check remove path */
-            System.out.println("[.] remove path from SimpleStorage configuration");
-            paths.clear();
-            conf.<Set<String>>get(SIMPLE_STORAGE_PATH).update(paths);
-            try {
-                // give it time to unindex
-                Thread.sleep(200);
-            } catch (InterruptedException ie) {
-                // ignore
-            }
-            assertStorageSize(0);
-            assertFileStorageSize(6, dir);
+                /* check remove path */
+                System.out.println("[.] remove path from SimpleStorage configuration");
+                paths.clear();
+                conf.<Set<String>>get(SIMPLE_STORAGE_PATH).update(paths);
+                try {
+                    // give it time to unindex
+                    Thread.sleep(200);
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+                assertStorageSize(0);
+                assertFileStorageSize(6, dir);
 
-            /* check indexing new path */
-            System.out.println("[.] add path to SimpleStorage configuration for indexing");
-            paths.add(System.getProperty("path"));
-            conf.<Set<String>>get(SIMPLE_STORAGE_PATH).update(paths);
-            try {
-                // give it time to index
-                Thread.sleep(200);
-            } catch (InterruptedException ie) {
-                // ignore
-            }
-            assertStorageSize(6);
-            assertFileStorageSize(6, dir);
+                /* check indexing new path */
+                System.out.println("[.] add path to SimpleStorage configuration for indexing");
+                paths.add(System.getProperty("path"));
+                conf.<Set<String>>get(SIMPLE_STORAGE_PATH).update(paths);
+                try {
+                    // give it time to index
+                    Thread.sleep(200);
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+                assertStorageSize(6);
+                assertFileStorageSize(6, dir);
 
-            /* clear the storage */
-            System.out.println("[.] clear SimpleStorage");
-            clearStorage();
-            assertStorageSize(0);
-            assertFileStorageSize(0, dir);
+                /* clear the storage */
+                System.out.println("[.] clear SimpleStorage");
+                clearStorage();
+                assertStorageSize(0);
+                assertFileStorageSize(0, dir);
 
-            for(Bundle bundle : bundles) {
-                bundle.clearBundle();
+                for (Bundle bundle : bundles) {
+                    bundle.clearBundle();
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+                fail();
+            } finally {
+                cleanup();
             }
         }
     }
@@ -238,15 +252,14 @@ public class SimpleStorageTest {
 
     private void clearStorage() {
         cockLock();
-        storage.clear().subscribe(
-                () -> WAIT_LOCK.get().countDown(),
-                e -> WAIT_LOCK.get().countDown()
-        );
+        storage.clear()
+                .doOnTerminate(() -> WAIT_LOCK.get().countDown())
+                .blockingAwait();
         waitFinish();
     }
 
     void assertStorageSize(int expectedSize) {
-        assertEquals(expectedSize, storage.getSimpleStorage().count());
+        assertEquals(expectedSize, storage.getFileStorage().count());
     }
 
     void assertFileStorageSize(int expectedSize, File dir) {

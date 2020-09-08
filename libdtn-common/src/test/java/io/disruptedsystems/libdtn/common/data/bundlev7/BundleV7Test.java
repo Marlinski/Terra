@@ -1,10 +1,13 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.utils.NullLogger;
+import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -154,32 +157,28 @@ public class BundleV7Test {
         };
 
         for (Bundle bundle : bundles) {
+            //System.out.println(bundle.bid.getBidString());
             Bundle[] res = {null};
 
             // prepare serializer
             CborEncoder enc = BundleV7Serializer.encode(bundle,
                     new BaseBlockDataSerializerFactory());
 
-            // prepare parser
-            BundleV7Item bundleParser = new BundleV7Item(
-                    new NullLogger(),
-                    new BaseExtensionToolbox(),
-                    new BaseBlobFactory().enableVolatile(100000).disablePersistent());
-
             CborParser parser = CBOR.parser().cbor_parse_custom_item(
                     () -> new BundleV7Item(
-                            new NullLogger(),
+                            new SimpleLogger(),
                             new BaseExtensionToolbox(),
-                            new BaseBlobFactory().enableVolatile(100000).disablePersistent()),
+                            new BaseBlobFactory().enableVolatile(100000)),
                     (p, t, item) ->
                             res[0] = item.bundle);
 
             // serialize and parse
             enc.observe(10).subscribe(
                     buf -> {
+                        //System.out.println(new String(buf.array()));
                         try {
                             if (parser.read(buf)) {
-                                assertEquals(false, buf.hasRemaining());
+                                assertFalse(buf.hasRemaining());
                             }
                         } catch (RxParserException rpe) {
                             rpe.printStackTrace();
@@ -203,12 +202,12 @@ public class BundleV7Test {
      */
     public static void checkBundlePayload(Bundle bundle) {
         // assert
-        assertEquals(true, bundle != null);
+        assertTrue(bundle != null);
         String[] payload = {null};
         if (bundle != null) {
             for (CanonicalBlock block : bundle.getBlocks()) {
-                assertEquals(true, block.isTagged("crc_check"));
-                assertEquals(true, block.<Boolean>getTagAttachment("crc_check"));
+                assertTrue(block.isTagged("crc_check"));
+                assertTrue(block.<Boolean>getTagAttachment("crc_check"));
             }
 
             bundle.getPayloadBlock().data.observe().subscribe(
@@ -218,7 +217,7 @@ public class BundleV7Test {
                         payload[0] = new String(arr);
                     });
 
-            assertEquals(true, payload[0] != null);
+            assertTrue(payload[0] != null);
             assertEquals(testPayload, payload[0]);
         }
     }

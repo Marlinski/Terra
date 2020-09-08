@@ -26,7 +26,7 @@ public class BlockBlobParser {
                             logger.v(TAG, ".. blob_byte_string_size=" + size);
                             try {
                                 block.data = factory.createBlob((int) size);
-                            } catch (BlobFactory.BlobFactoryException sfe) {
+                            } catch (IOException e) {
                                 logger.v(TAG, ".. blob_create=NullBlob");
                                 block.data = new NullBlob();
                             }
@@ -37,7 +37,7 @@ public class BlockBlobParser {
                             logger.v(TAG, ".. chunk=" + new String(chunk.array()));
                             try {
                                 p.<WritableBlob>getReg(3).write(chunk);
-                            } catch (WritableBlob.BlobOverflowException | IOException io) {
+                            } catch (IOException io) {
                                 logger.v(TAG, ".. blob_write_error=" + io.getMessage());
                                 p.<WritableBlob>getReg(3).close();
                                 p.setReg(3, null);

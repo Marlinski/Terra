@@ -9,7 +9,7 @@ import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
 import io.disruptedsystems.libdtn.common.data.StatusReport;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
+import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
@@ -352,7 +352,7 @@ public class BundleProtocol implements BundleProtocolApi {
                 .blockingGet();
 
         /* serialize the status report into the bundle payload */
-        UntrackedByteBufferBlob blobReport = new UntrackedByteBufferBlob((int) size);
+        VolatileBlob blobReport = new VolatileBlob((int) size);
         final WritableBlob wblob = blobReport.getWritableBlob();
         enc.observe()
                 .map(wblob::write)

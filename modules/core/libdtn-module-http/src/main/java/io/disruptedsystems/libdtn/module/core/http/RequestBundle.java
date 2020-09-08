@@ -10,8 +10,7 @@ import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Dispatch;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -114,7 +113,7 @@ public class RequestBundle {
 
         try {
             final Bundle bundle = createBundleSkeletonFromHTTPHeaders(destEID, reportToEID, lifetime);
-            final UntrackedByteBufferBlob blob = new UntrackedByteBufferBlob((int) req.getContentLength());
+            final VolatileBlob blob = new VolatileBlob((int) req.getContentLength());
             return req.getContent()
                     .reduce(blob.getWritableBlob(), (wblob, buff) -> {
                         try {

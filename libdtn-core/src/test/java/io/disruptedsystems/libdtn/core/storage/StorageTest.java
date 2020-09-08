@@ -103,7 +103,7 @@ public class StorageTest {
 
             assertEquals(0, storage.count());
             assertEquals(0, storage.getVolatileStorage().count());
-            assertEquals(0, storage.getSimpleStorage().count());
+            assertEquals(0, storage.getFileStorage().count());
             assertFileStorageSize(0, dir);
 
             System.out.println("[.] store bundle in Storage");
@@ -127,7 +127,7 @@ public class StorageTest {
 
             assertEquals(bundles.length, storage.count());
             assertEquals(bundles.length, storage.getVolatileStorage().count());
-            assertEquals(bundles.length, storage.getSimpleStorage().count());
+            assertEquals(bundles.length, storage.getFileStorage().count());
             assertFileStorageSize(bundles.length, dir);
 
             System.out.println("[.] clear Storage");
@@ -140,7 +140,7 @@ public class StorageTest {
 
             assertEquals(0, storage.count());
             assertEquals(0, storage.getVolatileStorage().count());
-            assertEquals(0, storage.getSimpleStorage().count());
+            assertEquals(0, storage.getFileStorage().count());
             assertFileStorageSize(0, dir);
 
             for(Bundle bundle : bundles) {
@@ -163,7 +163,7 @@ public class StorageTest {
 
 
     void assertStorageSize(int expectedSize) {
-        assertEquals(expectedSize, storage.getSimpleStorage().count());
+        assertEquals(expectedSize, storage.getFileStorage().count());
     }
 
     void assertFileStorageSize(int expectedSize, File dir) {

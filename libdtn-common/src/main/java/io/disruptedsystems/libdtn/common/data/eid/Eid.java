@@ -3,6 +3,10 @@ package io.disruptedsystems.libdtn.common.data.eid;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkAuthorityNotNull;
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkPathNotNull;
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkSchemeNotNull;
+
 /**
  * @author Lucien Loiseau on 04/09/20.
  */
@@ -30,15 +34,33 @@ public interface Eid {
 
 
     static boolean hasSameScheme(URI a, URI b) {
-        return a.getScheme().equals(b.getScheme());
+        try {
+            checkSchemeNotNull(a);
+            checkSchemeNotNull(b);
+            return a.getScheme().equals(b.getScheme());
+        } catch (Dtn.InvalidDtnEid e) {
+            return false;
+        }
     }
 
     static boolean hasSameAuthority(URI a, URI b) {
-        return a.getAuthority().equals(b.getAuthority());
+        try {
+            checkAuthorityNotNull(a);
+            checkAuthorityNotNull(b);
+            return a.getAuthority().equals(b.getAuthority());
+        } catch (Dtn.InvalidDtnEid e) {
+            return false;
+        }
     }
 
     static boolean hasSamePath(URI a, URI b) {
-        return a.getPath().equals(b.getPath());
+        try {
+            checkPathNotNull(a);
+            checkPathNotNull(b);
+            return a.getPath().equals(b.getPath());
+        } catch (Dtn.InvalidDtnEid e) {
+            return false;
+        }
     }
 
     static boolean matchAuthority(URI a, URI b) {

@@ -1,7 +1,7 @@
 package io.disruptedsystems.libdtn.common.data;
 
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
+import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
 
 import java.nio.ByteBuffer;
 
@@ -37,7 +37,7 @@ public class PayloadBlock extends BlockBlob {
      * @param data payload
      */
     public PayloadBlock(String data) {
-        super(PAYLOAD_BLOCK_TYPE, new UntrackedByteBufferBlob(data.getBytes()));
+        super(PAYLOAD_BLOCK_TYPE, new VolatileBlob(data.getBytes()));
     }
 
 
@@ -47,7 +47,7 @@ public class PayloadBlock extends BlockBlob {
      * @param data payload
      */
     public PayloadBlock(byte[] data) {
-        super(PAYLOAD_BLOCK_TYPE, new UntrackedByteBufferBlob(data));
+        super(PAYLOAD_BLOCK_TYPE, new VolatileBlob(data));
     }
 
 
@@ -57,7 +57,7 @@ public class PayloadBlock extends BlockBlob {
      * @param data payload
      */
     public PayloadBlock(ByteBuffer data) {
-        super(PAYLOAD_BLOCK_TYPE, new UntrackedByteBufferBlob(data));
+        super(PAYLOAD_BLOCK_TYPE, new VolatileBlob(data));
     }
 
 

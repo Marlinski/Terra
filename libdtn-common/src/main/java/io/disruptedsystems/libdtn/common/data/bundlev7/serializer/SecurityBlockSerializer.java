@@ -1,12 +1,12 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.serializer;
 
+import java.util.List;
+
 import io.disruptedsystems.libdtn.common.data.security.AbstractSecurityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityResult;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
-
-import java.util.List;
 
 
 /**
@@ -31,8 +31,7 @@ public class SecurityBlockSerializer {
             enc.cbor_encode_int(i);
         }
 
-        enc
-                .cbor_encode_int(block.getCipherSuiteId())
+        enc.cbor_encode_int(block.getCipherSuiteId())
                 .cbor_encode_int(block.securityBlockFlag);
 
         if (block.getSaFlag(SecurityBlock.SecurityBlockFlags.SECURITY_SOURCE_PRESENT)) {

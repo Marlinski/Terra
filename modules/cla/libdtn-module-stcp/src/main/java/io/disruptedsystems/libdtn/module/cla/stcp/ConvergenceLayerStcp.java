@@ -172,7 +172,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     }
 
     public class Channel implements ClaChannelSpi {
-
         RxTCP.Connection tcpcon;
         URI channelEid;
         URI localEid;

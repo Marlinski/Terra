@@ -66,7 +66,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Lucien Loiseau on 20/09/18.
  */
-public class SimpleStorage extends CoreComponent {
+public class FileStorage extends CoreComponent {
 
     private static final String TAG = "SimpleStorage";
 
@@ -77,8 +77,8 @@ public class SimpleStorage extends CoreComponent {
     private Storage metaStorage;
     private CoreApi core;
 
-    public SimpleStorage(Storage metaStorage,
-                         CoreApi core) {
+    public FileStorage(Storage metaStorage,
+                       CoreApi core) {
         this.metaStorage = metaStorage;
         this.core = core;
     }
@@ -234,8 +234,7 @@ public class SimpleStorage extends CoreComponent {
      * @throws StorageApi.StorageFullException        if there isn't enough space in SimpleStorage
      * @throws StorageApi.StorageUnavailableException if SimpleStorage is disabled
      */
-    FileBlob createBlob(long expectedSize)
-            throws StorageApi.StorageUnavailableException, StorageApi.StorageFullException {
+    FileBlob createBlob(long expectedSize) throws StorageApi.StorageUnavailableException, StorageApi.StorageFullException {
         if (!isEnabled()) {
             throw new StorageApi.StorageUnavailableException();
         }

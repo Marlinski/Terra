@@ -41,19 +41,10 @@ public class NullBlob extends Tag implements Blob {
         return 0;
     }
 
-    public class NullReadableBlob implements ReadableBlob {
-        @Override
-        public void read(OutputStream stream) throws IOException {
-        }
-
-        @Override
-        public void close() {
-        }
-    }
 
     public class NullWritableBlob implements WritableBlob {
         @Override
-        public void clear() {
+        public void dispose() {
         }
 
         @Override

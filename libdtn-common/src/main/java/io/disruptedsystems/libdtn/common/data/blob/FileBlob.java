@@ -1,13 +1,5 @@
 package io.disruptedsystems.libdtn.common.data.blob;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
-import io.disruptedsystems.libdtn.common.utils.Function;
-import io.disruptedsystems.libdtn.common.utils.Supplier;
-import io.disruptedsystems.libdtn.common.data.Tag;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,13 +7,22 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.spi.AbstractInterruptibleChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
+
+import io.disruptedsystems.libdtn.common.data.Tag;
+import io.disruptedsystems.libdtn.common.utils.Function;
+import io.disruptedsystems.libdtn.common.utils.Supplier;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * FileBlob holds a Blob in a file saved in persistent storage. Useful for large Blob that can't
@@ -33,10 +34,6 @@ public class FileBlob extends Tag implements Blob {
 
     private static final int BUFFER_SIZE = 4096;
     private File file;
-
-    public String getPathToBlob() {
-        return file.getAbsolutePath();
-    }
 
     /**
      * Constructor: creates a Blob from a path. It will open the file and check for existence.
@@ -111,7 +108,7 @@ public class FileBlob extends Tag implements Blob {
                     }
                     return channel;
                 },
-                (channel) -> channel.close());
+                AbstractInterruptibleChannel::close);
     }
 
     @Override
@@ -122,21 +119,22 @@ public class FileBlob extends Tag implements Blob {
             throw new FileNotFoundException("file not found: " + file.getAbsolutePath());
         }
 
-        FileChannel readChannel = new RandomAccessFile(file, "r").getChannel();
-        FileChannel writeChannel = new RandomAccessFile(file, "rw").getChannel();
-        ByteBuffer buffer = ByteBuffer.allocate(2048);
-        buffer.clear();
+        File temporary = new File(getFilePath() +
+                "-map-" +
+                new Date().getTime());
+        FileChannel writeChannel = new FileOutputStream(temporary).getChannel();
 
-        writeChannel.write(open.get());
-        while ((readChannel.read(buffer) != -1)) {
-            buffer.flip();
-            writeChannel.write(update.apply(buffer));
-            buffer.clear();
-        }
-        writeChannel.write(close.get());
-
-        readChannel.close();
-        writeChannel.close();
+        Flowable.concat(Flowable.just(open.get()),
+                observe().map(update::apply),
+                Flowable.just(close.get()))
+                .doOnNext(writeChannel::write)
+                .doOnTerminate(writeChannel::close)
+                .doOnError((e) -> temporary.delete())
+                .doOnComplete(() -> {
+                    Path destinationPath = Paths.get(file.getAbsolutePath());
+                    Path sourcePath = Paths.get(temporary.getAbsolutePath());
+                    Files.move(sourcePath, destinationPath, REPLACE_EXISTING);
+                }).ignoreElements().blockingAwait();
     }
 
     @Override
@@ -153,6 +151,10 @@ public class FileBlob extends Tag implements Blob {
     public Completable moveToFile(String newLocation) {
         return Completable.create(s -> {
             try {
+                if(!file.exists()) {
+                    throw new IOException("Can't access file: " + newLocation);
+                }
+
                 Path sourcePath = Paths.get(file.getAbsolutePath());
                 Path destinationPath = Paths.get(newLocation);
                 Files.move(sourcePath, destinationPath, REPLACE_EXISTING);
@@ -168,7 +170,6 @@ public class FileBlob extends Tag implements Blob {
         });
     }
 
-
     private class WritableFileBlob implements WritableBlob {
 
         private FileOutputStream fos = null;
@@ -176,7 +177,7 @@ public class FileBlob extends Tag implements Blob {
         private boolean open = false;
 
         @Override
-        public void clear() {
+        public void dispose() {
             if (!file.exists()) {
                 return;
             }
@@ -215,7 +216,6 @@ public class FileBlob extends Tag implements Blob {
             int length = buffer.remaining();
             while (buffer.hasRemaining()) {
                 int b = buffer.get();
-                System.out.println("bundle=" + (char) b);
                 bos.write(b);
             }
             return length;

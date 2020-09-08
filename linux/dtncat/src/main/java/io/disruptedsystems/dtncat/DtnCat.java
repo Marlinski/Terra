@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.Buffer;
 import java.util.concurrent.Callable;
 
 import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
@@ -21,7 +22,6 @@ import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.reactivex.rxjava3.core.Completable;
@@ -40,7 +40,7 @@ import picocli.CommandLine;
                 ""})
 public class DtnCat implements Callable<Void> {
 
-    static final String TAG = "DtnCat";
+    static final String TAG = "dtncat";
 
     @CommandLine.Parameters(index = "0", description = "connect to the following DtnEid host.")
     private String dtnhost;
@@ -64,6 +64,9 @@ public class DtnCat implements Callable<Void> {
     @CommandLine.Option(names = {"-D", "--destination"}, description = "Destination Endpoint-ID "
             + "(Eid)")
     private String deid;
+
+    @CommandLine.Option(names = {"-s", "--payload-size"}, description = "maximum size for the payload for each bundle (default to 10 000 bytes).")
+    private int bundleSize = 10000;
 
     @CommandLine.Option(names = {"--crc-16"}, description = "use Crc-16")
     private boolean crc16 = false;
@@ -95,19 +98,20 @@ public class DtnCat implements Callable<Void> {
         return eid;
     }
 
-    private Bundle createBundleFromStdin(Bundle bundle) throws
-            IOException,
-            WritableBlob.BlobOverflowException {
-        Blob blob;
-        try {
-            blob = factory.createBlob(-1);
-        } catch (BlobFactory.BlobFactoryException boe) {
-            throw new WritableBlob.BlobOverflowException();
+    private Bundle createBundleFromStdin(InputStream in) throws URISyntaxException, IOException {
+        URI destination = new URI(deid);
+        Bundle bundle = new Bundle(destination, lifetime);
+        if (report != null) {
+            URI reportTo = new URI(report);
+            bundle.setReportTo(reportTo);
         }
+        Blob blob = factory.createBlob(bundleSize);
+
+        // fill it with data
         WritableBlob wb = blob.getWritableBlob();
-        InputStream isr = new BufferedInputStream(System.in);
-        wb.write(isr);
+        wb.write(in, bundleSize);
         wb.close();
+
         bundle.addBlock(new PayloadBlock(blob));
 
         if (crc16) {
@@ -120,6 +124,48 @@ public class DtnCat implements Callable<Void> {
         }
 
         return bundle;
+    }
+
+    private void sendBundle() {
+        try {
+            if (deid == null) {
+                throw new IOException("destination must be set");
+            }
+
+            agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, null, logger);
+            InputStream isr = new BufferedInputStream(System.in);
+
+            while (true) {
+                logger.i(TAG, "new bundle");
+                Bundle bundle = createBundleFromStdin(isr);
+                if (bundle.getPayloadBlock().data.size() == 0) {
+                    logger.i(TAG, "reached end of stream");
+                    break;
+                }
+
+                agent.send(bundle).subscribe(
+                        isSent -> {
+                            if (isSent) {
+                                bundle.clearBundle();
+                                logger.i(TAG, "bundle successfully sent to " + dtnhost + ":"
+                                        + dtnport);
+                                System.exit(0);
+                            } else {
+                                bundle.clearBundle();
+                                logger.e(TAG, "bundle was refused by " + dtnhost + ":" + dtnport);
+                                System.exit(1);
+                            }
+                        },
+                        err -> {
+                            bundle.clearBundle();
+                            logger.e(TAG, "error: " + err.getMessage());
+                            System.exit(1);
+                        });
+            }
+        } catch (IOException | URISyntaxException e) {
+            /* ignore */
+            logger.e(TAG, "sending error: " + e.getMessage());
+        }
     }
 
     private void listenBundle() throws URISyntaxException {
@@ -170,49 +216,12 @@ public class DtnCat implements Callable<Void> {
         }
     }
 
-    private void sendBundle() {
-        try {
-            if (deid == null) {
-                throw new IOException("destination must be set");
-            }
-            URI destination = new URI(deid);
-            Bundle bundle = new Bundle(destination, lifetime);
-            if (report != null) {
-                URI reportTo = new URI(report);
-                bundle.setReportTo(reportTo);
-            }
-
-            agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, null, logger);
-            agent.send(createBundleFromStdin(bundle)).subscribe(
-                    isSent -> {
-                        if (isSent) {
-                            bundle.clearBundle();
-                            logger.i(TAG, "bundle successfully sent to " + dtnhost + ":"
-                                    + dtnport);
-                            System.exit(0);
-                        } else {
-                            bundle.clearBundle();
-                            logger.e(TAG, "bundle was refused by " + dtnhost + ":" + dtnport);
-                            System.exit(1);
-                        }
-                    },
-                    err -> {
-                        bundle.clearBundle();
-                        logger.e(TAG, "error: " + err.getMessage());
-                        System.exit(1);
-                    });
-        } catch (IOException | WritableBlob.BlobOverflowException | URISyntaxException e) {
-            /* ignore */
-            logger.e(TAG, "sending error: " + e.getMessage());
-        }
-    }
-
     @Override
     public Void call() throws Exception {
         eid = fixEid(eid);
         deid = fixEid(deid);
         toolbox = new BaseExtensionToolbox();
-        factory = new BaseBlobFactory().enableVolatile(1000000).enablePersistent("./");
+        factory = new BaseBlobFactory().enableVolatile(bundleSize);
         logger = new SimpleLogger();
 
         switch (verbose.length) {

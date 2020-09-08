@@ -11,13 +11,10 @@ import java.nio.ByteBuffer;
  */
 public interface WritableBlob {
 
-    class BlobOverflowException extends Exception {
-    }
-
     /**
-     * Clear the current VolatileBlob.
+     * Clear the content of this blob.
      */
-    void clear();
+    void dispose();
 
     /**
      * Read size bytes from the InputStream and store it in the VolatileBlob.
@@ -27,9 +24,8 @@ public interface WritableBlob {
      * @param stream read the data from
      * @return int number of bytes read
      * @throws IOException if low-level reading the data or writing to the blob failed
-     * @throws BlobOverflowException if write size exceed VolatileBlob capacity
      */
-    int write(InputStream stream) throws IOException, BlobOverflowException;
+    int write(InputStream stream) throws IOException;
 
     /**
      * Read size bytes from the InputStream and store it in the VolatileBlob.
@@ -40,19 +36,17 @@ public interface WritableBlob {
      * @param size   of the data to read
      * @return int number of byte read
      * @throws IOException if low-level reading the data or writing to the blob failed
-     * @throws BlobOverflowException if write size exceed VolatileBlob capacity
      */
-    int write(InputStream stream, int size) throws IOException, BlobOverflowException;
+    int write(InputStream stream, int size) throws IOException;
 
     /**
      * copy one byte to the VolatileBlob.
      *
      * @param b the byte
      * @return 1
-     * @throws IOException if low-level reading the data or writing to the blob failed
-     * @throws BlobOverflowException if write size exceed VolatileBlob capacity
+     * @throws IOException if low-level reading the data or writing to the blob faile
      */
-    int write(byte b) throws IOException, BlobOverflowException;
+    int write(byte b) throws IOException;
 
     /**
      * read all the bytes from the array and copy them to the VolatileBlob.
@@ -60,9 +54,8 @@ public interface WritableBlob {
      * @param a the byte array to write to the VolatileBlob
      * @return number of bytes read
      * @throws IOException if low-level reading the data or writing to the blob failed
-     * @throws BlobOverflowException if write size exceed VolatileBlob capacity
      */
-    int write(byte[] a) throws IOException, BlobOverflowException;
+    int write(byte[] a) throws IOException;
 
     /**
      * read all the bytes from the ByteBuffer and copy them to the VolatileBlob.
@@ -70,9 +63,8 @@ public interface WritableBlob {
      * @param buffer the bytebyffer to write to the VolatileBlob
      * @return number of bytes read
      * @throws IOException if low-level reading the data or writing to the blob failed
-     * @throws BlobOverflowException if write size exceed VolatileBlob capacity
      */
-    int write(ByteBuffer buffer) throws IOException, BlobOverflowException;
+    int write(ByteBuffer buffer) throws IOException;
 
     /**
      * After close() is called, no further write call is possible.

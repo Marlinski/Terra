@@ -44,7 +44,7 @@ public abstract class BlockBlob extends CanonicalBlock {
     @Override
     public void clearBlock() {
         super.clearBlock();
-        data.getWritableBlob().clear();
+        data.getWritableBlob().dispose();
     }
 
     @Override

@@ -1,26 +1,25 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.marlinski.libcbor.CBOR;
-import io.marlinski.libcbor.CborEncoder;
-import io.marlinski.libcbor.CborParser;
-import io.disruptedsystems.libdtn.common.ExtensionToolbox;
-import io.disruptedsystems.libdtn.common.data.BlockBlob;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
-import io.disruptedsystems.libdtn.common.data.blob.VersatileGrowingBuffer;
-import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
-import io.disruptedsystems.libdtn.common.data.bundlev7.parser.CanonicalBlockItem;
-import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockHeaderSerializer;
-
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
+
+import io.disruptedsystems.libdtn.common.ExtensionToolbox;
+import io.disruptedsystems.libdtn.common.data.BlockBlob;
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
+import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
+import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
+import io.disruptedsystems.libdtn.common.data.bundlev7.parser.CanonicalBlockItem;
+import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
+import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockHeaderSerializer;
+import io.disruptedsystems.libdtn.common.utils.Log;
+import io.marlinski.libcbor.CBOR;
+import io.marlinski.libcbor.CborEncoder;
+import io.marlinski.libcbor.CborParser;
 
 /**
  * BlockConfidentialityBlock is an ExtensionBlock for confidentiality in the bpsec extension.
@@ -122,7 +121,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
                     long blockDataSize = ((BlockBlob) block).data.size();
                     CborEncoder enc = CBOR.encoder().cbor_start_byte_string(blockDataSize);
                     int headersize = enc.observe().map(ByteBuffer::remaining)
-                            .reduce(0, (a, b) -> a + b).blockingGet();
+                            .reduce(0, Integer::sum).blockingGet();
                     ByteBuffer cborHeader = ByteBuffer.allocate(headersize);
                     enc.observe().subscribe(cborHeader::put);
                     cborHeader.flip();
@@ -160,7 +159,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
                             .blockingGet();
 
                     // malloc space for the new encrypted block
-                    encryptedBlock.data = new UntrackedByteBufferBlob(
+                    encryptedBlock.data = new VolatileBlob(
                             cipher.getOutputSize(encodedSize) + cipher.getBlockSize());
                     WritableBlob wblob = encryptedBlock.data.getWritableBlob();
 
@@ -211,8 +210,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
                 // init cipher
                 Cipher cipher;
                 try {
-                    cipher = context.initCipherForDecryption(
-                            this.cipherSuiteId, this.securitySource);
+                    cipher = context.initCipherForDecryption(this.cipherSuiteId, this.securitySource);
                 } catch (SecurityContext.NoSecurityContextFound
                         | NoSuchAlgorithmException
                         | NoSuchPaddingException e) {
@@ -224,8 +222,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
                     CborParser parser = CBOR.parser()
                             .cbor_parse_custom_item(
                                     () -> new CanonicalBlockItem(logger, toolbox,
-                                            (size) -> new VersatileGrowingBuffer(
-                                                    UntrackedByteBufferBlob::new, 1024)),
+                                            (size) -> new VolatileBlob(1024)),
                                     (p, t, item) -> {
                                         bundle.updateBlock(block.number, item.block);
                                     });

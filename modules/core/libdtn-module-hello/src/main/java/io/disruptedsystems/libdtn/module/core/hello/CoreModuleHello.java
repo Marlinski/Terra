@@ -2,7 +2,7 @@ package io.disruptedsystems.libdtn.module.core.hello;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
-import io.disruptedsystems.libdtn.common.data.blob.UntrackedByteBufferBlob;
+import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
 import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
@@ -62,7 +62,7 @@ public class CoreModuleHello implements CoreModuleSpi {
                 .blockingGet();
 
         /* serialize the hello message into a Blob (for the payload) */
-        UntrackedByteBufferBlob blobHello = new UntrackedByteBufferBlob((int) size);
+        VolatileBlob blobHello = new VolatileBlob((int) size);
         final WritableBlob wblob = blobHello.getWritableBlob();
         hello.encode().observe()
                 .map(wblob::write)

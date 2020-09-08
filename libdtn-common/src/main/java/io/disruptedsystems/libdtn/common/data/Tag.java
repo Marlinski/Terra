@@ -10,11 +10,7 @@ import java.util.Map;
  */
 public abstract class Tag implements Taggable {
 
-    private Map<String, Object> attachement;
-
-    public Tag() {
-        attachement = new HashMap<>();
-    }
+    private Map<String, Object> attachement = new HashMap<>();
 
     @Override
     public void tag(String tag) {
@@ -40,6 +36,5 @@ public abstract class Tag implements Taggable {
     public <T> T getTagAttachment(String key) {
         return (T) attachement.get(key);
     }
-
 
 }

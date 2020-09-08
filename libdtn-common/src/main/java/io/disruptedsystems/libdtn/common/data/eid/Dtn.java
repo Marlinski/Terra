@@ -14,6 +14,31 @@ public interface Dtn {
     class InvalidDtnEid extends Exception {
     }
 
+    static void checkAuthorityNotNull(URI uri) throws InvalidDtnEid {
+        if(uri.getAuthority() == null) {
+            throw new InvalidDtnEid();
+        }
+    }
+
+    static void checkSchemeSpecificPartNotNull(URI uri) throws InvalidDtnEid {
+        if(uri.getSchemeSpecificPart() == null) {
+            throw new InvalidDtnEid();
+        }
+    }
+
+    static void checkPathNotNull(URI uri) throws InvalidDtnEid {
+        if(uri.getPath() == null) {
+            throw new InvalidDtnEid();
+        }
+    }
+
+    static void checkSchemeNotNull(URI uri) throws InvalidDtnEid {
+        if(uri.getScheme() == null) {
+            throw new InvalidDtnEid();
+        }
+    }
+
+
     /**
      * a dtn-eid is of the form:
      * <p>
@@ -30,13 +55,17 @@ public interface Dtn {
      * @throws InvalidDtnEid
      */
     static void checkValidDtnEid(URI uri) throws InvalidDtnEid {
+        checkSchemeNotNull(uri);
+        checkSchemeSpecificPartNotNull(uri);
         if (!uri.getScheme().equals("dtn")) {
             throw new InvalidDtnEid();
         }
         if (uri.getSchemeSpecificPart().equals("none")) {
             return;
         }
-        if (uri.getPath() == null || uri.getPath().equals("")) {
+        checkAuthorityNotNull(uri);
+        checkPathNotNull(uri);
+        if (uri.getPath().equals("")) {
             throw new InvalidDtnEid();
         }
     }

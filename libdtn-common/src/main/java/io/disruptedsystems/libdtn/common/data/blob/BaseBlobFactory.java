@@ -14,7 +14,7 @@ public class BaseBlobFactory implements BlobFactory {
 
     private static final String TAG = "BaseBlobFactory";
 
-    private VolatileMemory memory;
+    private int volatileMaxSize;
     private boolean enableVolatileBlob = false;
     private boolean enableFileBlob = false;
     private String filePath = "./";
@@ -22,22 +22,12 @@ public class BaseBlobFactory implements BlobFactory {
     /**
      * enable volatile Blob to be created.
      *
-     * @param limit in terms of memory consumption all the volatile Blob can take together.
+     * @param limit is the maximum size of a single volatile blob.
      * @return the current BaseBlobFactory.
      */
     public BaseBlobFactory enableVolatile(int limit) {
-        this.memory = new VolatileMemory(limit);
+        volatileMaxSize = limit;
         enableVolatileBlob = true;
-        return this;
-    }
-
-    /**
-     * Disable volatile Blob to be created.
-     *
-     * @return the current BaseBlobFactory.
-     */
-    public BaseBlobFactory disableVolatile() {
-        enableVolatileBlob = false;
         return this;
     }
 
@@ -51,16 +41,6 @@ public class BaseBlobFactory implements BlobFactory {
     public BaseBlobFactory enablePersistent(String path) {
         enableFileBlob = true;
         this.filePath = path;
-        return this;
-    }
-
-    /**
-     * Disable persistent Blob to be created.
-     *
-     * @return the current BaseBlobFactory.
-     */
-    public BaseBlobFactory disablePersistent() {
-        enableFileBlob = false;
         return this;
     }
 
@@ -88,19 +68,18 @@ public class BaseBlobFactory implements BlobFactory {
      * Creates a volatile {@link Blob}.
      *
      * @param expectedSize of the {@link Blob}
-     * @return a new {@link ByteBufferBlob}
-     * @throws BlobFactoryException if volatile {@link Blob} are disabled or if there is no memory.
+     * @return a new {@link VolatileBlob}
+     * @throws IOException if volatile {@link Blob} are disabled or if there is no memory.
      */
-    public Blob createVolatileBlob(int expectedSize) throws BlobFactoryException {
-        // try in volatile memory
-        if (isVolatileEnabled()) {
-            try {
-                return new ByteBufferBlob(memory, expectedSize);
-            } catch (IOException io) {
-                throw new BlobFactoryException();
-            }
+    public Blob createVolatileBlob(int expectedSize) throws IOException {
+        // create in volatile memory
+        if (!isVolatileEnabled()) {
+            throw new IOException("volatile storage is not enabled");
         }
-        throw new BlobFactoryException();
+        if (expectedSize < 0 || expectedSize > volatileMaxSize) {
+            throw new IOException("size exceeds maximum volatile blob limit");
+        }
+        return new VolatileBlob(expectedSize);
     }
 
     /**
@@ -108,49 +87,34 @@ public class BaseBlobFactory implements BlobFactory {
      *
      * @param expectedSize of the {@link Blob}
      * @return a new {@link FileBlob}
-     * @throws BlobFactoryException if persistent {@link Blob} are disabled or if disk is full.
+     * @throws IOException if persistent {@link Blob} are disabled or if disk is full.
      */
-    public Blob createFileBlob(int expectedSize) throws BlobFactoryException {
-        // try in persistent memory
-        if (isPersistentEnabled()) {
-            if (FileUtil.spaceLeft(filePath) > expectedSize) {
-                try {
-                    File fblob = FileUtil.createNewFile("blob-", ".blob", filePath);
-                    return new FileBlob(fblob);
-                } catch (IOException io) {
-                    throw new BlobFactoryException();
-                }
-            }
+    public Blob createFileBlob(int expectedSize) throws IOException {
+        // create in persistent memory
+        if (!isPersistentEnabled()) {
+            throw new IOException("persistent storage not enabled");
         }
-        throw new BlobFactoryException();
+
+        if (FileUtil.spaceLeft(filePath) < expectedSize) {
+            throw new IOException("not enough size left on device");
+        }
+
+        try {
+            File fblob = FileUtil.createNewFile("blob-", ".blob", filePath);
+            return new FileBlob(fblob);
+        } catch (IOException io) {
+            throw new IOException("could not create file in directory: "+filePath);
+        }
     }
 
     @Override
-    public Blob createBlob(int expectedSize) throws BlobFactoryException {
-        if (expectedSize < 0) {
-            // indefinite size Blob
-            return createGrowingBlob();
-        }
-
+    public Blob createBlob(int expectedSize) throws IOException {
         try {
             return createVolatileBlob(expectedSize);
-        } catch (BlobFactoryException e) {
+        } catch (IOException e) {
             /* ignore */
         }
 
-        try {
-            return createFileBlob(expectedSize);
-        } catch (BlobFactoryException e) {
-            /* ignore */
-        }
-
-        return new NullBlob();
+        return createFileBlob(expectedSize);
     }
-
-    // ----- indefinite size blob -------
-
-    private Blob createGrowingBlob() throws BlobFactoryException {
-        return new VersatileGrowingBuffer(this);
-    }
-
 }

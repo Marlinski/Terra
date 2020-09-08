@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkAuthorityNotNull;
 import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkValidDtnEid;
 
 /**
@@ -19,6 +20,7 @@ public interface Cla {
 
     static void checkValidClaEid(URI uri) throws Dtn.InvalidDtnEid, InvalidClaEid {
         checkValidDtnEid(uri);
+        checkAuthorityNotNull(uri);
         if (!uri.getAuthority().startsWith("@")) {
             throw new InvalidClaEid();
         }

@@ -3,6 +3,7 @@ package io.disruptedsystems.libdtn.common.data.eid;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkAuthorityNotNull;
 import static io.disruptedsystems.libdtn.common.data.eid.Dtn.checkValidDtnEid;
 
 /**
@@ -15,6 +16,7 @@ public interface Api {
 
     static void checkValidApiEid(URI uri) throws Dtn.InvalidDtnEid, InvalidApiEid {
         checkValidDtnEid(uri);
+        checkAuthorityNotNull(uri);
         if(!uri.getAuthority().equals("api:me")) {
             throw new InvalidApiEid();
         }

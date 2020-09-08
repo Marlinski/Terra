@@ -38,7 +38,6 @@ import org.junit.Test;
  */
 public class BundleEncryptionTest {
 
-
     @Test
     public void testSimpleBundleEncryption() {
         System.out.println("[+] bundle: testing encryption");
@@ -71,9 +70,9 @@ public class BundleEncryptionTest {
             try {
                 // perform confidentiality
                 bcb.applyTo(b, context, new BaseBlockDataSerializerFactory(), logger);
-            } catch (SecurityBlock.SecurityOperationException foe) {
-                System.out.println(foe.getMessage());
-                foe.printStackTrace();
+            } catch (SecurityBlock.SecurityOperationException soe) {
+                System.out.println(soe.getMessage());
+                soe.printStackTrace();
                 fail();
             }
         }
@@ -90,7 +89,7 @@ public class BundleEncryptionTest {
                     () -> new BundleV7Item(
                             logger,
                             new BaseExtensionToolbox(),
-                            new BaseBlobFactory().enableVolatile(100000).disablePersistent()),
+                            new BaseBlobFactory().enableVolatile(100000)),
                     (p, t, item) ->
                             res[0] = item.bundle);
 

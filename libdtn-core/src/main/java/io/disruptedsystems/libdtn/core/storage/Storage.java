@@ -18,6 +18,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,11 +49,11 @@ public class Storage extends CoreComponent implements StorageApi {
         }
 
         @Override
-        public Blob createFileBlob(int expectedSize) throws BlobFactoryException {
+        public Blob createFileBlob(int expectedSize) throws IOException {
             try {
-                return simpleStorage.createBlob(expectedSize);
+                return fileStorage.createBlob(expectedSize);
             } catch (StorageApi.StorageException se) {
-                throw new BlobFactoryException();
+                throw new IOException(se.getMessage());
             }
         }
     }
@@ -60,7 +61,7 @@ public class Storage extends CoreComponent implements StorageApi {
     private ConfigurationApi conf;
     private CoreApi core;
     private VolatileStorage volatileStorage;
-    private SimpleStorage simpleStorage;
+    private FileStorage fileStorage;
     private CoreBlobFactory blobFactory;
     private BlockProcessorFactory processorFactory;
     private Log logger;
@@ -92,7 +93,7 @@ public class Storage extends CoreComponent implements StorageApi {
         this.core = core;
         this.processorFactory = core.getExtensionManager().getBlockProcessorFactory();
         volatileStorage = new VolatileStorage(this, core);
-        simpleStorage = new SimpleStorage(this, core);
+        fileStorage = new FileStorage(this, core);
         blobFactory = new CoreBlobFactory();
     }
 
@@ -106,7 +107,7 @@ public class Storage extends CoreComponent implements StorageApi {
         super.initComponent(conf, entry, logger);
         volatileStorage
                 .initComponent(core.getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_VOLATILE_STORAGE, core.getLogger());
-        simpleStorage
+        fileStorage
                 .initComponent(core.getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_SIMPLE_STORAGE, core.getLogger());
     }
 
@@ -130,8 +131,8 @@ public class Storage extends CoreComponent implements StorageApi {
         return volatileStorage;
     }
 
-    public SimpleStorage getSimpleStorage() {
-        return simpleStorage;
+    public FileStorage getFileStorage() {
+        return fileStorage;
     }
 
     IndexEntry addEntry(BundleId bid, Bundle bundle) {
@@ -219,11 +220,11 @@ public class Storage extends CoreComponent implements StorageApi {
         }
 
         return Single.create(s -> volatileStorage.store(bundle).subscribe(
-                vb -> simpleStorage.store(vb).onErrorReturnItem(vb)
+                vb -> fileStorage.store(vb).onErrorReturnItem(vb)
                         .subscribe(
                                 pb -> s.onSuccess(vb),
                                 e -> s.onSuccess(vb)),
-                e -> simpleStorage.store(bundle)
+                e -> fileStorage.store(bundle)
                         .subscribe(
                                 s::onSuccess,
                                 s::onError)));
@@ -266,7 +267,7 @@ public class Storage extends CoreComponent implements StorageApi {
 
             return Single.just(vb);
         } else {
-            return simpleStorage.get(id);
+            return fileStorage.get(id);
         }
     }
 
@@ -281,7 +282,7 @@ public class Storage extends CoreComponent implements StorageApi {
         }
 
         if (containsPersistent(id)) {
-            return simpleStorage.remove(id)
+            return fileStorage.remove(id)
                     .onErrorComplete()
                     .andThen(volatileStorage.remove(id));
         } else {

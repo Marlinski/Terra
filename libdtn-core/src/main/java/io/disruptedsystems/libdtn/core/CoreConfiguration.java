@@ -220,7 +220,7 @@ public class CoreConfiguration implements ConfigurationApi {
         this.<Eid, Eid>createCoreEntryMap(CoreEntry.STATIC_ROUTE_CONFIGURATION);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_STORAGE, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_VOLATILE_STORAGE, true);
-        this.createCoreEntry(CoreEntry.VOLATILE_BLOB_STORAGE_MAX_CAPACITY, 10000000);
+        this.createCoreEntry(CoreEntry.VOLATILE_BLOB_STORAGE_MAX_CAPACITY, 50000);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_SIMPLE_STORAGE, false);
         this.<String>createCoreEntrySet(CoreEntry.SIMPLE_STORAGE_PATH);
         this.createCoreEntry(CoreEntry.LIMIT_BLOCKSIZE, (long) 1000000000);
