@@ -86,35 +86,12 @@ public class LdcpRequest {
                                         ExtensionToolbox toolbox,
                                         BlobFactory factory,
                                         Log logger) {
-        /*
-        return Single.just(new RxTCP.ConnectionRequest<>(host, port))
-                .flatMap(RxTCP.ConnectionRequest::connect)
-                .doOnSuccess(c -> logger.d(TAG, "connected to: " + host + ":" + port))
-                .flatMap(c -> c.order(requestMessage.encode())
-                        .track()
-                        .ignoreElements()
-                        .toSingle(() -> c)
-                        .doOnError(e -> c.closeNow())
-                )
-                .doOnSuccess(c -> logger.d(TAG, "request sent, waiting for response"))
-                .flatMap(c -> Single.<ResponseMessage>create(s ->
-                {
-                    CborParser parser = ResponseMessage.getParser(logger, toolbox, factory);
-                    c.recv().subscribe(
-                            (buf) -> {
-                                while (buf.hasRemaining() && !parser.isDone()) {
-                                    if (parser.read(buf)) {
-                                        s.onSuccess(parser.getReg(0));
-                                    }
-                                }
-                            }, s::onError);
-                }).doOnTerminate(c::closeNow));
-    */
         return Single.create(s -> new RxTCP.ConnectionRequest<>(host, port)
                 .connect()
                 .subscribe(
                         c -> {
                             logger.d(TAG, "connected to: " + host + ":" + port);
+                            logger.d(TAG, "seding to: " + requestMessage.toString());
                             c.order(requestMessage.encode()).track().ignoreElements().subscribe(
                                     () -> {
                                         logger.d(TAG, "request sent, waiting for response");

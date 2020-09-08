@@ -4,6 +4,7 @@ import static io.disruptedsystems.libdtn.common.utils.FileUtil.createFile;
 import static io.disruptedsystems.libdtn.common.utils.FileUtil.createNewFile;
 import static io.disruptedsystems.libdtn.common.utils.FileUtil.spaceLeft;
 
+import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.StorageApi;
@@ -472,8 +473,11 @@ public class FileStorage extends CoreComponent {
                             (p, t, item) -> {
                                 if (p.<FileHeaderItem>getReg(0).hasBlob) {
                                     String path = p.<FileHeaderItem>getReg(0).blobPath;
+                                    FileBlob payload;
                                     try {
-                                        item.bundle.getPayloadBlock().data = new FileBlob(path);
+                                        payload = new FileBlob(path);
+                                        item.bundle.getPayloadBlock().data.getWritableBlob().dispose();
+                                        item.bundle.getPayloadBlock().data = payload;
                                     } catch (IOException io) {
                                         throw new RxParserException("can't retrieve payload blob");
                                     }
@@ -542,12 +546,11 @@ public class FileStorage extends CoreComponent {
                 s.onError(new StorageApi.BundleNotFoundException());
                 return;
             }
-
-            String error = "";
             Storage.IndexEntry entry = metaStorage.index.get(id);
 
+            String error = "";
             File fbundle = new File(entry.bundlePath);
-            core.getLogger().v(TAG, "deleting " + id.getBidString()
+            core.getLogger().i(TAG, "deleting " + id.getBidString()
                     + " bundle file: "
                     + fbundle.getAbsolutePath());
             if (fbundle.exists() && !fbundle.canWrite()) {

@@ -181,6 +181,7 @@ public class FileBlob extends Tag implements Blob {
             if (!file.exists()) {
                 return;
             }
+            System.out.println("delete: "+file.getAbsolutePath());
             file.delete();
         }
 

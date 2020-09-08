@@ -144,4 +144,15 @@ public class RequestMessage {
                             req.body = str;
                         });
     }
+
+    @Override
+    public String toString() {
+        return "RequestMessage{" +
+                "code=" + code +
+                ", path='" + path + '\'' +
+                ", fields=" + fields +
+                ", bundle=" + bundle +
+                ", body='" + body + '\'' +
+                '}';
+    }
 }
