@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.MetaBundle;
@@ -25,11 +27,10 @@ import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
 import io.marlinski.librxbus.RxBus;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
-import static io.disruptedsystems.libdtn.common.utils.FileUtil.createFile;
-import static io.disruptedsystems.libdtn.common.utils.FileUtil.spaceLeft;
+import static io.disruptedsystems.libdtn.core.storage.simple.FileStorageUtils.createBundleFile;
 
 /**
  * SimpleStorage stores bundle in files but keep an index in memory of all the bundles in storage.
@@ -54,6 +55,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
 
     protected static final String BLOB_FOLDER = "blob";
     protected static final String BUNDLE_FOLDER = "bundle";
+    ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private File storageDir;
     private File bundleDir;
@@ -80,58 +82,58 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
         indexBundlesFromPath(bundleDir);
     }
 
+    /* ========= INDEXING FILES =========== */
+
     private void indexBundlesFromPath(File folder) {
         if (!isEnabled()) {
             return;
         }
 
-        for (final File file : folder.listFiles()) {
-            ByteBuffer buffer = ByteBuffer.allocate(500);
-            FileChannel in;
-            try {
-                in = new FileInputStream(file).getChannel();
-            } catch (FileNotFoundException fnfe) {
-                continue; /* cannot happen */
-            }
-
-            boolean done = false;
-            CborParser parser = CBOR.parser().cbor_parse_custom_item(
-                    () -> new FileStorageUtils.MetaBundleFileItem(core.getLogger()),
-                    (p, t, item) -> {
-                        item.info.bundlePath = file.getAbsolutePath();
-                        index.put(item.meta.bid, item.meta, item.info);
-                        RxBus.post(new BundleIndexed(item.meta));
-                    });
-
-            try {
-                while ((in.read(buffer) > 0) && !done) {
-                    buffer.flip();
-                    done = parser.read(buffer);
-                    buffer.clear();
+        core.getLogger().i(TAG, "indexing bundles.. " + folder.getAbsolutePath());
+        lock.writeLock().lock();
+        try {
+            for (final File file : folder.listFiles()) {
+                // prepare input stream
+                ByteBuffer buffer = ByteBuffer.allocate(500);
+                FileChannel in;
+                try {
+                    in = new FileInputStream(file).getChannel();
+                } catch (FileNotFoundException fnfe) {
+                    continue; /* cannot happen */
                 }
-                in.close();
-            } catch (RxParserException | IOException rpe) {
-                //rpe.printStackTrace();
-                core.getLogger().w(TAG, "deleting corrupted bundle: " + file.getName());
-                file.delete();
+
+                // prepare parser
+                boolean done = false;
+                CborParser parser = CBOR.parser().cbor_parse_custom_item(
+                        () -> new FileStorageUtils.MetaBundleFileItem(core.getLogger()),
+                        (p, t, item) -> {
+                            item.info.bundlePath = file.getAbsolutePath();
+                            index.put(item.meta.bid, item.meta, item.info);
+                        });
+
+                // parse file
+                try {
+                    core.getLogger().v(TAG, "parsing file < " + file.getAbsolutePath());
+                    while ((in.read(buffer) > 0) && !done) {
+                        buffer.flip();
+                        done = parser.read(buffer);
+                        buffer.clear();
+                    }
+                    if(!done) {
+                        throw new RxParserException("file is corrupted");
+                    }
+                } catch (RxParserException | IOException rpe) {
+                    //rpe.printStackTrace();
+                    core.getLogger().w(TAG, "deleting corrupted bundle: " + file.getName());
+                    file.delete();
+                }
             }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    private File createBundleFile(String bid) throws StorageApi.StorageFullException {
-        if (spaceLeft(bundleDir.getAbsolutePath()) > 1000) {
-            try {
-                String safeBid = bid.replaceAll("/", "_");
-                return createFile(
-                        "bundle-" + safeBid + ".bundle",
-                        bundleDir.getAbsolutePath());
-            } catch (IOException io) {
-                System.out.println("IOException createNewFile: " + io.getMessage() + " : dir="
-                        + bundleDir + "  bid=" + bid + ".bundle");
-            }
-        }
-        throw new StorageApi.StorageFullException();
-    }
+    /* ========= STORING FILES =========== */
 
     private static class SerializationContext {
         public File fbundle;
@@ -153,7 +155,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                 .map(b -> {
                     // we remove the payload from the bundle if it is a file blob
                     SerializationContext ctx = new SerializationContext();
-                    ctx.fbundle = createBundleFile(b.bid);
+                    ctx.fbundle = createBundleFile(bundleDir, b.bid);
 
                     // serialize the payload in a file blob (unless it is one already)
                     ctx.blob = serializeBlob(b);
@@ -162,71 +164,82 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                     ctx.out = new BufferedOutputStream(new FileOutputStream(ctx.fbundle));
                     return ctx;
                 })
-                .flatMapCompletable(ctx -> FileStorageUtils.bundleFileEncoder(bundle, ctx.blob.getFilePath(), core.getExtensionManager().getBlockDataSerializerFactory())
-                        .observe()
-                        .map(buffer -> {
-                            // serialization into the file
-                            while (buffer.hasRemaining()) {
-                                ctx.out.write(buffer.get());
-                            }
-                            return buffer;
-                        })
-                        .doOnTerminate(() -> closeSilently(ctx.out))
-                        .doOnError(e -> {
-                            bundle.tag("serialization_failed");
-                            ctx.fbundle.delete();
-                        })
-                        .doOnComplete(() -> {
-                            // reattach the blob
-                            bundle.getPayloadBlock().data = ctx.blob;
+                .flatMapCompletable(ctx -> Flowable.using(
+                        () -> {
+                            lock.writeLock().lock();
+                            return true;
+                        },
+                        b -> FileStorageUtils.bundleFileEncoder(bundle, ctx.blob.getFilePath(), core.getExtensionManager().getBlockDataSerializerFactory())
+                                .observe()
+                                .map(buffer -> {
+                                    // serialization into the file
+                                    while (buffer.hasRemaining()) {
+                                        ctx.out.write(buffer.get());
+                                    }
+                                    return buffer;
+                                })
+                                .doOnTerminate(() -> closeSilently(ctx.out))
+                                .doOnError(e -> {
+                                    bundle.tag("serialization_failed");
+                                    ctx.fbundle.delete();
+                                })
+                                .doOnComplete(() -> {
+                                    // reattach the blob
+                                    bundle.getPayloadBlock().data = ctx.blob;
 
-                            // index the new file
-                            MetaBundle meta = new MetaBundle(bundle);
-                            index.put(meta.bid, meta, new FileStorageUtils.BundleInfo(
-                                    ctx.fbundle.getAbsolutePath(),
-                                    ctx.blob.getFilePath()));
+                                    // index the new file
+                                    MetaBundle meta = new MetaBundle(bundle);
+                                    index.put(meta.bid, meta, new FileStorageUtils.BundleInfo(
+                                            ctx.fbundle.getAbsolutePath(),
+                                            ctx.blob.getFilePath()));
 
-                            RxBus.post(new BundleIndexed(meta));
-                            bundle.tag("in_storage");
-                        }).ignoreElements())
-                .subscribeOn(Schedulers.io());
+                                    RxBus.post(new BundleIndexed(meta));
+                                    bundle.tag("in_storage");
+                                }),
+                        b -> lock.writeLock().unlock()).ignoreElements());
     }
 
-    private FileBlob serializeBlob(Bundle bundle) throws Blob.NotFileBlob, IOException {
-        if (bundle.getPayloadBlock().data.isFileBlob()) {
-            // payload is already a file, just needs to be move/copy in the right location
-            FileBlob fblob = (FileBlob) bundle.getPayloadBlock().data;
-            File parent = new File(fblob.getFilePath()).getParentFile();
-            if (parent.equals(blobDir)) {
-                // the blob is in the right folder
-                return (FileBlob) bundle.getPayloadBlock().data;
+    private FileBlob serializeBlob(Bundle bundle) throws IOException {
+        lock.writeLock().lock();
+        try {
+            if (bundle.getPayloadBlock().data.isFileBlob()) {
+                // payload is already a file, just needs to be move/copy in the right location
+                FileBlob fblob = (FileBlob) bundle.getPayloadBlock().data;
+                File parent = new File(fblob.getFilePath()).getParentFile();
+                if (parent.equals(blobDir)) {
+                    // the blob is in the right folder
+                    return (FileBlob) bundle.getPayloadBlock().data;
+                }
+                // it needs to be moved to the blob folder
+                File newfblob = FileUtil.createNewFile("blob-", ".blob", blobDir);
+                fblob.moveToFile(newfblob.getAbsolutePath());
+                return fblob;
             }
-            // it needs to be move to the blob folder
-            File newfblob = FileUtil.createNewFile("blob-", ".blob", blobDir);
-            fblob.moveToFile(newfblob.getAbsolutePath());
-            return fblob;
+
+            // payload is not a file and needs to be serialized
+            Blob vblob = bundle.getPayloadBlock().data;
+            File newFile = FileUtil.createNewFile("blob-", ".blob", blobDir);
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newFile));
+            vblob.observe()
+                    .map(buf -> {
+                        out.write(buf.array(), buf.position(), buf.limit());
+                        return buf;
+                    })
+                    .doOnTerminate(out::close)
+                    .doOnError(e -> {
+                        core.getLogger().w(TAG, "could not serialize payload in file blob: "
+                                + newFile.getAbsolutePath());
+                        newFile.delete();
+                    })
+                    .ignoreElements()
+                    .blockingAwait();
+            return new FileBlob(newFile);
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        // payload is not a file and needs to be serialized
-        Blob vblob = bundle.getPayloadBlock().data;
-        File newFile = FileUtil.createNewFile("blob-", ".blob", blobDir);
-        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(newFile));
-        vblob.observe()
-                .map(buf -> {
-                    out.write(buf.array(), buf.position(), buf.limit());
-                    return buf;
-                })
-                .doOnTerminate(out::close)
-                .doOnError(e -> {
-                    core.getLogger().w(TAG, "could not serialize payload in file blob: "
-                            + newFile.getAbsolutePath());
-                    newFile.delete();
-                })
-                .ignoreElements()
-                .blockingAwait();
-
-        return new FileBlob(newFile);
     }
+
+    /* ========= PULLING FILES =========== */
 
     private static class DeserializationContext {
         public File fbundle;
@@ -258,21 +271,28 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                 })
                 .flatMap(ctx -> Single.just(FileStorageUtils.createBundleParser(core.getExtensionManager(), blobFactory, core.getLogger()))
                         .map(p -> {
-                            ByteBuffer buffer = ByteBuffer.allocate(2048);
-                            boolean done = false;
-                            while ((ctx.in.read(buffer) > 0) && !done) { // read buffer from file
-                                buffer.flip();
-                                done = p.read(buffer);
-                                buffer.clear();
+                            lock.readLock().lock();
+                            try {
+                                ByteBuffer buffer = ByteBuffer.allocate(2048);
+                                boolean done = false;
+                                while ((ctx.in.read(buffer) > 0) && !done) { // read buffer from file
+                                    buffer.flip();
+                                    done = p.read(buffer);
+                                    buffer.clear();
+                                }
+                                return p.<Bundle>getReg(1);
+                            } finally {
+                                lock.readLock().unlock();
                             }
-                            return p.<Bundle>getReg(1);
                         })
                         .doOnTerminate(ctx.in::close)
                         .doOnError(e -> {
                             // todo: should delete the file
-                        })
-                ).subscribeOn(Schedulers.io());
+                        }));
     }
+
+
+    /* ========= DELETING FILES =========== */
 
     public Completable remove(String bid) {
         if (!isEnabled()) {
@@ -286,30 +306,34 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
         return Single.just(bid)
                 .map(i -> {
                     // prepare deserialization context
-                    StorageIndex.IndexEntry<FileStorageUtils.BundleInfo> entry = index.pullEntry(bid);
-                    File fbundle = new File(entry.attached.bundlePath);
+                    lock.writeLock().lock();
+                    try {
+                        StorageIndex.IndexEntry<FileStorageUtils.BundleInfo> entry = index.pullEntry(bid);
+                        File fbundle = new File(entry.attached.bundlePath);
 
-                    if (fbundle.exists() && !fbundle.canWrite()) {
-                        throw new StorageFailedException("can't access bundle file for deletion: " + entry.attached.bundlePath);
+                        if (fbundle.exists() && !fbundle.canWrite()) {
+                            throw new StorageFailedException("can't access bundle file for deletion: " + entry.attached.bundlePath);
+                        }
+
+                        core.getLogger().i(TAG, "deleting  " + bid
+                                + " bundle file: "
+                                + fbundle.getAbsolutePath());
+                        fbundle.delete();
+                        index.remove(i);
+
+                        // we remove the blob if needed
+                        File fblob = new File(entry.attached.blobPath);
+                        if (fblob.exists() && !fblob.canWrite()) {
+                            throw new StorageFailedException("can't access payload blob file for deletion: " + entry.attached.bundlePath);
+                        }
+                        core.getLogger().i(TAG, "deleting  " + bid
+                                + " blob file: "
+                                + fblob.getAbsolutePath());
+                        fblob.delete();
+                        return i;
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-
-                    core.getLogger().i(TAG, "deleting  " + bid
-                            + " bundle file: "
-                            + fbundle.getAbsolutePath());
-                    fbundle.delete();
-                    index.remove(i);
-
-                    // we remove the blob if needed
-                    File fblob = new File(entry.attached.blobPath);
-                    if (fblob.exists() && !fblob.canWrite()) {
-                        throw new StorageFailedException("can't access payload blob file for deletion: " + entry.attached.bundlePath);
-                    }
-                    core.getLogger().i(TAG, "deleting  " + bid
-                            + " blob file: "
-                            + fblob.getAbsolutePath());
-                    fblob.delete();
-
-                    return i;
                 }).ignoreElement();
     }
 

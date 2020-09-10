@@ -1,8 +1,13 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
+import org.apache.commons.collections4.trie.PatriciaTrie;
+
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 
@@ -11,6 +16,8 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
  */
 class StorageIndex<T> {
 
+    ReadWriteLock lock = new ReentrantReadWriteLock();
+
     public static class IndexEntry<T> {
         Bundle bundle;      /* either a bundle or a metabundle */
         T attached;
@@ -18,59 +25,111 @@ class StorageIndex<T> {
         IndexEntry(Bundle bundle) {
             this.bundle = bundle;
         }
+
         IndexEntry(Bundle bundle, T attached) {
             this.bundle = bundle;
             this.attached = attached;
         }
+
+        @Override
+        public int hashCode() {
+            return bundle.bid.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return bundle.bid.equals(o);
+        }
     }
 
-    Map<String, IndexEntry<T>> index = new ConcurrentHashMap<>();
+    /*
+     * Indexes
+     * -------
+     * - we keep an index that maps a bid to a bundle.
+     * - and a reverse index (patricia trie) that maps destination to bundles for efficient lookup
+     */
+    Map<String, IndexEntry<T>> bundleIndex = new ConcurrentHashMap<>();
+    PatriciaTrie<Set<IndexEntry<T>>> destinationTrie = new PatriciaTrie<>();
 
     void teardown() {
-        index.clear();
+        bundleIndex.clear();
     }
 
     Bundle put(String bid, Bundle bundle) {
-        IndexEntry<T> entry = new IndexEntry<T>(bundle);
-        index.put(bid, entry);
-        bundle.tag("in_storage");
-        return bundle;
+        return put(bid, bundle, null);
     }
 
     Bundle put(String bid, Bundle bundle, T attached) {
-        IndexEntry<T> entry = new IndexEntry<T>(bundle, attached);
-        index.put(bid, entry);
-        bundle.tag("in_storage");
-        return bundle;
+        lock.writeLock().lock();
+        try {
+            // add in bundle index
+            IndexEntry<T> entry = new IndexEntry<T>(bundle, attached);
+            bundleIndex.put(bid, entry);
+
+            // add destination in reverse index
+            Set<IndexEntry<T>> entries = destinationTrie.get(bundle.getDestination().toString());
+            if(entries == null) {
+                entries = new HashSet<>();
+                destinationTrie.put(bundle.getDestination().toString(), entries);
+            }
+            entries.add(entry);
+
+            bundle.tag("in_storage");
+            return bundle;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     Bundle pullBundle(String bid) {
-        if(!index.containsKey(bid)) {
-            return null;
+        IndexEntry<T> entry = pullEntry(bid);
+        if (entry != null) {
+            return entry.bundle;
         }
-        return index.get(bid).bundle;
+        return null;
     }
 
     IndexEntry<T> pullEntry(String bid) {
-        if(!index.containsKey(bid)) {
-            return null;
-        }
-        return index.get(bid);
+        return bundleIndex.get(bid);
     }
 
     void remove(String bid) {
-        index.remove(bid);
+        lock.writeLock().lock();
+        try {
+            IndexEntry<T> entry = bundleIndex.get(bid);
+            if (entry == null) {
+                return;
+            }
+
+            // remove entry from index
+            bundleIndex.remove(bid);
+
+            // remove entry from reverse index
+            Set<IndexEntry<T>> entries = destinationTrie.get(entry.bundle.getDestination().toString());
+            if(entries == null) {
+                // todo: should not happen, maybe throw an error ?
+                return;
+            }
+            entries.remove(entry);
+
+            // remove key if mapped set is empty
+            if (entries.size() == 0) {
+                destinationTrie.remove(entry.bundle.getDestination().toString(), entries);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     int size() {
-        return index.size();
+        return bundleIndex.size();
     }
 
     boolean contains(String bid) {
-        return index.containsKey(bid);
+        return bundleIndex.containsKey(bid);
     }
 
     Set<String> allBid() {
-        return index.keySet();
+        return bundleIndex.keySet();
     }
 }

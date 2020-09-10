@@ -19,6 +19,7 @@ import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage;
 
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE;
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.PERSISTENCE_STORAGE_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -37,6 +38,7 @@ public class VolatileStorageTest {
         return new MockCore() {
             {{
                 conf.<Boolean>get(COMPONENT_ENABLE_STORAGE).update(true);
+                conf.<String>get(PERSISTENCE_STORAGE_PATH).update("@DISABLED");
             }}
 
             @Override
@@ -73,7 +75,6 @@ public class VolatileStorageTest {
         storage.initComponent(
                 mockCore.getConf().get(COMPONENT_ENABLE_STORAGE),
                 mockCore.getLogger());
-
 
         System.out.println("[.] clear VolatileStorage");
         storage.clear().subscribe();

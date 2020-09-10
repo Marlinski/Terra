@@ -1,5 +1,6 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
+import java.io.File;
 import java.io.IOException;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
@@ -12,11 +13,14 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSeria
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
+import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
 
+import static io.disruptedsystems.libdtn.common.utils.FileUtil.createFile;
+import static io.disruptedsystems.libdtn.common.utils.FileUtil.spaceLeft;
 import static io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage.TAG;
 
 /**
@@ -40,6 +44,25 @@ class FileStorageUtils {
             this.bundlePath = bundlePath;
             this.blobPath = blobPath;
         }
+    }
+
+    /*
+     * ========= FILE ===========
+     */
+
+    protected static File createBundleFile(File path, String bid) throws StorageApi.StorageFullException {
+        if (spaceLeft(path.getAbsolutePath()) > 1000) {
+            try {
+                String safeBid = bid.replaceAll("/", "_");
+                return createFile(
+                        "bundle-" + safeBid + ".bundle",
+                        path.getAbsolutePath());
+            } catch (IOException io) {
+                System.out.println("IOException createNewFile: " + io.getMessage() + " : dir="
+                        + path + "  bid=" + bid + ".bundle");
+            }
+        }
+        throw new StorageApi.StorageFullException();
     }
 
     /*

@@ -30,6 +30,9 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    // patricia trie
+    implementation 'org.apache.commons:commons-collections4:4.0'
+
     // core apis
     implementation project(path: ':libdtn-core-api')
 

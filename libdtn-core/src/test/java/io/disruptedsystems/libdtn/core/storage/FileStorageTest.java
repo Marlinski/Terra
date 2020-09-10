@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,6 +35,7 @@ import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.BLOB_VOLATILE_MAX_SIZE;
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE;
@@ -50,7 +52,6 @@ import static org.junit.Assert.fail;
  */
 public class FileStorageTest {
 
-    public static final AtomicReference<CountDownLatch> WAIT_LOCK = new AtomicReference<>(new CountDownLatch(1));
     private CoreConfiguration conf = new CoreConfiguration();
     private File dir = new File("/tmp/bundle/");
     private StorageApi storage;
@@ -158,7 +159,7 @@ public class FileStorageTest {
             ///////////// PULL
             /* pull the bundles from storage  */
             System.out.println("[.] pull from SimpleStorage");
-            final LinkedList<Bundle> pulledBundles = new LinkedList<>();
+            final ConcurrentLinkedQueue<Bundle> pulledBundles = new ConcurrentLinkedQueue<>();
 
             Observable.fromArray(bundles)
                     .doOnNext(b -> System.out.println("pulling: "+b.bid))
@@ -173,7 +174,6 @@ public class FileStorageTest {
                     .blockingAwait();
 
             // check it looks fine
-            Thread.sleep(2000);
             assertEquals(bundles.length, pulledBundles.size());
             assertFileStorageSize(bundles.length, dir);
 
@@ -181,7 +181,7 @@ public class FileStorageTest {
             for (Bundle bundle : pulledBundles) {
                 boolean found = false;
                 for (Bundle value : bundles) {
-                    if (value.bid.equals(bundle.bid.toString())) {
+                    if (value.bid.equals(bundle.bid)) {
                         found = true;
                         assertArrayEquals(
                                 flowableToByteArray(value.getPayloadBlock().data.observe()),
