@@ -1,6 +1,5 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.reactivex.rxjava3.core.Observable;
 
 /**
@@ -18,14 +17,14 @@ public interface EventListenerApi<T> {
      * @param bid bundle id
      * @return true if the bundle was added to the watchlist, false othewise
      */
-    boolean watch(T key, BundleId bid);
+    boolean watch(T key, String bid);
 
     /**
      * remove bundle from all watchlist.
      *
      * @param bid bundle id
      */
-    void unwatch(BundleId bid);
+    void unwatch(String bid);
 
     /**
      * remove bundle from all watchlist, specifying the key.
@@ -34,7 +33,7 @@ public interface EventListenerApi<T> {
      * @param bid bundle id
      * @return true if the bundle was successfully removed, false otherwise
      */
-    boolean unwatch(T key, BundleId bid);
+    boolean unwatch(T key, String bid);
 
 
     /**
@@ -43,6 +42,6 @@ public interface EventListenerApi<T> {
      * @param key key of the watchlist
      * @return an observable of bundle ids
      */
-    Observable<BundleId> getBundlesOfInterest(T key);
+    Observable<String> getBundlesOfInterest(T key);
 
 }

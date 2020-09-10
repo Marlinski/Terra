@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
@@ -35,7 +34,6 @@ public class TestBundle {
         bundle.setDestination(URI.create("ipn:5.12"));
         bundle.setSource(URI.create("dtn://source/"));
         bundle.setReportTo(Dtn.nullEid());
-        bundle.bid = BundleId.create(bundle);
         return bundle;
     }
 

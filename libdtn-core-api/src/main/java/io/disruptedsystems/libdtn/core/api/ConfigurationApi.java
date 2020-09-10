@@ -78,22 +78,36 @@ public interface ConfigurationApi {
 
     // ---- CONFIGURATION ENTRIES ----
     enum CoreEntry {
+        // local
         LOCAL_EID("localEid"),
         ALIASES("aliases"),
+
+        // bundle protocol - validation
         MAX_LIFETIME("max_lifetime"),
         MAX_TIMESTAMP_FUTURE("max_timestamp_future"),
+        EID_SINGLETON_ONLY("eid_singleton_only"),
         ALLOW_RECEIVE_ANONYMOUS_BUNDLE("allow_receive_anonymous_bundle"),
         ENABLE_STATUS_REPORTING("enable_status_reporting"),
         ENABLE_FORWARDING("dtn_enable_forwarding"),
+
+        // components
         COMPONENT_ENABLE_CONNECTION_AGENT("component_enable_connection_agent"),
+        COMPONENT_ENABLE_EVENT_PROCESSING("component_enable_event_processing"),
+        COMPONENT_ENABLE_AA_REGISTRATION("component_enable_aa_registration"),
+        COMPONENT_ENABLE_DETECT_PEER_ON_LAN("component_enable_detect_peer_lan"),
+        COMPONENT_ENABLE_LINKLOCAL_ROUTING("component_enable_linklocal_routing"),
+        COMPONENT_ENABLE_ROUTING("component_enable_routing"),
+        COMPONENT_ENABLE_STATIC_ROUTING("component_enable_static_routing"),
+        COMPONENT_ENABLE_SMART_ROUTING("component_enable_smart_routing"),
+
+        // routing
+        STATIC_ROUTE_CONFIGURATION("static_routes_configuration"),
         ENABLE_AUTO_CONNECT_FOR_BUNDLE("dtn_enable_auto_connect_bundle"),
-        ENABLE_COMPONENT_DETECT_PEER_ON_LAN("component_enable_detect_peer_lan"),
         ENABLE_AUTO_CONNECT_FOR_DETECT_EVENT("dtn_enable_auto_connect_detect"),
         AUTO_CONNECT_USE_WHITELIST("dtn_auto_connect_use_whitelist"),
         AUTO_CONNECT_WHITELIST("dtn_auto_connect_whitelist"),
-        COMPONENT_ENABLE_EVENT_PROCESSING("component_enable_event_processing"),
-        COMPONENT_ENABLE_AA_REGISTRATION("component_enable_aa_registration"),
-        EID_SINGLETON_ONLY("eid_singleton_only"),
+
+        // modules extensions
         COMPONENT_ENABLE_MODULE_LOADER("component_enable_module_loader"),
         ENABLE_CLA_MODULES("enable_cla_modules"),
         MODULES_CLA_PATH("modules_cla_path"),
@@ -101,17 +115,14 @@ public interface ConfigurationApi {
         MODULES_AA_PATH("modules_aa_path"),
         ENABLE_CORE_MODULES("enable_core_modules"),
         MODULES_CORE_PATH("modules_core_path"),
-        COMPONENT_ENABLE_LINKLOCAL_ROUTING("component_enable_linklocal_routing"),
-        COMPONENT_ENABLE_ROUTING("component_enable_routing"),
-        COMPONENT_ENABLE_STATIC_ROUTING("component_enable_static_routing"),
-        COMPONENT_ENABLE_SMART_ROUTING("component_enable_smart_routing"),
-        STATIC_ROUTE_CONFIGURATION("static_routes_configuration"),
+
+        // blob and storage
         COMPONENT_ENABLE_STORAGE("component_enable_storage"),
-        COMPONENT_ENABLE_VOLATILE_STORAGE("component_enable_volatile_storage"),
-        VOLATILE_BLOB_STORAGE_MAX_CAPACITY("volatile_blob_storage_max_capacity"),
-        COMPONENT_ENABLE_SIMPLE_STORAGE("component_enable_simple_storage"),
-        SIMPLE_STORAGE_PATH("simple_storage_paths"),
+        PERSISTENCE_STORAGE_PATH("persistence_storage_path"),
+        BLOB_VOLATILE_MAX_SIZE("volatile_blob_max_size"),
         LIMIT_BLOCKSIZE("limit_blocksize"),
+
+        // logging
         COMPONENT_ENABLE_LOGGING("component_enable_logging"),
         LOG_LEVEL("log_level"),
         ENABLE_LOG_FILE("enable_log_file"),

@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.core.api;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -164,7 +163,7 @@ public interface RegistrarApi {
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
-    Set<BundleId> checkInbox(URI eid, String cookie)
+    Set<String> checkInbox(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
 
     /**

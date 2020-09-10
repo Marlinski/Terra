@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.aa.api;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.reactivex.rxjava3.core.Single;
 
 import java.net.URI;
@@ -134,7 +133,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Set<BundleId> checkInbox(URI eid, String cookie);
+    Set<String> checkInbox(URI eid, String cookie);
 
     /**
      * get a specific bundle but does not mark it as delivered.
@@ -150,7 +149,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Bundle> get(URI eid, String cookie, BundleId bundleId);
+    Single<Bundle> get(URI eid, String cookie, String bundleId);
 
     /**
      * fetch a specific bundle and mark it as delivered.
@@ -166,7 +165,7 @@ public interface ApplicationAgentApi {
      * @rxthrows NullArgument if eid or the cookie is null
      * @rxthrows InvalidEid if eid is malformed
      */
-    Single<Bundle> fetch(URI eid, String cookie, BundleId bundleId);
+    Single<Bundle> fetch(URI eid, String cookie, String bundleId);
 
     /**
      * Turn a registration active. If the registration was already active it does nothing,

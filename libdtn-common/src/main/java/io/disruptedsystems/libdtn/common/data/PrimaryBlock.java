@@ -1,6 +1,10 @@
 package io.disruptedsystems.libdtn.common.data;
 
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.UUID;
 
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
@@ -51,19 +55,24 @@ public class PrimaryBlock extends Block {
         FRAGMENT(0),
         ADM_RECORD(1),
         NO_FRAGMENT(2),
-        RESERVED_1(3),
-        RESERVED_2(4),
+        RESERVED_3(3),
+        RESERVED_4(4),
         APP_ACK_REQUEST(5),
         STATUS_TIME_REPORT(6),
-        CONTAINS_MANIFEST(7),
-        RECEPTION_REPORT(8),
-        RESERVED_3(9),
-        FORWARD_REPORT(10),
-        DELIVERY_REPORT(11),
-        DELETION_REPORT(12),
-        RESERVED_4(13),
-        RESERVED_5(14),
-        RESERVED_6(15);
+        RESERVED_7(7),
+        RESERVED_8(8),
+        RESERVED_9(9),
+        RESERVED_10(10),
+        RESERVED_11(11),
+        RESERVED_12(12),
+        RESERVED_13(13),
+        RECEPTION_REPORT(14),
+        RESERVED_15(15),
+        FORWARD_REPORT(16),
+        DELIVERY_REPORT(17),
+        DELETION_REPORT(18),
+        RESERVED_19(19),
+        RESERVED_20(20);
 
         private int offset;
 
@@ -90,7 +99,7 @@ public class PrimaryBlock extends Block {
     private Long fragmentOffset = null;
 
     /* libdtn internal use */
-    public BundleId bid;
+    public String bid;
 
     /**
      * Constructor: creates an empty PrimaryBlock, should probably not be used.
@@ -103,8 +112,8 @@ public class PrimaryBlock extends Block {
         this.reportTo = Dtn.nullEid();
         this.creationTimestamp = System.currentTimeMillis();
         this.sequenceNumber = sequence_counter++;
-        bid = BundleId.create(this);
         this.lifetime = 10000;
+        updateBundleId();
     }
 
     /**
@@ -179,7 +188,7 @@ public class PrimaryBlock extends Block {
         return sequenceNumber;
     }
 
-    public BundleId getBid() {
+    public String getBid() {
         return bid;
     }
 
@@ -227,7 +236,7 @@ public class PrimaryBlock extends Block {
 
     public void setSource(URI source) {
         this.source = source;
-        this.bid = BundleId.create(this);
+        updateBundleId();
     }
 
     public void setReportTo(URI reportto) {
@@ -236,12 +245,12 @@ public class PrimaryBlock extends Block {
 
     public void setCreationTimestamp(long creationTimestamp) {
         this.creationTimestamp = creationTimestamp;
-        this.bid = BundleId.create(this);
+        updateBundleId();
     }
 
     public void setSequenceNumber(long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
-        this.bid = BundleId.create(this);
+        updateBundleId();
     }
 
     public void setLifetime(long lifetime) {
@@ -250,9 +259,39 @@ public class PrimaryBlock extends Block {
 
     public void setAppDataLength(Long appDataLength) {
         this.appDataLength = appDataLength;
+        updateBundleId();
     }
 
     public void setFragmentOffset(Long fragmentOffset) {
         this.fragmentOffset = fragmentOffset;
+        updateBundleId();
     }
+
+    private void updateBundleId() {
+        String[] algorithms = {"SHA-256", "SHA-512", "SHA-384", "SHA-1", "MD5"};
+        for (String algo : algorithms) {
+            try {
+                MessageDigest md = MessageDigest.getInstance(algo);
+                md.update(source.toString().getBytes());
+                md.update(String.valueOf(creationTimestamp).getBytes());
+                md.update(String.valueOf(sequenceNumber).getBytes());
+                md.update(String.valueOf(appDataLength).getBytes());
+                md.update(String.valueOf(fragmentOffset).getBytes());
+                bid = UUID.nameUUIDFromBytes(md.digest()).toString();
+                return;
+            } catch (NoSuchAlgorithmException ignore) {
+                // that should never happen
+            }
+        }
+
+        // no algorithm were found so we make something up (that should never happen though)
+        // FIXME this method provides a unique bid but can be long, should probably use some XOR
+        String sb = "s=" + source.toString()
+                + "t=" + creationTimestamp
+                + "s=" + sequenceNumber
+                + "l=" + appDataLength
+                + "o=" + fragmentOffset;
+        bid = Base64.getEncoder().encodeToString(sb.getBytes());
+    }
+
 }

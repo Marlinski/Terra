@@ -23,6 +23,10 @@ public class FileUtil {
      */
     public static File createNewFile(String prefix, String suffix, String path) throws IOException {
         File f = new File(path);
+        return createNewFile(prefix, suffix, f);
+    }
+
+    public static File createNewFile(String prefix, String suffix, File f) throws IOException {
         if (f.exists() && f.canRead() && f.canWrite()) {
             return File.createTempFile(prefix, suffix, f);
         } else {

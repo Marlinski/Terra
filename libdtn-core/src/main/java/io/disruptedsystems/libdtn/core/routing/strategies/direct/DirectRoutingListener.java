@@ -3,9 +3,6 @@ package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 import java.net.URI;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.eid.Api;
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.storage.EventListener;
@@ -43,30 +40,30 @@ public class DirectRoutingListener extends EventListener<String> {
         getBundlesOfInterest(event.channel.channelEid().getAuthority()).subscribe(
                 bundleID -> {
                     core.getLogger().v(TAG, "step 1.1: pull from storage "
-                            + bundleID.getBidString());
+                            + bundleID);
                     core.getStorage().get(bundleID).subscribe(
                             bundle -> {
                                 core.getLogger().v(TAG,
                                         "step 1.2-1: forward bundle "
-                                        + bundleID.getBidString());
+                                        + bundleID);
                                 event.channel.sendBundle(
                                         bundle,
                                         core.getExtensionManager().getBlockDataSerializerFactory()
                                 ).ignoreElements().subscribe(
                                         () -> {
-                                            core.getLogger().v(TAG, "step 1.3: forward successful, resume processing " + bundleID.getBidString());
+                                            core.getLogger().v(TAG, "step 1.3: forward successful, resume processing " + bundleID);
                                             this.unwatch(bundle.bid);
                                             core.getBundleProtocol()
                                                     .bundleForwardingSuccessful(bundle);
                                         },
                                         e -> {
                                             /* do nothing and wait for next opportunity */
-                                            core.getLogger().v(TAG, "step 1.3: forward failed, wait next opportunity " + bundleID.getBidString());
+                                            core.getLogger().v(TAG, "step 1.3: forward failed, wait next opportunity " + bundleID);
                                         });
                             },
                             e -> {
                                 core.getLogger().w(TAG,
-                                        "step 1.2-2: failed to pull bundle from storage " + bundleID.getBidString() + ": " + e.getLocalizedMessage());
+                                        "step 1.2-2: failed to pull bundle from storage " + bundleID + ": " + e.getLocalizedMessage());
                             });
                 });
     }

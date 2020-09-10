@@ -15,8 +15,9 @@ public class SimpleLogger implements Log {
         }
     }
 
-    public void set(LogLevel level) {
+    public SimpleLogger set(LogLevel level) {
         this.level = level;
+        return this;
     }
 
     @Override

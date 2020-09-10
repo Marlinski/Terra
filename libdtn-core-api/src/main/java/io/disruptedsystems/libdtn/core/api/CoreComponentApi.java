@@ -27,10 +27,9 @@ public interface CoreComponentApi {
      * init a core component. It can be dynamically started or stopped by enabling or disabling
      * the entry in the DTNconfiguration that is passed to this method.
      *
-     * @param conf   instance of the configuration
-     * @param entry  specific entry to watch for
+     * @param entry  entry in the configuration to watch to turn the component up/down
      * @param logger instance of logger
      */
-    void initComponent(ConfigurationApi conf, ConfigurationApi.CoreEntry entry, Log logger);
+    void initComponent(ConfigurationApi.EntryInterface<Boolean> entry, Log logger);
 
 }

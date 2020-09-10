@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.Buffer;
 import java.util.concurrent.Callable;
 
 import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
@@ -221,7 +220,7 @@ public class DtnCat implements Callable<Void> {
         eid = fixEid(eid);
         deid = fixEid(deid);
         toolbox = new BaseExtensionToolbox();
-        factory = new BaseBlobFactory().enableVolatile(bundleSize);
+        factory = new BaseBlobFactory().setVolatileMaxSize(bundleSize);
         logger = new SimpleLogger();
 
         switch (verbose.length) {

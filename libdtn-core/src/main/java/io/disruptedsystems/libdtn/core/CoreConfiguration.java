@@ -196,7 +196,7 @@ public class CoreConfiguration implements ConfigurationApi {
         this.createCoreEntry(CoreEntry.MAX_TIMESTAMP_FUTURE, (long) 0);
         this.createCoreEntry(CoreEntry.ALLOW_RECEIVE_ANONYMOUS_BUNDLE, false);
         this.createCoreEntry(CoreEntry.ENABLE_STATUS_REPORTING, true);
-        this.createCoreEntry(CoreEntry.ENABLE_COMPONENT_DETECT_PEER_ON_LAN, true);
+        this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_DETECT_PEER_ON_LAN, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_CONNECTION_AGENT, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_EVENT_PROCESSING, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_AA_REGISTRATION, true);
@@ -219,10 +219,8 @@ public class CoreConfiguration implements ConfigurationApi {
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_SMART_ROUTING, false);
         this.<Eid, Eid>createCoreEntryMap(CoreEntry.STATIC_ROUTE_CONFIGURATION);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_STORAGE, true);
-        this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_VOLATILE_STORAGE, true);
-        this.createCoreEntry(CoreEntry.VOLATILE_BLOB_STORAGE_MAX_CAPACITY, 50000);
-        this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_SIMPLE_STORAGE, false);
-        this.<String>createCoreEntrySet(CoreEntry.SIMPLE_STORAGE_PATH);
+        this.createCoreEntry(CoreEntry.PERSISTENCE_STORAGE_PATH, "@DISABLED");
+        this.createCoreEntry(CoreEntry.BLOB_VOLATILE_MAX_SIZE, 50000);
         this.createCoreEntry(CoreEntry.LIMIT_BLOCKSIZE, (long) 1000000000);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_LOGGING, true);
         this.createCoreEntry(CoreEntry.LOG_LEVEL, Log.LogLevel.VERBOSE);

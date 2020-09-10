@@ -9,7 +9,6 @@ import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.utils.Log;
@@ -48,7 +47,7 @@ public class ApplicationAgent implements ApplicationAgentApi {
                 host,
                 port,
                 new BaseExtensionToolbox(),
-                new BaseBlobFactory().enableVolatile(1000000),
+                new BaseBlobFactory().setVolatileMaxSize(1000000),
                 new NullLogger());
     }
 
@@ -198,16 +197,16 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Set<BundleId> checkInbox(URI sink, String cookie) {
+    public Set<String> checkInbox(URI sink, String cookie) {
         return null;
     }
 
     @Override
-    public Single<Bundle> get(URI eid, String cookie, BundleId bundleId) {
+    public Single<Bundle> get(URI eid, String cookie, String bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.GETBUNDLE.path)
                 .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
-                .setHeader("bundle-id", bundleId.getBidString())
+                .setHeader("bundle-id", bundleId)
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {
                     if (res.code == ResponseMessage.ResponseCode.ERROR) {
@@ -221,11 +220,11 @@ public class ApplicationAgent implements ApplicationAgentApi {
     }
 
     @Override
-    public Single<Bundle> fetch(URI eid, String cookie, BundleId bundleId) {
+    public Single<Bundle> fetch(URI eid, String cookie, String bundleId) {
         return LdcpRequest.GET(ApiPaths.ClientToDaemonLdcpPathVersion1.FETCHBUNDLE.path)
                 .setHeader("eid", eid.toString())
                 .setHeader("cookie", cookie)
-                .setHeader("bundle-id", bundleId.getBidString())
+                .setHeader("bundle-id", bundleId)
                 .send(host, port, toolbox, factory, logger)
                 .flatMap(res -> {
                     if (res.code == ResponseMessage.ResponseCode.ERROR) {

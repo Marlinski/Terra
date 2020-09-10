@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.core.api;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -52,7 +51,7 @@ public interface StorageApi extends CoreComponentApi {
             super("bundle already exists");
         }
 
-        public BundleAlreadyExistsException(BundleId bid) {
+        public BundleAlreadyExistsException(String bid) {
             super("bundle already exists: " + bid);
         }
     }
@@ -62,7 +61,7 @@ public interface StorageApi extends CoreComponentApi {
             super("bundle not found");
         }
 
-        public BundleNotFoundException(BundleId bid) {
+        public BundleNotFoundException(String bid) {
             super("bundle not found: " + bid);
         }
     }
@@ -79,7 +78,7 @@ public interface StorageApi extends CoreComponentApi {
      *
      * @return total number of bundle indexed
      */
-    int count();
+    Single<Integer> count();
 
     /**
      * check if a Bundle is in storage.
@@ -87,12 +86,10 @@ public interface StorageApi extends CoreComponentApi {
      * @param bid of the bundle
      * @return true if the Bundle is stored in volatile storage, false otherwise
      */
-    boolean contains(BundleId bid);
+    Single<Boolean> contains(String bid);
 
     /**
-     * Try to store in volatile storage first and then copy in persistent storage whatever happens
-     * If Volatile Storage is enabled, it will return the whole Bundle, otherwise it returns
-     * a MetaBundle.
+     * Store a bundle into storage.
      *
      * <p>Whenever the Single completes, the caller can expect that no further operations is needed
      * in background to store the bundle.
@@ -100,16 +97,7 @@ public interface StorageApi extends CoreComponentApi {
      * @param bundle to store
      * @return Completable that complete whenever the bundle is stored, error otherwise
      */
-    Single<Bundle> store(Bundle bundle);
-
-    /**
-     * Pull a MetaBundle from Storage. If the bundle is available in VolatileStorage it pulls
-     * the real Bundle from the index, otherwise it returns the MetaBundle.
-     *
-     * @param id of the bundle to pull from storage
-     * @return a Bundle, either a real one or a MetaBundle
-     */
-    Single<Bundle> getMeta(BundleId id);
+    Completable store(Bundle bundle);
 
     /**
      * Pull a Bundle from StorageApi. It will try to pull it from Volatile if it exists, or from
@@ -118,7 +106,7 @@ public interface StorageApi extends CoreComponentApi {
      * @param id of the bundle to pull from storage
      * @return a Single that completes if the Bundle was successfully pulled, onError otherwise
      */
-    Single<Bundle> get(BundleId id);
+    Single<Bundle> get(String id);
 
     /**
      * Delete a Bundle from all storage and removes all event registration to it.
@@ -126,7 +114,7 @@ public interface StorageApi extends CoreComponentApi {
      * @param id of the bundle to delete
      * @return Completable
      */
-    Completable remove(BundleId id);
+    Completable remove(String id);
 
     /**
      * Clear all bundles.

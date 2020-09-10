@@ -29,7 +29,7 @@ public class RequestNetwork {
                 ? "enabled"
                 : "disabled") + "\n");
         sb.append("libdetect: "
-                + (core.getConf().<Boolean>get(ConfigurationApi.CoreEntry.ENABLE_COMPONENT_DETECT_PEER_ON_LAN).value()
+                + (core.getConf().<Boolean>get(ConfigurationApi.CoreEntry.COMPONENT_ENABLE_DETECT_PEER_ON_LAN).value()
                 ? "enabled"
                 : "disabled") + "\n");
         sb.append("libdetect auto-connect: "

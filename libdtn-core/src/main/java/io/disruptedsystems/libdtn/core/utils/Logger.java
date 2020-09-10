@@ -7,6 +7,8 @@ import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_LOGGING;
+
 /**
  * Simple Logger.
  *
@@ -24,7 +26,7 @@ public class Logger extends CoreComponent implements Log {
     public Logger(CoreConfiguration conf) {
         level = LogLevel.INFO;
         conf.<LogLevel>get(ConfigurationApi.CoreEntry.LOG_LEVEL).observe().subscribe(l -> level = l);
-        initComponent(conf, ConfigurationApi.CoreEntry.COMPONENT_ENABLE_LOGGING, null);
+        initComponent(conf.get(COMPONENT_ENABLE_LOGGING), null);
     }
 
     @Override

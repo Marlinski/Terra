@@ -14,10 +14,8 @@ public class BaseBlobFactory implements BlobFactory {
 
     private static final String TAG = "BaseBlobFactory";
 
-    private int volatileMaxSize;
-    private boolean enableVolatileBlob = false;
-    private boolean enableFileBlob = false;
-    private String filePath = "./";
+    private int volatileMaxSize = 0;
+    private String blobPath = null;
 
     /**
      * enable volatile Blob to be created.
@@ -25,9 +23,8 @@ public class BaseBlobFactory implements BlobFactory {
      * @param limit is the maximum size of a single volatile blob.
      * @return the current BaseBlobFactory.
      */
-    public BaseBlobFactory enableVolatile(int limit) {
+    public BaseBlobFactory setVolatileMaxSize(int limit) {
         volatileMaxSize = limit;
-        enableVolatileBlob = true;
         return this;
     }
 
@@ -38,9 +35,8 @@ public class BaseBlobFactory implements BlobFactory {
      * @param path of the directory where persistent Blob will be created.
      * @return the current BaseBlobFactory.
      */
-    public BaseBlobFactory enablePersistent(String path) {
-        enableFileBlob = true;
-        this.filePath = path;
+    public BaseBlobFactory setPersistentPath(String path) {
+        this.blobPath = path;
         return this;
     }
 
@@ -50,7 +46,7 @@ public class BaseBlobFactory implements BlobFactory {
      * @return true if volatile blob are enabled, false otherwise.
      */
     public boolean isVolatileEnabled() {
-        return enableVolatileBlob;
+        return volatileMaxSize > 0;
     }
 
     /**
@@ -59,7 +55,7 @@ public class BaseBlobFactory implements BlobFactory {
      * @return true if persistent blob are enabled, false otherwise.
      */
     public boolean isPersistentEnabled() {
-        return enableFileBlob;
+        return blobPath != null;
     }
 
     // ----- definite size blob -------
@@ -95,15 +91,15 @@ public class BaseBlobFactory implements BlobFactory {
             throw new IOException("persistent storage not enabled");
         }
 
-        if (FileUtil.spaceLeft(filePath) < expectedSize) {
+        if (FileUtil.spaceLeft(blobPath) < expectedSize) {
             throw new IOException("not enough size left on device");
         }
 
         try {
-            File fblob = FileUtil.createNewFile("blob-", ".blob", filePath);
+            File fblob = FileUtil.createNewFile("blob-", ".blob", blobPath);
             return new FileBlob(fblob);
         } catch (IOException io) {
-            throw new IOException("could not create file in directory: "+filePath);
+            throw new IOException("could not create file in directory: "+ blobPath);
         }
     }
 

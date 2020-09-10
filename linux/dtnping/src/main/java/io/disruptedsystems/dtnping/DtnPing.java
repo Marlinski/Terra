@@ -130,7 +130,7 @@ public class DtnPing implements Callable<Void> {
                 });
 
         ExtensionToolbox toolbox = new BaseExtensionToolbox();
-        BlobFactory factory = new BaseBlobFactory().enableVolatile(10000);
+        BlobFactory factory = new BaseBlobFactory().setVolatileMaxSize(10000);
         if (cookie == null) {
             agent = ApplicationAgent.create(dtnhost, dtnport, toolbox, factory, logger);
             agent.register(Api.me(sink), cb).subscribe(

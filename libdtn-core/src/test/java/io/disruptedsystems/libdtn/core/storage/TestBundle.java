@@ -5,7 +5,6 @@ import java.net.URI;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
@@ -27,13 +26,12 @@ public class TestBundle {
         bundle.setDestination(URI.create("ipn:5.12"));
         bundle.setSource(URI.create("dtn://source/"));
         bundle.setReportTo(Dtn.nullEid());
-        bundle.bid = BundleId.create(bundle);
         return bundle;
     }
 
     public static Bundle testBundle1() {
         Bundle bundle = testBundle0();
-        bundle.addBlock(new PayloadBlock(new String(testPayload)));
+        bundle.addBlock(new PayloadBlock(testPayload));
         return bundle;
     }
 

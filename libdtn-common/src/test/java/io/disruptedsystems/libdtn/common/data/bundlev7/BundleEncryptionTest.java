@@ -27,7 +27,6 @@ import io.disruptedsystems.libdtn.common.data.security.BlockConfidentialityBlock
 import io.disruptedsystems.libdtn.common.data.security.SecurityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityContext;
 import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 
 import org.junit.Test;
 
@@ -89,7 +88,7 @@ public class BundleEncryptionTest {
                     () -> new BundleV7Item(
                             logger,
                             new BaseExtensionToolbox(),
-                            new BaseBlobFactory().enableVolatile(100000)),
+                            new BaseBlobFactory().setVolatileMaxSize(100000)),
                     (p, t, item) ->
                             res[0] = item.bundle);
 

@@ -1,10 +1,8 @@
 package io.disruptedsystems.libdtn.core.storage;
 
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.EventListenerApi;
 import io.disruptedsystems.libdtn.core.events.BundleDeleted;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
@@ -14,6 +12,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_EVENT_PROCESSING;
 
 /**
  * When an Event is fired, it may trigger some operation to a bundle. For instance, a new
@@ -79,7 +79,7 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
     private static final String TAG = "EventListener";
 
     private final Object lock = new Object();
-    private Map<T, Set<BundleId>> watchList;
+    private Map<T, Set<String>> watchList;
     protected CoreApi core;
 
     /**
@@ -90,7 +90,7 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
     public EventListener(CoreApi core) {
         this.core = core;
         watchList = new ConcurrentHashMap<>();
-        initComponent(core.getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_EVENT_PROCESSING, core.getLogger());
+        initComponent(core.getConf().get(COMPONENT_ENABLE_EVENT_PROCESSING), core.getLogger());
     }
 
     @Override
@@ -103,7 +103,7 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
         RxBus.unregister(this);
         synchronized (lock) {
             for (T key : watchList.keySet()) {
-                Set<BundleId> set = watchList.get(key);
+                Set<String> set = watchList.get(key);
                 if (set != null) {
                     set.clear();
                 }
@@ -113,29 +113,29 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
     }
 
     @Override
-    public boolean watch(T key, BundleId bid) {
+    public boolean watch(T key, String bid) {
         if (!isEnabled()) {
             return false;
         }
 
         synchronized (lock) {
             core.getLogger().d(getComponentName(), "add bundle to a watchlist: "
-                    + bid.getBidString() + " key=" + key.toString());
+                    + bid.toString() + " key=" + key.toString());
             return watchList.computeIfAbsent(key, k -> new HashSet<>()).add(bid);
         }
     }
 
     @Override
-    public void unwatch(BundleId bid) {
+    public void unwatch(String bid) {
         if (!isEnabled()) {
             return;
         }
 
         synchronized (lock) {
             core.getLogger().d(getComponentName(), "remove bundle from a watchlist: "
-                    + bid.getBidString());
+                    + bid.toString());
             for (T key : watchList.keySet()) {
-                Set<BundleId> set = watchList.get(key);
+                Set<String> set = watchList.get(key);
                 if (set != null) {
                     set.remove(bid);
                 }
@@ -144,13 +144,13 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
     }
 
     @Override
-    public boolean unwatch(T key, BundleId bid) {
+    public boolean unwatch(T key, String bid) {
         if (!isEnabled()) {
             return false;
         }
 
         synchronized (lock) {
-            Set<BundleId> set = watchList.get(key);
+            Set<String> set = watchList.get(key);
             if (set != null) {
                 set.remove(bid);
                 return true;
@@ -161,13 +161,13 @@ public abstract class EventListener<T> extends CoreComponent implements EventLis
     }
 
     @Override
-    public Observable<BundleId> getBundlesOfInterest(T key) {
+    public Observable<String> getBundlesOfInterest(T key) {
         if (!isEnabled()) {
             return Observable.empty();
         }
 
         synchronized (lock) {
-            Set<BundleId> set = watchList.get(key);
+            Set<String> set = watchList.get(key);
             if (set == null) {
                 return Observable.empty();
             }

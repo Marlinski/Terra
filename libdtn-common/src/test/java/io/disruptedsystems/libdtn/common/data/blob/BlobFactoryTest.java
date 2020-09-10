@@ -15,7 +15,7 @@ public class BlobFactoryTest {
 
     @Test
     public void testVolatileBlobFactory() {
-        BlobFactory factory = new BaseBlobFactory().enableVolatile(100);
+        BlobFactory factory = new BaseBlobFactory().setVolatileMaxSize(100);
 
         try {
             Blob vblob = factory.createBlob(50);
@@ -33,7 +33,7 @@ public class BlobFactoryTest {
 
     @Test
     public void testPersistentBlobFactory() {
-        BlobFactory factory = new BaseBlobFactory().enablePersistent("/tmp");
+        BlobFactory factory = new BaseBlobFactory().setPersistentPath("/tmp");
 
         try {
             Blob fblob = factory.createBlob(50);
@@ -50,7 +50,7 @@ public class BlobFactoryTest {
 
     @Test
     public void testVolatilePersistentBlobFactory() {
-        BlobFactory factory = new BaseBlobFactory().enableVolatile(100).enablePersistent("/tmp");
+        BlobFactory factory = new BaseBlobFactory().setVolatileMaxSize(100).setPersistentPath("/tmp");
 
         try {
             Blob vblob = factory.createBlob(50);

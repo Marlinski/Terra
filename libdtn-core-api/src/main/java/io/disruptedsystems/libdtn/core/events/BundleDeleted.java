@@ -1,7 +1,5 @@
 package io.disruptedsystems.libdtn.core.events;
 
-import io.disruptedsystems.libdtn.common.data.BundleId;
-
 /**
  * BundleDeleted event is thrown when a bundle is deleted.
  *
@@ -9,14 +7,14 @@ import io.disruptedsystems.libdtn.common.data.BundleId;
  */
 public class BundleDeleted {
 
-    public BundleId bid;
+    public String bid;
 
-    public BundleDeleted(BundleId bid) {
+    public BundleDeleted(String bid) {
         this.bid = bid;
     }
 
     @Override
     public String toString() {
-        return "Bundle deleted: bid=" + bid.getBidString();
+        return "Bundle deleted: bid=" + bid;
     }
 }

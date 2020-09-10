@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.DtnCore;
@@ -137,16 +136,12 @@ public class Terra implements Callable<Void> {
             }
         }
 
-        conf.get(ConfigurationApi.CoreEntry.COMPONENT_ENABLE_VOLATILE_STORAGE).update(volatileStorage);
         if (volatileStorage) {
-            conf.get(ConfigurationApi.CoreEntry.VOLATILE_BLOB_STORAGE_MAX_CAPACITY).update(volatileLimit);
+            conf.get(ConfigurationApi.CoreEntry.BLOB_VOLATILE_MAX_SIZE).update(volatileLimit);
         }
 
-        conf.get(ConfigurationApi.CoreEntry.COMPONENT_ENABLE_SIMPLE_STORAGE).update(persistentStorage);
         if (persistentStorage) {
-            Set<String> paths = new HashSet<>();
-            paths.add(simplePath);
-            conf.<Set<String>>get(ConfigurationApi.CoreEntry.SIMPLE_STORAGE_PATH).update(paths);
+            conf.<String>get(ConfigurationApi.CoreEntry.PERSISTENCE_STORAGE_PATH).update(simplePath);
         }
 
         conf.get(ConfigurationApi.CoreEntry.ENABLE_STATUS_REPORTING).update(!disableReporting);

@@ -100,7 +100,7 @@ public class PrimaryBlockItem implements CborParser.ParseableItem {
                 .cbor_parse_int((p, t, i) -> {
                     logger.v(TAG, ". sequenceNumber=" + i);
                     bundle.setSequenceNumber(i);
-                    logger.v(TAG, ". bid=" + bundle.getBid().getBidString());
+                    logger.v(TAG, ". bid=" + bundle.getBid().toString());
                 })
                 .cbor_parse_int((p, t, i) -> {
                     logger.v(TAG, ". lifetime=" + i);

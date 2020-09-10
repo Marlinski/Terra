@@ -69,7 +69,7 @@ public class RoutingEngine implements RoutingEngineApi {
 
     @Override
     public Single<RoutingStrategyResult> route(Bundle bundle) {
-        core.getLogger().v(TAG, "trying direct strategy: "+ bundle.bid.getBidString());
+        core.getLogger().v(TAG, "trying direct strategy: "+ bundle.bid.toString());
         return directStrategy.route(bundle)
                 .flatMap(
                         directRoutingResult -> {
@@ -89,7 +89,7 @@ public class RoutingEngine implements RoutingEngineApi {
         try {
             return findAlternateStrategy(bundle).route(bundle);
         } catch (NoAlternateStrategyFound nasf) {
-            core.getLogger().d(TAG, "no alternate strategy found, route later: "+ bundle.bid.getBidString());
+            core.getLogger().d(TAG, "no alternate strategy found, route later: "+ bundle.bid.toString());
             return directStrategy.forwardLater(bundle);
         }
     }

@@ -80,7 +80,7 @@ public class ConvergenceLayerStcpTest {
                         channel -> {
                             channel.recvBundle(
                                     new BaseExtensionToolbox(),
-                                    new BaseBlobFactory().enableVolatile(1000000)).subscribe(
+                                    new BaseBlobFactory().setVolatileMaxSize(1000000)).subscribe(
                                     b -> {
                                         recv[i[0]++] = b;
                                     },
@@ -157,7 +157,7 @@ public class ConvergenceLayerStcpTest {
                         channel -> {
                             channel.recvBundle(
                                     new BaseExtensionToolbox(),
-                                    new BaseBlobFactory().enableVolatile(1000000)).subscribe(
+                                    new BaseBlobFactory().setVolatileMaxSize(1000000)).subscribe(
                                     TestBundle::checkBundlePayload,
                                     e -> lock.countDown(),
                                     lock::countDown);

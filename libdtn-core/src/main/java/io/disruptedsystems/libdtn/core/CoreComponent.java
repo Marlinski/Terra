@@ -21,9 +21,9 @@ public abstract class CoreComponent implements CoreComponentApi {
     private static final Set<CoreComponent> REGISTERED_COMPONENTS = new HashSet<>();
 
     @Override
-    public void initComponent(ConfigurationApi conf, ConfigurationApi.CoreEntry entry, Log logger) {
+    public void initComponent(ConfigurationApi.EntryInterface<Boolean> entry, Log logger) {
         REGISTERED_COMPONENTS.add(this);
-        conf.<Boolean>get(entry).observe()
+        entry.observe()
                 .subscribe(
                         enabled -> {
                             this.enabled = enabled;

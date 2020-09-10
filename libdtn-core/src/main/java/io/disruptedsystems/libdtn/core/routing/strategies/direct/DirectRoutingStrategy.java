@@ -4,14 +4,11 @@ package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 import java.net.URI;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
-import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
-import io.disruptedsystems.libdtn.core.api.EventListenerApi;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -79,7 +76,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     private void prepareBundleForTransmission(Bundle bundle, ClaChannelSpi claChannel) {
         core.getLogger().v(TAG, "5.4-4 "
-                + bundle.bid.getBidString() + " -> "
+                + bundle.bid.toString() + " -> "
                 + claChannel.channelEid().toString());
 
         /* call block-specific routine for transmission */
@@ -103,19 +100,18 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
         if (!bundle.isTagged("in_storage")) {
             return core.getStorage()
                     .store(bundle)
-                    .flatMap(this::routeLaterFromStorage);
+                    .andThen(routeLaterFromStorage(bundle));
         } else {
             return routeLaterFromStorage(bundle);
         }
     }
 
     private Single<RoutingStrategyResult> routeLaterFromStorage(Bundle bundle) {
-        final BundleId bid = bundle.bid;
         final URI destination = bundle.getDestination();
 
         Observable<URI> potentialClas = core.getRoutingTable().resolveEid(destination);
         core.getLogger().v(TAG, "forward later: "
-                + bundle.bid.getBidString() + " -> "
+                + bundle.bid + " -> "
                 + potentialClas.map(URI::toString).reduce((str, eid) -> str + "," + eid).blockingGet());
 
         /* register a listener that will listen for LinkLocalEntryUp event

@@ -7,7 +7,6 @@ import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
 import io.disruptedsystems.libdtn.core.storage.EventListener;
 import io.marlinski.librxbus.Subscribe;

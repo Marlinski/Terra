@@ -23,17 +23,22 @@ import io.disruptedsystems.libdtn.core.routing.LinkLocalTable;
 import io.disruptedsystems.libdtn.core.routing.LocalEidTable;
 import io.disruptedsystems.libdtn.core.routing.RoutingEngine;
 import io.disruptedsystems.libdtn.core.routing.RoutingTable;
-import io.disruptedsystems.libdtn.core.routing.strategies.direct.DirectRoutingListener;
 import io.disruptedsystems.libdtn.core.routing.strategies.direct.DirectRoutingStrategy;
 import io.disruptedsystems.libdtn.core.services.NullAa;
 import io.disruptedsystems.libdtn.core.spi.ApplicationAgentSpi;
-import io.disruptedsystems.libdtn.core.storage.Storage;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.aa.Registrar;
+import io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage;
 import io.disruptedsystems.libdtn.core.utils.Logger;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.RxThread;
 import io.marlinski.librxbus.Subscribe;
+
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_AA_REGISTRATION;
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_LINKLOCAL_ROUTING;
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_MODULE_LOADER;
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_ROUTING;
+import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE;
 
 /**
  * DtnCore registers all the DtnEid Core CoreComponent.
@@ -88,7 +93,7 @@ public class DtnCore implements CoreApi {
         this.claManager = new ClaManager(this);
 
         /* storage */
-        this.storage = new Storage(this);
+        this.storage = SimpleStorage.create(this);
 
         /* runtime modules */
         this.moduleLoader = new ModuleLoader(this);
@@ -97,11 +102,11 @@ public class DtnCore implements CoreApi {
     @Override
     public void init() {
         RxBus.register(this);
-        linkLocalRouting.initComponent(getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_LINKLOCAL_ROUTING, getLogger());
-        routingTable.initComponent(getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_ROUTING, getLogger());
-        registrar.initComponent(getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_AA_REGISTRATION, getLogger());
-        storage.initComponent(getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE, getLogger());
-        moduleLoader.initComponent(getConf(), ConfigurationApi.CoreEntry.COMPONENT_ENABLE_MODULE_LOADER, getLogger());
+        linkLocalRouting.initComponent(getConf().get(COMPONENT_ENABLE_LINKLOCAL_ROUTING), getLogger());
+        routingTable.initComponent(getConf().get(COMPONENT_ENABLE_ROUTING), getLogger());
+        registrar.initComponent(getConf().get(COMPONENT_ENABLE_AA_REGISTRATION), getLogger());
+        storage.initComponent(getConf().get(COMPONENT_ENABLE_STORAGE), getLogger());
+        moduleLoader.initComponent(getConf().get(COMPONENT_ENABLE_MODULE_LOADER), getLogger());
 
         /* starts DtnEid core services (AA) */
         ApplicationAgentSpi nullAa = new NullAa();

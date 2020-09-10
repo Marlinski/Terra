@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
@@ -202,7 +201,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     @Override
-    public Set<BundleId> checkInbox(URI eid, String cookie)
+    public Set<String> checkInbox(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
         checkRegisteredSink(eid, cookie);
         // todo: call storage service

@@ -89,7 +89,7 @@ public class BundleIntegrityTest {
                     () -> new BundleV7Item(
                             logger,
                             new BaseExtensionToolbox(),
-                            new BaseBlobFactory().enableVolatile(100000)),
+                            new BaseBlobFactory().setVolatileMaxSize(100000)),
                     (p, t, item) ->
                             res[0] = item.bundle);
 

@@ -8,7 +8,6 @@ import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Dispatch;
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.blob.Blob;
 import io.disruptedsystems.libdtn.common.data.blob.VolatileBlob;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
@@ -47,11 +46,10 @@ public class RequestBundle {
             return res.setStatus(HttpResponseStatus.BAD_REQUEST)
                     .writeStringAndFlushOnEach(just("incorrect BundleId"));
         }
-        BundleId bid = BundleId.create(param);
-        if (core.getStorage().contains(bid)) {
-            core.getLogger().i(TAG, "delivering payload: "+bid.getBidString());
+        if (core.getStorage().contains(param).onErrorReturnItem(false).blockingGet()) {
+            core.getLogger().i(TAG, "delivering payload: "+param);
             return Observable.<Bundle>create(s ->
-                    core.getStorage().get(bid).subscribe(
+                    core.getStorage().get(param).subscribe(
                             bundle -> {
                                 s.onNext(bundle);
                                 s.onCompleted();
@@ -86,11 +84,10 @@ public class RequestBundle {
      */
     private Action aaActionFetch = (params, req, res) -> {
         String param = params.get("*");
-        BundleId bid = BundleId.create(param);
-        if (core.getStorage().contains(bid)) {
-            core.getLogger().i(TAG, "delivering payload: "+bid.getBidString());
+        if (core.getStorage().contains(param).onErrorReturnItem(false).blockingGet()) {
+            core.getLogger().i(TAG, "delivering payload: "+param);
             return Observable.<Bundle>create(s ->
-                    core.getStorage().get(bid).subscribe(
+                    core.getStorage().get(param).subscribe(
                             bundle -> {
                                 s.onNext(bundle);
                                 s.onCompleted();

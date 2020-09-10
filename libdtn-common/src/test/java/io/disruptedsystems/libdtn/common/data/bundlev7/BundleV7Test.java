@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
@@ -16,7 +15,6 @@ import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.BundleId;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
@@ -53,7 +51,6 @@ public class BundleV7Test {
         bundle.setDestination(URI.create("ipn:5.12"));
         bundle.setSource(makeSourceEid());
         bundle.setReportTo(Dtn.nullEid());
-        bundle.bid = BundleId.create(bundle);
         return bundle;
     }
 
@@ -168,7 +165,7 @@ public class BundleV7Test {
                     () -> new BundleV7Item(
                             new SimpleLogger(),
                             new BaseExtensionToolbox(),
-                            new BaseBlobFactory().enableVolatile(100000)),
+                            new BaseBlobFactory().setVolatileMaxSize(100000)),
                     (p, t, item) ->
                             res[0] = item.bundle);
 

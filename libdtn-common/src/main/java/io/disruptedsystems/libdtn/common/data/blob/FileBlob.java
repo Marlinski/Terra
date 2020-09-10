@@ -21,6 +21,7 @@ import io.disruptedsystems.libdtn.common.utils.Function;
 import io.disruptedsystems.libdtn.common.utils.Supplier;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -43,10 +44,7 @@ public class FileBlob extends Tag implements Blob {
      * @throws IOException if the file cannot be accessed
      */
     public FileBlob(String absolutePath) throws IOException {
-        file = new File(absolutePath);
-        if (!file.exists()) {
-            throw new IOException("Can't access file: " + absolutePath);
-        }
+        this(new File(absolutePath));
     }
 
     /**
@@ -57,7 +55,7 @@ public class FileBlob extends Tag implements Blob {
      */
     public FileBlob(File file) throws IOException {
         this.file = file;
-        if (!file.exists()) {
+        if (!file.exists() && !file.canRead()) {
             throw new IOException("Can't access file: " + file.getAbsolutePath());
         }
     }
@@ -149,25 +147,21 @@ public class FileBlob extends Tag implements Blob {
 
     @Override
     public Completable moveToFile(String newLocation) {
-        return Completable.create(s -> {
-            try {
-                if(!file.exists()) {
-                    throw new IOException("Can't access file: " + newLocation);
-                }
+        return Single.just(newLocation)
+                .map(loc -> {
+                    if (!file.exists()) {
+                        throw new IOException("Can't access file: " + newLocation);
+                    }
 
-                Path sourcePath = Paths.get(file.getAbsolutePath());
-                Path destinationPath = Paths.get(newLocation);
-                Files.move(sourcePath, destinationPath, REPLACE_EXISTING);
-                file = new File(newLocation);
-                if (!file.exists()) {
-                    s.onError(new IOException("Can't access file: " + newLocation));
-                } else {
-                    s.onComplete();
-                }
-            } catch (IOException io) {
-                s.onError(io);
-            }
-        });
+                    Path sourcePath = Paths.get(file.getAbsolutePath());
+                    Path destinationPath = Paths.get(newLocation);
+                    Files.move(sourcePath, destinationPath, REPLACE_EXISTING);
+                    file = new File(newLocation);
+                    if (!file.exists()) {
+                        throw new IOException("Can't access file: " + newLocation);
+                    }
+                    return loc;
+                }).ignoreElement();
     }
 
     private class WritableFileBlob implements WritableBlob {
@@ -181,7 +175,7 @@ public class FileBlob extends Tag implements Blob {
             if (!file.exists()) {
                 return;
             }
-            System.out.println("delete: "+file.getAbsolutePath());
+            System.out.println("delete: " + file.getAbsolutePath());
             file.delete();
         }
 
