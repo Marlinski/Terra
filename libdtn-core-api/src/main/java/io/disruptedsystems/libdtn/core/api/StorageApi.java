@@ -1,8 +1,11 @@
 package io.disruptedsystems.libdtn.core.api;
 
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -115,6 +118,14 @@ public interface StorageApi extends CoreComponentApi {
      * @return Completable
      */
     Completable remove(String id);
+
+    /**
+     * get all Bundles ID whose destination field matches the destination given as parameter.
+     *
+     * @param destination
+     * @return an Observable of Bundle ID
+     */
+    Observable<String> findBundlesForDestination(String destination);
 
     /**
      * Clear all bundles.

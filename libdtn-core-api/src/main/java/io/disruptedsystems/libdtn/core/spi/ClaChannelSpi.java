@@ -32,6 +32,14 @@ public interface ClaChannelSpi {
     ChannelMode getMode();
 
     /**
+     * check wether this channel is open. A channel is open if it can send or receive bundle.
+     * when a channel is close, it can no longer be used for sending or receiving bundle.
+     *
+     * @return true if the channel is open
+     */
+    boolean isOpen();
+
+    /**
      * return the Eid specific for this Channel. It must be unique accross all channels.
      * It is used to identify this interface.
      *

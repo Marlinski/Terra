@@ -240,7 +240,7 @@ public class BundleProtocol implements BundleProtocolApi {
                 + "  reason=" + ((reason instanceof DeliveryApi.DeliveryFailure)
                     ? ((DeliveryApi.DeliveryFailure)reason).reason.name()
                     : reason.getMessage())
-                + "  bundleID=" + bundle.bid.toString() + "]");
+                + "  bundleID=" + bundle.bid + "]");
 
         if (!bundle.isTagged("in_storage")) {
             core.getStorage().store(bundle).subscribe(
@@ -255,8 +255,7 @@ public class BundleProtocol implements BundleProtocolApi {
                         core.getLogger().w(TAG, "storage failure. "
                                 + storageFailure.getMessage());
                         bundleDeletion(bundle);
-                    }
-            );
+                    });
         } else {
             /* register for event and deliver later */
             core.getDelivery().deliverLater(bundle);

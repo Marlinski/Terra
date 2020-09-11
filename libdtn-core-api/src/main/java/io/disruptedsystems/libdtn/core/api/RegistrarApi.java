@@ -1,11 +1,11 @@
 package io.disruptedsystems.libdtn.core.api;
 
+import java.net.URI;
+import java.util.Set;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
 import io.reactivex.rxjava3.core.Flowable;
-
-import java.net.URI;
-import java.util.Set;
 
 /**
  * Api to access the services of the Bundle Protocol from an Application Agent.
@@ -85,23 +85,23 @@ public interface RegistrarApi {
      *
      * @param eid to register
      * @return a cookir for this registration upon success, null otherwise
-     * @throws RegistrarDisabled     if the registrar is disabled
+     * @throws RegistrarDisabled    if the registrar is disabled
      * @throws EidAlreadyRegistered if the sink is already registered
-     * @throws NullArgument          if one of the argument is null
-     * @throws InvalidEid        if the eid is invalid
+     * @throws NullArgument         if one of the argument is null
+     * @throws InvalidEid           if the eid is invalid
      */
     String register(URI eid) throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
 
     /**
      * Register an active registration. It fails If the sink is already registered.
      *
-     * @param eid  to register
-     * @param cb   callback to receive data for this registration
+     * @param eid to register
+     * @param cb  callback to receive data for this registration
      * @return a cookie for this registration upon success, null otherwise.
-     * @throws RegistrarDisabled     if the registrar is disabled
+     * @throws RegistrarDisabled    if the registrar is disabled
      * @throws EidAlreadyRegistered if the sink is already registered
-     * @throws NullArgument          if one of the argument is null
-     * @throws InvalidEid        if the eid is invalid
+     * @throws NullArgument         if one of the argument is null
+     * @throws InvalidEid           if the eid is invalid
      */
     String register(URI eid, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, EidAlreadyRegistered, NullArgument;
@@ -113,7 +113,7 @@ public interface RegistrarApi {
      * @param cookie cookie for this registration
      * @return true if the AA was unregister, false otherwise
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink to unregister is not register
+     * @throws EidNotRegistered  if the sink to unregister is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
@@ -129,7 +129,7 @@ public interface RegistrarApi {
      * @param bundle to send
      * @return true if the bundle is queued, false otherwise
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws BundleMalformed   if the bundle can't be serialized
@@ -158,7 +158,7 @@ public interface RegistrarApi {
      * @param cookie that was returned upon registration.
      * @return a list with all the bundle ids.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
@@ -174,7 +174,7 @@ public interface RegistrarApi {
      * @param bundleId id of the bundle to retrieve
      * @return number of data waiting to be retrieved
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws BundleNotFound    if the bundle was not found
      * @throws NullArgument      if one of the argument is null
@@ -191,7 +191,7 @@ public interface RegistrarApi {
      * @param bundleId id of the bundle to retrieve
      * @return number of data waiting to be retrieved
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws BundleNotFound    if the bundle was not found
      * @throws NullArgument      if one of the argument is null
@@ -207,13 +207,25 @@ public interface RegistrarApi {
      * @param cookie that was returned upon registration.
      * @return Flowable of Blob
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */
     Flowable<Bundle> fetch(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument;
+
+    /**
+     * Check whether a registration is active or not.
+     *
+     * @param eid to the registration
+     * @return true if the registration is active, false otherwise
+     * @throws RegistrarDisabled if the registrar is disabled
+     * @throws EidNotRegistered  if the sink is not register
+     * @throws NullArgument      if one of the argument is null
+     * @throws InvalidEid        if the eid is invalid
+     */
+    boolean isActive(URI eid) throws EidNotRegistered, NullArgument, RegistrarDisabled;
 
     /**
      * Turn a registration active. If the registration was already active it does nothing,
@@ -225,7 +237,7 @@ public interface RegistrarApi {
      * @param cb     the callback for the active registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
@@ -241,7 +253,7 @@ public interface RegistrarApi {
      * @param cookie of the registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws BadCookie         if the cookie provided does not match registration cookie
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
@@ -253,10 +265,10 @@ public interface RegistrarApi {
      * Privileged method! Turn a registration passive. If the registration was already passive it
      * does nothing.
      *
-     * @param eid  to the registration
+     * @param eid to the registration
      * @return true if the registration was successfully activated, false otherwise.
      * @throws RegistrarDisabled if the registrar is disabled
-     * @throws EidNotRegistered if the sink is not register
+     * @throws EidNotRegistered  if the sink is not register
      * @throws NullArgument      if one of the argument is null
      * @throws InvalidEid        if the eid is invalid
      */

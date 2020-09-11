@@ -133,6 +133,11 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
         }
 
         @Override
+        public boolean isOpen() {
+            return (ws != null && ws.isOpen());
+        }
+
+        @Override
         public void close() {
             if (ws != null) {
                 try {

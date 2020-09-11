@@ -204,6 +204,11 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
         }
 
         @Override
+        public boolean isOpen() {
+            return tcpcon.channel.isOpen();
+        }
+
+        @Override
         public URI channelEid() {
             return channelEid;
         }

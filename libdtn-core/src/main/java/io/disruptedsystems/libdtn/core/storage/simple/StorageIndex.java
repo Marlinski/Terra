@@ -12,8 +12,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.core.events.BundleIndexed;
 import io.marlinski.librxbus.RxBus;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Lucien Loiseau on 10/09/20.

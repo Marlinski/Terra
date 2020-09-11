@@ -1,6 +1,7 @@
 package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
 
+import java.io.IOException;
 import java.net.URI;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
@@ -12,11 +13,11 @@ import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
 import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.marlinski.librxbus.RxBus;
-import io.marlinski.librxbus.RxThread;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * DirectRoutingStrategy will try to forward a bundle using a directly connected peer
@@ -105,8 +106,35 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     @Subscribe
     public void onEvent(LinkLocalEntryUp event) {
+        if (event.channel.getMode() == ClaChannelSpi.ChannelMode.InUnidirectional) {
+            return;
+        }
+
         core.getLogger().v(TAG, "pull all relevant bundles for cla: " + event.channel.channelEid());
-        
+        core.getRoutingTable()
+                .reverseCla(event.channel.channelEid()) // find all destination enabled by this channel
+                .flatMap(destination -> core.getStorage().findBundlesForDestination(destination.toString())) // pull all relevent bundles
+                .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
+                .map(bundle -> { // check that the channel is open or close the whole stream
+                    if (event.channel.isOpen()) {
+                        throw new IOException("channel is closed");
+                    }
+                    return bundle;
+                })
+                .flatMap(bundle -> event.channel // send it
+                        .sendBundle(bundle, core.getExtensionManager().getBlockDataSerializerFactory())
+                        .doOnError(e -> core.getLogger().w(TAG, event.channel.channelEid()
+                                + " : transmission failed for bundle "
+                                + bundle.bid + " dest="
+                                + bundle.getDestination().toString()))
+                        .doOnComplete(() -> core.getLogger().w(TAG, event.channel.channelEid()
+                                + " : bundle successfully transmitted "
+                                + bundle.bid + " dest="
+                                + bundle.getDestination().toString()))
+                        .onErrorComplete()) // do not close the stream if this one failed
+                .onErrorComplete() // do not throw exception
+                .subscribeOn(Schedulers.computation()) // do not block the caller's thread
+                .subscribe(); // execute!
     }
 
     /*

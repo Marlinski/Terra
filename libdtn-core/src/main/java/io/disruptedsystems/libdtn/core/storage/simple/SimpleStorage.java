@@ -1,6 +1,7 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
 import java.io.File;
+import java.util.Set;
 
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
@@ -64,12 +65,13 @@ public abstract class SimpleStorage<T> extends CoreComponent implements StorageA
 
     @Override
     protected void componentUp() {
-
     }
 
     @Override
     protected void componentDown() {
-        index.teardown();
+        if(index != null) {
+            index.teardown();
+        }
     }
 
     @Override
@@ -99,6 +101,12 @@ public abstract class SimpleStorage<T> extends CoreComponent implements StorageA
         return Observable.fromIterable(index.allBid())
                 .flatMapCompletable(this::remove)
                 .onErrorComplete();
+    }
+
+    @Override
+    public Observable<String> findBundlesForDestination(String destination) {
+        return Observable.fromStream(index.destinationTrie.get(destination).stream())
+                .map(entry -> entry.bundle.bid);
     }
 
     @Override
