@@ -16,5 +16,8 @@ public class MetaBundle extends Bundle {
 
     public MetaBundle(Bundle bundle) {
         super((PrimaryBlock)bundle);
+        for(String tag : bundle.getAllTags()) {
+            this.tag(tag);
+        }
     }
 }

@@ -2,6 +2,7 @@ package io.disruptedsystems.libdtn.core.storage.simple;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -10,8 +11,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.core.events.BundleIndexed;
 import io.marlinski.librxbus.RxBus;
+
+import static io.disruptedsystems.libdtn.core.api.BundleProtocolApi.TAG_DELIVERY_PENDING;
+import static io.disruptedsystems.libdtn.core.api.BundleProtocolApi.TAG_FORWARD_PENDING;
 
 /**
  * @author Lucien Loiseau on 10/09/20.
@@ -51,7 +57,8 @@ class StorageIndex<T> {
      * - and a reverse index (patricia trie) that maps destination to bundles for efficient lookup
      */
     Map<String, IndexEntry<T>> bundleIndex = new ConcurrentHashMap<>();
-    PatriciaTrie<Set<IndexEntry<T>>> destinationTrie = new PatriciaTrie<>();
+    PatriciaTrie<Set<IndexEntry<T>>> forwardingTrie = new PatriciaTrie<>();
+    PatriciaTrie<Set<IndexEntry<T>>> deliveryTrie = new PatriciaTrie<>();
 
     void teardown() {
         bundleIndex.clear();
@@ -68,13 +75,21 @@ class StorageIndex<T> {
             IndexEntry<T> entry = new IndexEntry<T>(bundle, attached);
             bundleIndex.put(bid, entry);
 
-            // add destination in reverse index
-            Set<IndexEntry<T>> entries = destinationTrie.get(bundle.getDestination().toString());
-            if(entries == null) {
-                entries = new HashSet<>();
-                destinationTrie.put(bundle.getDestination().toString(), entries);
+            // reverse index if bundle is to be forwarded
+            if(bundle.isTagged(TAG_FORWARD_PENDING)) {
+                addToTrie(forwardingTrie, bundle.getDestination().toString(), entry);
             }
-            entries.add(entry);
+
+            // reverse index if bundle is to be delivered
+            if(bundle.isTagged(TAG_DELIVERY_PENDING)) {
+                addToTrie(deliveryTrie, bundle.getDestination().toString(), entry);
+            }
+
+            // if delivery is a dtn-eid, we add the api:me as well for easier matching
+            if(bundle.isTagged(TAG_DELIVERY_PENDING) && Dtn.isDtnEid(bundle.getDestination())) {
+                String apimepath = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me()).toString();
+                addToTrie(deliveryTrie, apimepath, entry);
+            }
 
             bundle.tag("in_storage");
             RxBus.post(new BundleIndexed(bundle));
@@ -82,6 +97,15 @@ class StorageIndex<T> {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    private void addToTrie(PatriciaTrie<Set<IndexEntry<T>>> trie, String path, IndexEntry<T> entry) {
+        Set<IndexEntry<T>> entries = trie.get(path);
+        if(entries == null) {
+            entries = new HashSet<>();
+            trie.put(path, entries);
+        }
+        entries.add(entry);
     }
 
     Bundle pullBundle(String bid) {
@@ -106,21 +130,39 @@ class StorageIndex<T> {
 
             // remove entry from index
             bundleIndex.remove(bid);
+            URI destination =  entry.bundle.getDestination();
 
             // remove entry from reverse index
-            Set<IndexEntry<T>> entries = destinationTrie.get(entry.bundle.getDestination().toString());
-            if(entries == null) {
-                // todo: should not happen, maybe throw an error ?
-                return;
+            if(entry.bundle.isTagged(TAG_FORWARD_PENDING)) {
+                removeFromTrie(forwardingTrie, destination.toString(), entry);
             }
-            entries.remove(entry);
 
-            // remove key if mapped set is empty
-            if (entries.size() == 0) {
-                destinationTrie.remove(entry.bundle.getDestination().toString(), entries);
+            // remove entry from reverse index
+            if(entry.bundle.isTagged(TAG_DELIVERY_PENDING)) {
+                removeFromTrie(deliveryTrie, destination.toString(), entry);
+            }
+
+            // if delivery is a dtn-eid, we remove the api:me
+            if(entry.bundle.isTagged(TAG_DELIVERY_PENDING) && Dtn.isDtnEid(destination)) {
+                String apimepath = Api.swapApiMeUnsafe(destination, Api.me()).toString();
+                removeFromTrie(deliveryTrie, apimepath.toString(), entry);
             }
         } finally {
             lock.writeLock().unlock();
+        }
+    }
+
+    private void removeFromTrie(PatriciaTrie<Set<IndexEntry<T>>> trie, String path, IndexEntry<T> entry) {
+        Set<IndexEntry<T>> entries = trie.get(path);
+        if (entries == null) {
+            // todo: should not happen, maybe throw an error ?
+            return;
+        }
+        entries.remove(entry);
+
+        // remove key if mapped set is empty
+        if (entries.size() == 0) {
+            forwardingTrie.remove(path, entries);
         }
     }
 

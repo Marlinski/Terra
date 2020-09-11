@@ -120,12 +120,22 @@ public interface StorageApi extends CoreComponentApi {
     Completable remove(String id);
 
     /**
-     * get all Bundles ID whose destination field matches the destination given as parameter.
+     * get all Bundles ID pending to be forwarded and whose destination field matches the
+     * destination given as parameter.
      *
      * @param destination
      * @return an Observable of Bundle ID
      */
-    Observable<String> findBundlesForDestination(String destination);
+    Observable<String> findBundlesToForward(String destination);
+
+    /**
+     * get all Bundles ID pending to be delivered and whose destination field matches the
+     * destination given as parameter.
+     *
+     * @param destination
+     * @return an Observable of Bundle ID
+     */
+    Observable<String> findBundlesToDeliver(String destination);
 
     /**
      * Clear all bundles.

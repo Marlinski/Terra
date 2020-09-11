@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.common.data;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * A Taggable class has method to attach, remove or check attached object.
  *
@@ -13,6 +16,13 @@ public interface Taggable {
      * @param tag string
      */
     void tag(String tag);
+
+    /**
+     * get all tags
+     *
+     * @return the set of tags
+     */
+    Set<String> getAllTags();
 
     /**
      * tag and attach an object to this Block. It is useful for Bundle processing.

@@ -16,14 +16,14 @@ import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
-import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.events.RegistrationActive;
 import io.disruptedsystems.libdtn.core.spi.ActiveRegistrationCallback;
-import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.marlinski.librxbus.RxBus;
 import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.DeliveryDisabled;
@@ -76,10 +76,12 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     protected void componentUp() {
+        RxBus.register(this);
     }
 
     @Override
     protected void componentDown() {
+        RxBus.unregister(this);
     }
 
     /* ---- helper methods ---- */
@@ -359,14 +361,20 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         core.getLogger().v(TAG, "deliver later: " + bundle.bid);
     }
 
-
     @Subscribe
     public void onEvent(RegistrationActive event) {
-        core.getLogger().v(TAG, "pull all relevant bundles for registration: " + event.eid);
-        core.getStorage().findBundlesForDestination(event.eid.toString()) // pull all relevent bundles
+        core.getLogger().v(TAG, event.eid + " : pull all relevant bundles for registration ");
+        Single.just(event.eid)
+                .flatMapObservable(eid -> {
+                    if (Dtn.isDtnEid(eid) && !Api.isApiEid(eid)) {
+                        return Observable.just(eid, Api.swapApiMeUnsafe(eid, Api.me()));
+                    }
+                    return Observable.just(eid);
+                })
+                .flatMap(eid -> core.getStorage().findBundlesToDeliver(eid.toString())) // pull all relevent bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
                 .map(bundle -> { // check that the channel is open or close the whole stream
-                    if (isRegistered(event.eid) && isActive(event.eid)) {
+                    if (!isRegistered(event.eid) || !isActive(event.eid)) {
                         throw new IOException("registration is down");
                     }
                     return bundle;
@@ -377,10 +385,13 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
                                 + " : delivery failed for bundle "
                                 + bundle.bid + " dest="
                                 + bundle.getDestination().toString()))
-                        .doOnComplete(() -> core.getLogger().w(TAG, event.eid
-                                + " : bundle successfully delivered "
-                                + bundle.bid + " dest="
-                                + bundle.getDestination().toString()))
+                        .doOnComplete(() -> {
+                            core.getLogger().w(TAG, event.eid
+                                    + " : bundle successfully delivered "
+                                    + bundle.bid + " dest="
+                                    + bundle.getDestination().toString());
+                            core.getBundleProtocol().bundleLocalDeliverySuccessful(bundle);
+                        })
                         .onErrorComplete()) // do not close the stream if this one failed
                 .onErrorComplete() // do not throw exception
                 .subscribeOn(Schedulers.computation()) // do not block the caller's thread

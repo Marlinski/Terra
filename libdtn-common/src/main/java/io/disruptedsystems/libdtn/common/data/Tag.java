@@ -2,6 +2,8 @@ package io.disruptedsystems.libdtn.common.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Tag class implements the Taggable interface.
@@ -15,6 +17,15 @@ public abstract class Tag implements Taggable {
     @Override
     public void tag(String tag) {
         tag(tag, null);
+    }
+
+    @Override
+    public Set<String> getAllTags() {
+        return attachement.entrySet()
+                .stream()
+                .filter(e -> e.getValue()==null)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -36,5 +47,4 @@ public abstract class Tag implements Taggable {
     public <T> T getTagAttachment(String key) {
         return (T) attachement.get(key);
     }
-
 }

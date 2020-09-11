@@ -2,6 +2,8 @@ package io.disruptedsystems.libdtn.core.storage.simple;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.MetaBundle;
@@ -73,6 +75,7 @@ class FileStorageUtils {
 
         Log logger;
         BundleInfo info = new BundleInfo();
+        Collection<CBOR.TextStringItem> tags;
         MetaBundle meta;
 
         MetaBundleFileItem(Log logger) {
@@ -83,6 +86,13 @@ class FileStorageUtils {
         public CborParser getItemParser() {
             return CBOR.parser()
                     .cbor_open_array(2)
+                    .cbor_open_array(2)
+                    .cbor_parse_linear_array(
+                            CBOR.TextStringItem::new,
+                            (__, ___, col) -> {
+                                logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
+                                tags = col;
+                            })
                     .cbor_parse_text_string_full((p, str) -> {
                         logger.v(TAG, ".. blobPath=" + str);
                         info.blobPath = str;
@@ -93,6 +103,9 @@ class FileStorageUtils {
                             () -> new PrimaryBlockItem(logger),
                             (p, t, item) -> {
                                 meta = new MetaBundle(item.bundle);
+                                for (CBOR.TextStringItem tag : tags) {
+                                    meta.tag(tag.value());
+                                }
                             });
         }
     }
@@ -111,12 +124,20 @@ class FileStorageUtils {
         }
 
         BundleInfo info = new BundleInfo();
+        Collection<CBOR.TextStringItem> tags;
         Bundle bundle;
 
         @Override
         public CborParser getItemParser() {
             return CBOR.parser()
                     .cbor_open_array(2)
+                    .cbor_open_array(2)
+                    .cbor_parse_linear_array(
+                            CBOR.TextStringItem::new,
+                            (__, ___, col) -> {
+                                logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
+                                tags = col;
+                            })
                     .cbor_parse_text_string_full((p, str) -> {
                         logger.v(TAG, ".. blobPath=" + str);
                         info.blobPath = str;
@@ -133,6 +154,9 @@ class FileStorageUtils {
                                 }
                                 item.bundle.tag("in_storage");
                                 bundle = item.bundle;
+                                for (CBOR.TextStringItem tag : tags) {
+                                    bundle.tag(tag.value());
+                                }
                             });
         }
     }
@@ -152,9 +176,16 @@ class FileStorageUtils {
     public static CborEncoder bundleFileEncoder(Bundle bundle,
                                                 String blobPath,
                                                 BlockDataSerializerFactory factory) {
-        return CBOR.encoder()
-                .cbor_start_array(2)  /* File = {blobpath , bundle} */
-                .cbor_encode_text_string(blobPath) /*  blob path */
-                .merge(BundleV7Serializer.encode(bundle, factory)); /* bundle */
+        Set<String> tags = bundle.getAllTags();
+        try {
+            return CBOR.encoder()
+                    .cbor_start_array(2)  /* File = {header , bundle} */
+                    .cbor_start_array(2)  /* header = {tags, blob path} */
+                    .cbor_encode_collection(tags)      /* tags */
+                    .cbor_encode_text_string(blobPath) /*  blob path */
+                    .merge(BundleV7Serializer.encode(bundle, factory)); /* bundle */
+        } catch (CBOR.CborEncodingUnknown e) {
+            throw new IllegalArgumentException();
+        }
     }
 }

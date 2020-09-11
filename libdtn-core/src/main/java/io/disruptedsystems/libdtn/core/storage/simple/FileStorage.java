@@ -192,9 +192,6 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                                     index.put(meta.bid, meta, new FileStorageUtils.BundleInfo(
                                             ctx.fbundle.getAbsolutePath(),
                                             ctx.blob.getFilePath()));
-
-                                    RxBus.post(new BundleIndexed(meta));
-                                    bundle.tag("in_storage");
                                 }),
                         b -> lock.writeLock().unlock()).ignoreElements());
     }

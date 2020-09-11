@@ -16,6 +16,7 @@ import io.disruptedsystems.libdtn.core.api.RoutingEngineApi;
 import io.disruptedsystems.libdtn.core.api.RoutingTableApi;
 import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.disruptedsystems.libdtn.core.events.BundleIndexed;
+import io.disruptedsystems.libdtn.core.events.DtnEvent;
 import io.disruptedsystems.libdtn.core.extension.ExtensionManager;
 import io.disruptedsystems.libdtn.core.network.ClaManager;
 import io.disruptedsystems.libdtn.core.processor.BundleProtocol;
@@ -175,8 +176,8 @@ public class DtnCore implements CoreApi {
         return routingTable;
     }
 
-    @Subscribe(thread = RxThread.IO)
-    public void onEvent(BundleIndexed event) {
-        bundleProcessor.bundleDispatching(event.bundle);
+    @Subscribe
+    public void onEvent(DtnEvent event) {
+        // do nothing
     }
 }

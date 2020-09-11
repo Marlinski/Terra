@@ -1,5 +1,7 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
+import org.apache.commons.collections4.trie.PatriciaTrie;
+
 import java.io.File;
 import java.util.Set;
 
@@ -69,7 +71,7 @@ public abstract class SimpleStorage<T> extends CoreComponent implements StorageA
 
     @Override
     protected void componentDown() {
-        if(index != null) {
+        if (index != null) {
             index.teardown();
         }
     }
@@ -104,8 +106,22 @@ public abstract class SimpleStorage<T> extends CoreComponent implements StorageA
     }
 
     @Override
-    public Observable<String> findBundlesForDestination(String destination) {
-        return Observable.fromStream(index.destinationTrie.get(destination).stream())
+    public Observable<String> findBundlesToForward(String destination) {
+        return findBundlesFromTrie(index.forwardingTrie, destination);
+    }
+
+    @Override
+    public Observable<String> findBundlesToDeliver(String destination) {
+        return findBundlesFromTrie(index.deliveryTrie, destination);
+    }
+
+    private Observable<String> findBundlesFromTrie(PatriciaTrie<Set<StorageIndex.IndexEntry<T>>> trie,
+                                                   String destination) {
+        Set<StorageIndex.IndexEntry<T>> set = trie.get(destination);
+        if (set == null) {
+            return Observable.empty();
+        }
+        return Observable.fromStream(set.stream())
                 .map(entry -> entry.bundle.bid);
     }
 

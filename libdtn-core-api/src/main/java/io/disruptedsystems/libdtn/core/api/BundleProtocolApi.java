@@ -9,6 +9,10 @@ import io.disruptedsystems.libdtn.common.data.Bundle;
  */
 public interface BundleProtocolApi {
 
+    String TAG_DISPATCH_PENDING = "dispatch_pending";
+    String TAG_DELIVERY_PENDING = "delivery_pending";
+    String TAG_FORWARD_PENDING = "forward_pending";
+
     /**
      * Process a bundle for transmission.
      *

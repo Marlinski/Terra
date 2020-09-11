@@ -68,7 +68,7 @@ public class BundleProtocol implements BundleProtocolApi {
                 && (core.getLocalEidTable().isEidNodeId(bundle.getSource()) != null)) {
             bundle.setSource(core.getLocalEidTable().nodeId());
         }
-        bundle.tag("dispatch_pending");
+        bundle.tag(TAG_DISPATCH_PENDING);
 
         /* 5.2 - step 2 */
         core.getLogger().v(TAG, "5.2-2 " + bundle.bid.toString());
@@ -82,7 +82,7 @@ public class BundleProtocol implements BundleProtocolApi {
                 + " to Eid: " + bundle.getDestination());
 
         /* 5.3 - step 1 */
-        core.getLogger().v(TAG, "5.3-1: " + bundle.bid.toString());
+        core.getLogger().v(TAG, "5.3-1: " + bundle.bid);
         LocalEidApi.LookUpResult isLocal = core.getLocalEidTable().isEidLocal(bundle.getDestination());
         if (isLocal != LocalEidApi.LookUpResult.eidIsNotLocal) {
             bundleLocalDelivery(isLocal, bundle);
@@ -104,8 +104,8 @@ public class BundleProtocol implements BundleProtocolApi {
         core.getLogger().d(TAG, "forwarding bundle: " + bundle.bid.toString());
 
         /* 5.4 - step 1 */
-        bundle.removeTag("dispatch_pending");
-        bundle.tag("forward_pending");
+        bundle.removeTag(TAG_DISPATCH_PENDING);
+        bundle.tag(TAG_FORWARD_PENDING);
 
         /* 5.4 - step 2 */
         core.getRoutingEngine().route(bundle).subscribe(
@@ -130,7 +130,7 @@ public class BundleProtocol implements BundleProtocolApi {
     @Override
     public void bundleForwardingSuccessful(Bundle bundle) {
         core.getLogger().d(TAG, "forwarding successful: " + bundle.bid.toString());
-        bundle.removeTag("forward_pending");
+        bundle.removeTag(TAG_FORWARD_PENDING);
         createStatusReport(ReportingNodeForwardedBundle, bundle, NoAdditionalInformation);
         bundleDiscarding(bundle);
     }
@@ -144,7 +144,7 @@ public class BundleProtocol implements BundleProtocolApi {
         /* 5.4.2 - step 2 */
         core.getLogger().v(TAG, "5.4.2-2 " + bundle.bid.toString());
         if (core.getLocalEidTable().isEidLocal(bundle.getDestination()) != null) {
-            bundle.removeTag("forward_pending");
+            bundle.removeTag(TAG_FORWARD_PENDING);
             bundleDiscarding(bundle);
         } else {
             bundleDeletion(bundle);
@@ -165,7 +165,7 @@ public class BundleProtocol implements BundleProtocolApi {
     public void bundleReception(Bundle bundle) {
         /* 5.6 - step 1 */
         core.getLogger().v(TAG, "5.6-1 " + bundle.bid.toString());
-        bundle.tag("dispatch_pending");
+        bundle.tag(TAG_DISPATCH_PENDING);
 
         /* 5.6 - step 2 */
         core.getLogger().v(TAG, "5.6-2 " + bundle.bid.toString());
@@ -208,13 +208,13 @@ public class BundleProtocol implements BundleProtocolApi {
 
     /* 5.7 */
     private void bundleLocalDelivery(LocalEidApi.LookUpResult localMatch, Bundle bundle) {
-        bundle.tag("delivery_pending");
+        bundle.tag(TAG_DELIVERY_PENDING);
         /* 5.7 - step 1 */
-        core.getLogger().v(TAG, "5.7-1 " + bundle.bid.toString());
+        core.getLogger().v(TAG, "5.7-1 " + bundle.bid);
         // todo: support fragmentation
 
         /* 5.7 - step 2 */
-        core.getLogger().v(TAG, "5.7-2 " + bundle.bid.toString());
+        core.getLogger().v(TAG, "5.7-2 " + bundle.bid);
         core.getDelivery().deliver(localMatch, bundle).subscribe(
                 () -> bundleLocalDeliverySuccessful(bundle),
                 deliveryFailure -> bundleLocalDeliveryFailure(bundle, deliveryFailure));
@@ -224,8 +224,8 @@ public class BundleProtocol implements BundleProtocolApi {
     /* 5.7 - step 3 */
     @Override
     public void bundleLocalDeliverySuccessful(Bundle bundle) {
-        core.getLogger().i(TAG, "bundle successfully delivered: " + bundle.bid.toString());
-        bundle.removeTag("delivery_pending");
+        core.getLogger().i(TAG, "bundle successfully delivered: " + bundle.bid);
+        bundle.removeTag(TAG_DELIVERY_PENDING);
         if (bundle.getV7Flag(DELIVERY_REPORT) && reporting()) {
             createStatusReport(ReportingNodeDeliveredBundle, bundle, NoAdditionalInformation);
         }
@@ -275,16 +275,16 @@ public class BundleProtocol implements BundleProtocolApi {
                 + bundle.bid.toString());
 
         /* 5.10 - step 1 */
-        core.getLogger().v(TAG, "5.10-2 " + bundle.bid.toString());
+        core.getLogger().v(TAG, "5.10-2 " + bundle.bid);
         if (bundle.getV7Flag(DELETION_REPORT) && reporting()) {
             createStatusReport(ReportingNodeDeletedBundle, bundle, NoAdditionalInformation);
         }
 
         /* 5.10 - step 2 */
-        core.getLogger().v(TAG, "5.10-2 " + bundle.bid.toString());
-        bundle.removeTag("dispatch_pending");
-        bundle.removeTag("forward_pending");
-        bundle.removeTag("delivery_pending");
+        core.getLogger().v(TAG, "5.10-2 " + bundle.bid);
+        bundle.removeTag(TAG_DISPATCH_PENDING);
+        bundle.removeTag(TAG_FORWARD_PENDING);
+        bundle.removeTag(TAG_DELIVERY_PENDING);
         bundleDiscarding(bundle);
     }
 

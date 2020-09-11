@@ -113,7 +113,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
         core.getLogger().v(TAG, "pull all relevant bundles for cla: " + event.channel.channelEid());
         core.getRoutingTable()
                 .reverseCla(event.channel.channelEid()) // find all destination enabled by this channel
-                .flatMap(destination -> core.getStorage().findBundlesForDestination(destination.toString())) // pull all relevent bundles
+                .flatMap(destination -> core.getStorage().findBundlesToForward(destination.toString())) // pull all relevent bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
                 .map(bundle -> { // check that the channel is open or close the whole stream
                     if (event.channel.isOpen()) {
