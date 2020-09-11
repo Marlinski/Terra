@@ -29,11 +29,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     private Set<TableEntry> staticRoutingTable;
     private Set<TableEntry> routingTable;
 
-    /**
-     * Constructor.
-     *
-     * @param core reference to the core
-     */
+
     public RoutingTable(CoreApi core) {
         this.core = core;
         staticRoutingTable = new HashSet<>();
@@ -53,8 +49,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         core.getConf().<Map<URI, URI>>get(ConfigurationApi.CoreEntry.STATIC_ROUTE_CONFIGURATION).observe().subscribe(
                 m -> {
                     staticRoutingTable.clear();
-                    m.forEach((to, from) -> staticRoutingTable.add(
-                            new RoutingTableApi.TableEntry(to, from)));
+                    m.forEach((to, from) -> staticRoutingTable.add(new RoutingTableApi.TableEntry(to, from)));
                 });
     }
 
@@ -67,40 +62,51 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         if (!isEnabled()) {
             return Observable.error(new ComponentIsDownException(getComponentName()));
         }
-        return resolveEid(destination, Observable.empty());
+
+        return resolveEid(destination, Observable.just(destination));
     }
 
     private Observable<URI> resolveEid(URI destination, Observable<URI> path) {
         return Observable.concat(
-                lookupPotentialNextHops(destination) // we add all next hops that are cla-eid
+                lookupPotentialNextHops(destination) // we add all next hops cla-eid
                         .filter(Cla::isClaEid),
-                lookupPotentialNextHops(destination) // otherwise we try to resolve them to cla-eids
+                lookupPotentialNextHops(destination) // and we recurse for the non cla-eid
                         .filter(eid -> !(Cla.isClaEid(eid)))
-                        .flatMap(candidate -> path.contains(candidate).flatMapObservable((b) -> {
-                            if (!b) {
-                                return resolveEid(candidate,
-                                        path.concatWith(Observable.just(candidate)));
-                            } else {
-                                return Observable.empty();
-                            }
-                        })));
+                        .filter(candidate -> !path.contains(candidate).blockingGet())
+                        .flatMap(candidate -> resolveEid(candidate, path.concatWith(Observable.just(candidate)))))
+                .distinct();
     }
 
     private Observable<URI> lookupPotentialNextHops(URI destination) {
-        return Observable.concat(
-                Observable.just(destination).filter(Cla::isClaEid),
-                compoundTableObservable()
-                        .filter(entry -> (entry.to == destination)) // todo || entry.to.isAuthoritative(destination))
+        return Observable.just(destination)
+                .concatWith(Observable.fromIterable(dumpTable())
+                        .filter(entry -> (entry.to.equals(destination))) // todo || regexp
                         .map(entry -> entry.next));
     }
 
-    private Observable<TableEntry> compoundTableObservable() {
-        if (staticIsEnabled) {
-            return Observable.fromIterable(staticRoutingTable)
-                    .concatWith(Observable.fromIterable(routingTable));
-        } else {
-            return Observable.fromIterable(routingTable);
+    @Override
+    public Observable<URI> reverseCla(URI claEid) {
+        if (!isEnabled()) {
+            return Observable.error(new ComponentIsDownException(getComponentName()));
         }
+
+        return reverseCla(claEid, Observable.just(claEid));
+    }
+
+    private Observable<URI> reverseCla(URI destination, Observable<URI> path) {
+        return Observable.concat(
+                lookupPotentialMatchesToward(destination), // we add every matches
+                lookupPotentialMatchesToward(destination)  // and we recurse on them
+                        .filter(candidate -> !path.contains(candidate).blockingGet())
+                        .flatMap(candidate -> reverseCla(candidate, path.concatWith(Observable.just(candidate)))))
+                .distinct();
+    }
+
+    private Observable<URI> lookupPotentialMatchesToward(URI destination) {
+        return Observable.just(destination)
+                .concatWith(Observable.fromIterable(dumpTable())
+                        .filter(entry -> (entry.next.equals(destination))) // todo || regexp
+                        .map(entry -> entry.to));
     }
 
 
@@ -121,9 +127,10 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
             return new HashSet<>();
         }
 
-        Set<TableEntry> ret = new HashSet<>();
-        ret.addAll(staticRoutingTable);
-        ret.addAll(routingTable);
+        Set<TableEntry> ret = new HashSet<>(routingTable);
+        if (staticIsEnabled) {
+            ret.addAll(staticRoutingTable);
+        }
         return Collections.unmodifiableSet(ret);
     }
 }

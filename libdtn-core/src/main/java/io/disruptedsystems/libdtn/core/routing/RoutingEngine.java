@@ -7,6 +7,7 @@ import io.disruptedsystems.libdtn.core.api.RoutingStrategyApi;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.RoutingBlock;
+import io.disruptedsystems.libdtn.core.routing.strategies.direct.DirectRoutingStrategy;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.HashMap;
@@ -40,11 +41,10 @@ public class RoutingEngine implements RoutingEngineApi {
      * Constructor.
      *
      * @param core           reference to the core
-     * @param directStrategy reference to the direct routing strategy
      */
-    public RoutingEngine(CoreApi core, DirectRoutingStrategyApi directStrategy) {
+    public RoutingEngine(CoreApi core) {
         this.core = core;
-        this.directStrategy = directStrategy;
+        this.directStrategy = new DirectRoutingStrategy(this.core);
         this.additionalStrategies = new HashMap<>();
     }
 

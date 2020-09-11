@@ -9,7 +9,11 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorF
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingException;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
+import io.disruptedsystems.libdtn.core.events.LinkLocalEntryUp;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
+import io.marlinski.librxbus.RxBus;
+import io.marlinski.librxbus.RxThread;
+import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -26,11 +30,10 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     public static final int MAIN_ROUTING_STRATEGY_ID = 1;
 
     private CoreApi core;
-    private DirectRoutingListener directListener;
 
     public DirectRoutingStrategy(CoreApi core) {
         this.core = core;
-        this.directListener = new DirectRoutingListener(core);
+        RxBus.register(this);
     }
 
     @Override
@@ -46,20 +49,13 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     @Override
     public Single<RoutingStrategyResult> route(Bundle bundle) {
         return findOpenedChannelTowards(bundle.getDestination())
-                .concatMapMaybe(
-                        claChannel ->
-                                claChannel.sendBundle(
-                                        bundle,
-                                        core.getExtensionManager().getBlockDataSerializerFactory())
-                                        .doOnSubscribe(
-                                                (disposable) ->
-                                                        prepareBundleForTransmission(
-                                                                bundle,
-                                                                claChannel))
-                                        .lastElement()
-                                        .onErrorComplete())
+                .concatMapMaybe(claChannel -> claChannel
+                        .sendBundle(bundle, core.getExtensionManager().getBlockDataSerializerFactory())
+                        .doOnSubscribe(disposable -> prepareBundleForTransmission(bundle, claChannel))
+                        .lastElement() // total bytes sent
+                        .onErrorComplete())
                 .map(byteSent -> RoutingStrategyResult.Forwarded)
-                .firstElement()
+                .firstElement() // stop when one of the cla channel worked
                 .toSingle()
                 .onErrorReturnItem(RoutingStrategyResult.CustodyRefused);
     }
@@ -97,31 +93,23 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     @Override
     public Single<RoutingStrategyResult> forwardLater(final Bundle bundle) {
+        core.getLogger().v(TAG, "forward later: " + bundle.bid);
         if (!bundle.isTagged("in_storage")) {
             return core.getStorage()
                     .store(bundle)
-                    .andThen(routeLaterFromStorage(bundle));
+                    .andThen(Single.just(RoutingStrategyResult.CustodyAccepted));
         } else {
-            return routeLaterFromStorage(bundle);
+            return Single.just(RoutingStrategyResult.CustodyAccepted);
         }
     }
 
-    private Single<RoutingStrategyResult> routeLaterFromStorage(Bundle bundle) {
-        final URI destination = bundle.getDestination();
+    @Subscribe
+    public void onEvent(LinkLocalEntryUp event) {
+        core.getLogger().v(TAG, "pull all relevant bundles for cla: " + event.channel.channelEid());
+        
+    }
 
-        Observable<URI> potentialClas = core.getRoutingTable().resolveEid(destination);
-        core.getLogger().v(TAG, "forward later: "
-                + bundle.bid + " -> "
-                + potentialClas.map(URI::toString).reduce((str, eid) -> str + "," + eid).blockingGet());
-
-        /* register a listener that will listen for LinkLocalEntryUp event
-         * and pull the bundle from storage if there is a match */
-
-        // watch bundle for all potential cla-eid
-        potentialClas
-                .map(claeid -> directListener.watchBundle(claeid, bundle))
-                .subscribe();
-
+    /*
         // then try to force an opportunity
         potentialClas
                 .distinct()
@@ -132,16 +120,12 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
                 .firstElement()
                 .subscribe(
                         (channel) -> {
-                            /* ignore - directListener will take care of forwarding it*/
                         },
                         e -> {
-                            /* ignore */
                         },
                         () -> {
-                            /* ignore */
                         });
-
         return Single.just(RoutingStrategyResult.CustodyAccepted);
-    }
+    */
 
 }

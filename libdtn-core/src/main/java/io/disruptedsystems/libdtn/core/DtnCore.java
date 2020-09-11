@@ -55,8 +55,6 @@ public class DtnCore implements CoreApi {
     private ExtensionManagerApi extensionManager;
     private LinkLocalTableApi linkLocalRouting;
     private RoutingTableApi routingTable;
-    private DirectRoutingStrategyApi directRouting;
-    private EventListenerApi directListener;
     private RoutingEngineApi routingEngine;
     private Registrar registrar;
     private StorageApi storage;
@@ -79,11 +77,13 @@ public class DtnCore implements CoreApi {
         /* BP block toolbox */
         this.extensionManager = new ExtensionManager(logger);
 
+        /* storage */
+        this.storage = SimpleStorage.create(this);
+
         /* routing */
         this.linkLocalRouting = new LinkLocalTable(this);
         this.routingTable = new RoutingTable(this);
-        this.directRouting = new DirectRoutingStrategy(this);
-        this.routingEngine = new RoutingEngine(this, directRouting);
+        this.routingEngine = new RoutingEngine(this);
         this.registrar = new Registrar(this);
 
         /* bundle processor */
@@ -91,9 +91,6 @@ public class DtnCore implements CoreApi {
 
         /* network cla */
         this.claManager = new ClaManager(this);
-
-        /* storage */
-        this.storage = SimpleStorage.create(this);
 
         /* runtime modules */
         this.moduleLoader = new ModuleLoader(this);

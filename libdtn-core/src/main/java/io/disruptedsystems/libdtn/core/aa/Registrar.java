@@ -53,7 +53,6 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     private CoreApi core;
     private Map<URI, Registration> registrations;
-    private DeliveryListener listener;
 
     /**
      * Constructor.
@@ -63,7 +62,6 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     public Registrar(CoreApi core) {
         this.core = core;
         registrations = new ConcurrentHashMap<>();
-        listener = new DeliveryListener(core);
     }
 
     @Override
@@ -341,9 +339,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     public void deliverLater(Bundle bundle) {
-        listener.watch(bundle);
+        // todo
     }
-
 
     /* passive registration */
     private static ActiveRegistrationCallback passiveRegistration
