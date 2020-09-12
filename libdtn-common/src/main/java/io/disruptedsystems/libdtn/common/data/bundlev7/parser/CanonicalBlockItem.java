@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
  */
 public class CanonicalBlockItem implements CborParser.ParseableItem {
 
+    public static final String TAG_CANONICAL_BLOCK_CRC_CHECK = "crc_check";
+
     /**
      * A BundleItem requires a toolbox to be able to parse extension {@link Block} and
      * extension eid. It also need a BlobFactory to create a new Blob to hold the payload.
@@ -122,7 +124,7 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
                 .do_here(p -> p.insert_now(closeCrc))  // validate closeCrc
                 .do_here(p -> {
                     logger.v(BundleV7Item.TAG, ". crc_check=" + crcOk);
-                    block.tag("crc_check", crcOk);
+                    block.tag(TAG_CANONICAL_BLOCK_CRC_CHECK, crcOk);
                 }); // tag the block
     }
 

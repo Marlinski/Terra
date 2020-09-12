@@ -8,9 +8,9 @@ package io.disruptedsystems.libdtn.common.data;
  *
  * @author Lucien Loiseau on 03/09/18.
  */
-public class ScopeControlHopLimitBlock extends ExtensionBlock {
+public class HopCountBlock extends ExtensionBlock {
 
-    public static final int SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE = 9;
+    public static final int HOP_COUNT_BLOCK_TYPE = 10;
 
     public long count;
     public long limit;
@@ -18,13 +18,12 @@ public class ScopeControlHopLimitBlock extends ExtensionBlock {
     /**
      * Constructor.
      */
-    public ScopeControlHopLimitBlock() {
-        super(SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE);
+    public HopCountBlock() {
+        super(HOP_COUNT_BLOCK_TYPE);
         setV7Flag(BlockV7Flags.REPLICATE_IN_EVERY_FRAGMENT, true);
         count = 0;
         limit = 0;
     }
-
 
     public long getHopsToLive() {
         return (limit < count) ? 0 : limit - count;

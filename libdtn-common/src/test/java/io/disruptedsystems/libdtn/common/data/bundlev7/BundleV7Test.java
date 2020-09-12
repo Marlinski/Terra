@@ -19,7 +19,7 @@ import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
@@ -81,7 +81,7 @@ public class BundleV7Test {
     public static Bundle testBundle3() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         return bundle;
     }
 
@@ -93,7 +93,7 @@ public class BundleV7Test {
     public static Bundle testBundle4() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         return bundle;
     }
@@ -106,7 +106,7 @@ public class BundleV7Test {
     public static Bundle testBundle5() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         bundle.setCrcType(PrimaryBlock.CrcFieldType.CRC_32);
         return bundle;
@@ -124,7 +124,7 @@ public class BundleV7Test {
         CanonicalBlock age = new AgeBlock();
         age.crcType = BlockHeader.CrcFieldType.CRC_16;
 
-        CanonicalBlock scope = new ScopeControlHopLimitBlock();
+        CanonicalBlock scope = new HopCountBlock();
         scope.crcType = BlockHeader.CrcFieldType.CRC_16;
 
         CanonicalBlock payload = new PayloadBlock(testPayload);

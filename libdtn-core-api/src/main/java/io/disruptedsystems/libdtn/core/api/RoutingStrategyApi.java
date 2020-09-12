@@ -9,6 +9,18 @@ import io.reactivex.rxjava3.core.Single;
  * @author Lucien Loiseau on 19/01/19.
  */
 public interface RoutingStrategyApi {
+    
+    class RoutingFailure extends Exception {
+        public enum Reason {
+            NoAlternateStrategyFound,
+        }
+
+        public Reason reason;
+
+        public RoutingFailure(Reason reason) {
+            this.reason = reason;
+        }
+    }
 
     enum RoutingStrategyResult {
         Forwarded,

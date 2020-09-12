@@ -117,8 +117,8 @@ public class RequestMessage {
                     req.path = path;
                 })
                 .cbor_parse_linear_map(
-                        CBOR.TextStringItem::new,
-                        CBOR.TextStringItem::new,
+                        (pos) -> new CBOR.TextStringItem(),
+                        (pos) -> new CBOR.TextStringItem(),
                         (p, ___, map) -> {
                             RequestMessage req = p.getReg(0);
                             for (CBOR.TextStringItem str : map.keySet()) {

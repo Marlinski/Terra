@@ -88,7 +88,7 @@ class FileStorageUtils {
                     .cbor_open_array(2)
                     .cbor_open_array(2)
                     .cbor_parse_linear_array(
-                            CBOR.TextStringItem::new,
+                            (pos) -> new CBOR.TextStringItem(),
                             (__, ___, col) -> {
                                 logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
                                 tags = col;
@@ -133,7 +133,7 @@ class FileStorageUtils {
                     .cbor_open_array(2)
                     .cbor_open_array(2)
                     .cbor_parse_linear_array(
-                            CBOR.TextStringItem::new,
+                            (pos) -> new CBOR.TextStringItem(),
                             (__, ___, col) -> {
                                 logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
                                 tags = col;

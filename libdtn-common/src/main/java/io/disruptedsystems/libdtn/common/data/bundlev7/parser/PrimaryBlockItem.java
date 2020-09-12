@@ -19,6 +19,8 @@ import java.nio.ByteBuffer;
  */
 public class PrimaryBlockItem implements CborParser.ParseableItem {
 
+    public static final String TAG_PRIMARY_BLOCK_CRC_CHECK = "crc_check";
+
     public PrimaryBlockItem(Log logger) {
         this.logger = logger;
     }
@@ -109,7 +111,7 @@ public class PrimaryBlockItem implements CborParser.ParseableItem {
                 .do_here(p -> p.insert_now(closeCrc)) // validate closeCrc
                 .do_here(p -> {
                     logger.v(TAG, ". crc_check=" + crcOk);
-                    bundle.tag("crc_check", crcOk);
+                    bundle.tag(TAG_PRIMARY_BLOCK_CRC_CHECK, crcOk);
                 }); // tag the block
     }
 

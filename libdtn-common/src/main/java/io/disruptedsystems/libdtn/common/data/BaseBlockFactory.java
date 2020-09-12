@@ -25,8 +25,8 @@ public class BaseBlockFactory implements BlockFactory {
                 return new PreviousNodeBlock();
             case AgeBlock.AGE_BLOCK_TYPE:
                 return new AgeBlock();
-            case ScopeControlHopLimitBlock.SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE:
-                return new ScopeControlHopLimitBlock();
+            case HopCountBlock.HOP_COUNT_BLOCK_TYPE:
+                return new HopCountBlock();
             case BlockAuthenticationBlock.BLOCK_AUTHENTICATION_BLOCK_TYPE:
                 return new BlockAuthenticationBlock();
             case BlockIntegrityBlock.BLOCK_INTEGRITY_BLOCK_TYPE:

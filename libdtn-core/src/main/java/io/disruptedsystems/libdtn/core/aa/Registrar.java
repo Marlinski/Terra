@@ -125,18 +125,16 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     }
 
     private void replaceApiMe(Bundle bundle) {
-        if (Api.isApiEid(bundle.getSource())) {
-            bundle.setSource(Api
-                    .swapApiMeUnsafe(bundle.getSource(), core.getLocalEidTable().nodeId()));
+        bundle.setSource(replaceApiMe(bundle.getSource()));
+        bundle.setReportTo(replaceApiMe(bundle.getReportTo()));
+        bundle.setDestination(replaceApiMe(bundle.getDestination()));
+    }
+
+    private URI replaceApiMe(URI eid) {
+        if (Api.isApiEid(eid)) {
+            return Api.swapApiMeUnsafe(eid, core.getLocalEidTable().nodeId());
         }
-        if (Api.isApiEid(bundle.getReportTo())) {
-            bundle.setReportTo(Api
-                    .swapApiMeUnsafe(bundle.getReportTo(), core.getLocalEidTable().nodeId()));
-        }
-        if (Api.isApiEid(bundle.getDestination())) {
-            bundle.setDestination(Api
-                    .swapApiMeUnsafe(bundle.getDestination(), core.getLocalEidTable().nodeId()));
-        }
+        return eid;
     }
 
     /* ------  RegistrarApi  is the contract facing ApplicationAgentAdapter ------- */
@@ -145,6 +143,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     public boolean isRegistered(URI eid) throws RegistrarDisabled, InvalidEid, NullArgument {
         checkEnable();
         checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         return registrations.containsKey(eid);
     }
 
@@ -160,6 +159,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         checkEnable();
         checkArgumentNotNull(eid);
         checkArgumentNotNull(cb);
+        eid = replaceApiMe(eid);
 
         Registration registration = new Registration(eid, cb);
         if (registrations.putIfAbsent(Eid.getEndpoint(eid), registration) == null) {
@@ -176,6 +176,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean unregister(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, BadCookie, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
 
         if (registrations.remove(eid) == null) {
@@ -198,6 +200,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean send(URI eid, String cookie, Bundle bundle)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument, BundleMalformed {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundle);
         replaceApiMe(bundle);
@@ -208,6 +212,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public Set<String> checkInbox(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
         // todo: call storage service
         return null;
@@ -216,6 +222,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public Bundle get(URI eid, String cookie, String bundleId)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundleId);
         // todo: call storage service
@@ -225,6 +233,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public Bundle fetch(URI eid, String cookie, String bundleId)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
         checkArgumentNotNull(bundleId);
         // todo: call storage service
@@ -234,6 +244,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public Flowable<Bundle> fetch(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkRegisteredSink(eid, cookie);
         // todo: call storage service
         return null;
@@ -242,6 +254,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean isActive(URI eid) throws EidNotRegistered, NullArgument, RegistrarDisabled {
         checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         Registration registration = checkRegisteredSink(eid);
         return registration.isActive();
     }
@@ -249,6 +262,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean setActive(URI eid, String cookie, ActiveRegistrationCallback cb)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         checkArgumentNotNull(cb);
         Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = cb;
@@ -260,6 +275,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean setPassive(URI eid)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         Registration registration = checkRegisteredSink(eid);
         registration.cb = passiveRegistration;
         core.getLogger().i(TAG, "registration passive: " + eid);
@@ -269,10 +286,17 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Override
     public boolean setPassive(URI eid, String cookie)
             throws RegistrarDisabled, InvalidEid, BadCookie, EidNotRegistered, NullArgument {
+        checkArgumentNotNull(eid);
+        eid = replaceApiMe(eid);
         Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = passiveRegistration;
         core.getLogger().i(TAG, "registration passive: " + eid);
         return true;
+    }
+
+    @Override
+    public Set<URI> allRegistrations() {
+        return registrations.keySet();
     }
 
     /**
@@ -309,33 +333,13 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
             return Completable.error(new DeliveryFailure(DeliveryDisabled));
         }
 
-        // first we check if there's an AA that registered to the bundle destination EID.
+        // first we check if there's an AA that is registered to the bundle destination EID.
         Registration reg = registrations.get(Eid.getEndpoint(bundle.getDestination()));
         if (reg != null) {
             return deliverToRegistration(reg, bundle);
         }
 
-        // if the device was detected to be registration local, then the AA must
-        // have been unregistered by then (should be very rare).
-        if (localMatch == LocalEidApi.LookUpResult.eidMatchAARegistration) {
-            return Completable.error(new DeliveryFailure(UnregisteredEid));
-        }
-
-        // if the eid is not a dtn we cannot do anything at this point
-        if (!Dtn.isDtnEid(bundle.getDestination())) {
-            return Completable.error(new DeliveryFailure(UnregisteredEid));
-        }
-
-        // some registration may have used the api:me authority so we try to
-        // use it and see if it matches
-        URI newEid = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me());
-        reg = registrations.get(Eid.getEndpoint(newEid));
-        if (reg != null) {
-            return deliverToRegistration(reg, bundle);
-        }
-
         // todo should we do prefix matching ?
-
         // we couldn't find a registration
         return Completable.error(new DeliveryFailure(UnregisteredEid));
     }
@@ -364,13 +368,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
     @Subscribe
     public void onEvent(RegistrationActive event) {
         core.getLogger().v(TAG, event.eid + " : pull all relevant bundles for registration ");
-        Single.just(event.eid)
-                .flatMapObservable(eid -> {
-                    if (Dtn.isDtnEid(eid) && !Api.isApiEid(eid)) {
-                        return Observable.just(eid, Api.swapApiMeUnsafe(eid, Api.me()));
-                    }
-                    return Observable.just(eid);
-                })
+        Observable.just(event.eid)
                 .flatMap(eid -> core.getStorage().findBundlesToDeliver(eid.toString())) // pull all relevent bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
                 .map(bundle -> { // check that the channel is open or close the whole stream

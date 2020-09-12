@@ -116,8 +116,8 @@ public class ResponseMessage {
                     p.setReg(0, message);
                 })
                 .cbor_parse_linear_map(
-                        CBOR.TextStringItem::new,
-                        CBOR.TextStringItem::new,
+                        (pos) -> new CBOR.TextStringItem(),
+                        (pos) -> new CBOR.TextStringItem(),
                         (p, ___, map) -> {
                             ResponseMessage res = p.getReg(0);
                             for (CBOR.TextStringItem str : map.keySet()) {

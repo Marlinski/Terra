@@ -85,12 +85,6 @@ class StorageIndex<T> {
                 addToTrie(deliveryTrie, bundle.getDestination().toString(), entry);
             }
 
-            // if delivery is a dtn-eid, we add the api:me as well for easier matching
-            if(bundle.isTagged(TAG_DELIVERY_PENDING) && Dtn.isDtnEid(bundle.getDestination())) {
-                String apimepath = Api.swapApiMeUnsafe(bundle.getDestination(), Api.me()).toString();
-                addToTrie(deliveryTrie, apimepath, entry);
-            }
-
             bundle.tag("in_storage");
             RxBus.post(new BundleIndexed(bundle));
             return bundle;
@@ -140,12 +134,6 @@ class StorageIndex<T> {
             // remove entry from reverse index
             if(entry.bundle.isTagged(TAG_DELIVERY_PENDING)) {
                 removeFromTrie(deliveryTrie, destination.toString(), entry);
-            }
-
-            // if delivery is a dtn-eid, we remove the api:me
-            if(entry.bundle.isTagged(TAG_DELIVERY_PENDING) && Dtn.isDtnEid(destination)) {
-                String apimepath = Api.swapApiMeUnsafe(destination, Api.me()).toString();
-                removeFromTrie(deliveryTrie, apimepath.toString(), entry);
             }
         } finally {
             lock.writeLock().unlock();

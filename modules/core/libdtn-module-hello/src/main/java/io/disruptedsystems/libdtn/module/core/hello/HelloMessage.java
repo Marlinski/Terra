@@ -29,7 +29,7 @@ public class HelloMessage implements CborParser.ParseableItem {
     public CborParser getItemParser() {
         return CBOR.parser()
                 .cbor_parse_linear_array(
-                        () -> new EidItem(new NullLogger()),
+                        (pos) -> new EidItem(new NullLogger()),
                         (p, t, size) -> { },
                         (p, t, item) -> eids.add(item.eid),
                         (p, t, a) -> { });

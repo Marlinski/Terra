@@ -13,7 +13,7 @@ import io.disruptedsystems.libdtn.common.data.ManifestBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.RoutingBlock;
-import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 
 /**
  * BaseBlockDataSerializerFactory implements {@link BlockDataSerializerFactory} for all the
@@ -44,9 +44,9 @@ public class BaseBlockDataSerializerFactory implements BlockDataSerializerFactor
             case AgeBlock.AGE_BLOCK_TYPE:
                 return AgeBlockSerializer
                         .encode((AgeBlock) block);
-            case ScopeControlHopLimitBlock.SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE:
-                return ScopeControlHopLimitBlockSerializer
-                        .encode((ScopeControlHopLimitBlock) block);
+            case HopCountBlock.HOP_COUNT_BLOCK_TYPE:
+                return HopCountBlockSerializer
+                        .encode((HopCountBlock) block);
             case BlockConfidentialityBlock.BLOCK_CONFIDENTIALITY_BLOCK_TYPE:
             case BlockIntegrityBlock.BLOCK_INTEGRITY_BLOCK_TYPE:
             case BlockAuthenticationBlock.BLOCK_AUTHENTICATION_BLOCK_TYPE:

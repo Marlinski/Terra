@@ -57,7 +57,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
                         .onErrorComplete())
                 .map(byteSent -> RoutingStrategyResult.Forwarded)
                 .firstElement() // stop when one of the cla channel worked
-                .toSingle()
+                .toSingle() // throw exception if zero channel exists or could be used
                 .onErrorReturnItem(RoutingStrategyResult.CustodyRefused);
     }
 
@@ -65,7 +65,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
         return Observable.concat(
                 core.getLinkLocalTable().lookupCla(destination)
                         .toObservable(),
-                core.getRoutingTable().resolveEid(destination)
+                core.getRoutingTable().findClaForEid(destination)
                         .map(core.getLinkLocalTable()::lookupCla)
                         .flatMap(Maybe::toObservable))
                 .distinct();
@@ -73,7 +73,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     private void prepareBundleForTransmission(Bundle bundle, ClaChannelSpi claChannel) {
         core.getLogger().v(TAG, "5.4-4 "
-                + bundle.bid.toString() + " -> "
+                + bundle.bid + " -> "
                 + claChannel.channelEid().toString());
 
         /* call block-specific routine for transmission */
@@ -95,13 +95,25 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     @Override
     public Single<RoutingStrategyResult> forwardLater(final Bundle bundle) {
         core.getLogger().v(TAG, "forward later: " + bundle.bid);
+
+        Single<RoutingStrategyResult> store;
         if (!bundle.isTagged("in_storage")) {
-            return core.getStorage()
+            store = core.getStorage()
                     .store(bundle)
                     .andThen(Single.just(RoutingStrategyResult.CustodyAccepted));
         } else {
-            return Single.just(RoutingStrategyResult.CustodyAccepted);
+            store = Single.just(RoutingStrategyResult.CustodyAccepted);
         }
+
+        return store.doOnSuccess(__ -> // try to force an opportunity
+                core.getRoutingTable().findClaForEid(bundle.getDestination())
+                        .concatMapMaybe(claeid ->
+                                Maybe.fromSingle(core.getClaManager()
+                                        .createOpportunity(claeid))
+                                        .onErrorComplete())
+                        .firstElement()
+                        .onErrorComplete()
+                        .subscribe());
     }
 
     @Subscribe
@@ -112,10 +124,10 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
         core.getLogger().v(TAG, "pull all relevant bundles for cla: " + event.channel.channelEid());
         core.getRoutingTable()
-                .reverseCla(event.channel.channelEid()) // find all destination enabled by this channel
-                .flatMap(destination -> core.getStorage().findBundlesToForward(destination.toString())) // pull all relevent bundles
+                .findEidForCla(event.channel.channelEid()) // find all destination enabled by this channel
+                .flatMap(destination -> core.getStorage().findBundlesToForward(destination.toString())) // pull all relevant bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
-                .map(bundle -> { // check that the channel is open or close the whole stream
+                .map(bundle -> { // check that the channel is open otherwise close the whole stream
                     if (event.channel.isOpen()) {
                         throw new IOException("channel is closed");
                     }

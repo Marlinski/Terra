@@ -5,23 +5,14 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.List;
 
-import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProcessorFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.MockCore;
-import io.disruptedsystems.libdtn.core.MockExtensionManager;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
-import io.reactivex.rxjava3.core.Observable;
 
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_ROUTING;
-import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE;
-import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.PERSISTENCE_STORAGE_PATH;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -62,7 +53,7 @@ public class RoutingTableTest {
         table.addRoute(URI.create("dtn://spacex/mission/scx01"), URI.create("dtn://@cla:stcp:spacex.io:7777/"));
         table.addRoute(URI.create("dtn://nodle.io/gateway/report"), URI.create("dtn://@cla:stcp:nodle.io:7777/"));
 
-        List<URI> clas = table.resolveEid(URI.create("dtn://mars.orbital/station/1")).toList().blockingGet();
+        List<URI> clas = table.findClaForEid(URI.create("dtn://mars.orbital/station/1")).toList().blockingGet();
         for(URI cla : clas) {
             System.out.println(cla);
         }
@@ -70,7 +61,7 @@ public class RoutingTableTest {
 
         System.out.println("-----");
 
-        List<URI> eids = table.reverseCla(URI.create("dtn://@cla:stcp:spacex.io:7777/")).toList().blockingGet();
+        List<URI> eids = table.findEidForCla(URI.create("dtn://@cla:stcp:spacex.io:7777/")).toList().blockingGet();
         for(URI eid : eids) {
             System.out.println(eid);
         }
@@ -79,7 +70,7 @@ public class RoutingTableTest {
         // add a routing loop
         table.addRoute(URI.create("dtn://spacex/mission/scx01"), URI.create("dtn://mars.orbital/station/1"));
 
-        clas = table.resolveEid(URI.create("dtn://mars.orbital/station/1")).toList().blockingGet();
+        clas = table.findClaForEid(URI.create("dtn://mars.orbital/station/1")).toList().blockingGet();
         for(URI cla : clas) {
             System.out.println(cla);
         }
@@ -87,7 +78,7 @@ public class RoutingTableTest {
 
         System.out.println("-----");
 
-        eids = table.reverseCla(URI.create("dtn://@cla:stcp:spacex.io:7777/")).toList().blockingGet();
+        eids = table.findEidForCla(URI.create("dtn://@cla:stcp:spacex.io:7777/")).toList().blockingGet();
         for(URI eid : eids) {
             System.out.println(eid);
         }

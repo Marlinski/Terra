@@ -34,7 +34,7 @@ public interface BlockProcessor {
     void onBlockDeserialized(CanonicalBlock block) throws ProcessingException;
 
     /**
-     * This is called during bundle processing step 5.4 when the bundle is being processed by the
+     * This is called during bundle processing step 5.6.3 when the bundle is being processed by the
      * receiving node. Some block may modify other block and may require the bundle to be reprocess.
      * If it returns true, the whole bundle will be reprocessed.
      *

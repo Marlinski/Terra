@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static io.disruptedsystems.libdtn.core.api.BundleProtocolApi.TAG_CLA_ORIGIN_IID;
+
 /**
  * LinkLocalTable is the link-local routing linkLocalTable. It contains all the linklocal Eid
  * associated with their ClaChannelSpi.
@@ -65,7 +67,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
                                         + channel.channelEid()
                                         + " received a new bundle from "
                                         + b.getSource());
-                                b.tag("cla-origin-iid", channel.channelEid());
+                                b.tag(TAG_CLA_ORIGIN_IID, channel.channelEid());
                                 core.getBundleProtocol().bundleReception(b);
                             },
                             e -> channelClosed(channel),

@@ -9,7 +9,7 @@ import io.disruptedsystems.libdtn.common.data.ManifestBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.RoutingBlock;
-import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 
 import java.util.Arrays;
 
@@ -57,7 +57,7 @@ public class BaseBlockProcessorFactory implements BlockProcessorFactory {
             FlowLabelBlock.FLOW_LABEL_BLOCK_TYPE,
             PreviousNodeBlock.PREVIOUS_NODE_BLOCK_TYPE,
             AgeBlock.AGE_BLOCK_TYPE,
-            ScopeControlHopLimitBlock.SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE
+            HopCountBlock.HOP_COUNT_BLOCK_TYPE
     };
 
     @Override

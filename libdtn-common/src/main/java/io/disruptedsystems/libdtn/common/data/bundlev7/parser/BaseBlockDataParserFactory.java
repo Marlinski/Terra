@@ -13,7 +13,7 @@ import io.disruptedsystems.libdtn.common.data.ManifestBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.RoutingBlock;
-import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 import io.disruptedsystems.libdtn.common.data.UnknownExtensionBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 
@@ -49,9 +49,9 @@ public class BaseBlockDataParserFactory implements BlockDataParserFactory {
             case AgeBlock.AGE_BLOCK_TYPE:
                 return AgeBlockParser
                         .getParser((AgeBlock) block, logger);
-            case ScopeControlHopLimitBlock.SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE:
-                return ScopeControlHopLimitBlockParser
-                        .getParser((ScopeControlHopLimitBlock) block, logger);
+            case HopCountBlock.HOP_COUNT_BLOCK_TYPE:
+                return HopCountBlockParser
+                        .getParser((HopCountBlock) block, logger);
             case BlockAuthenticationBlock.BLOCK_AUTHENTICATION_BLOCK_TYPE:
                 return SecurityBlockParser
                         .getParser((BlockAuthenticationBlock) block, logger);

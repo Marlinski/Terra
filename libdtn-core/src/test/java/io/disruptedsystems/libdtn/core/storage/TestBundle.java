@@ -9,7 +9,7 @@ import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.ScopeControlHopLimitBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 
 import static org.junit.Assert.assertEquals;
@@ -44,14 +44,14 @@ public class TestBundle {
     public static Bundle testBundle3() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         return bundle;
     }
 
     public static Bundle testBundle4() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         return bundle;
     }
@@ -60,7 +60,7 @@ public class TestBundle {
     public static Bundle testBundle5() {
         Bundle bundle = testBundle1();
         bundle.addBlock(new AgeBlock());
-        bundle.addBlock(new ScopeControlHopLimitBlock());
+        bundle.addBlock(new HopCountBlock());
         bundle.addBlock(new PreviousNodeBlock(Dtn.generate()));
         bundle.setCrcType(PrimaryBlock.CrcFieldType.CRC_32);
         return bundle;
@@ -71,7 +71,7 @@ public class TestBundle {
         bundle.setCrcType(PrimaryBlock.CrcFieldType.CRC_32);
 
         CanonicalBlock age = new AgeBlock();
-        CanonicalBlock scope = new ScopeControlHopLimitBlock();
+        CanonicalBlock scope = new HopCountBlock();
         CanonicalBlock payload = new PayloadBlock(testPayload);
         CanonicalBlock previous = new PreviousNodeBlock();
 

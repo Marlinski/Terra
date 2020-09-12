@@ -13,7 +13,6 @@ public interface DeliveryApi extends CoreComponentApi {
 
     class DeliveryFailure extends Exception {
         public enum Reason {
-            DeliverySuccessful,
             DeliveryRefused,
             DeliveryDisabled,
             PassiveRegistration,

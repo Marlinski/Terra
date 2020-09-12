@@ -27,8 +27,8 @@ public abstract class CanonicalBlock extends BlockHeader {
                 return new PayloadBlock();
             case AgeBlock.AGE_BLOCK_TYPE:
                 return new AgeBlock();
-            case ScopeControlHopLimitBlock.SCOPE_CONTROL_HOP_LIMIT_BLOCK_TYPE:
-                return new ScopeControlHopLimitBlock();
+            case HopCountBlock.HOP_COUNT_BLOCK_TYPE:
+                return new HopCountBlock();
             default:
                 return new UnknownExtensionBlock(type);
         }

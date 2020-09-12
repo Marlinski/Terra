@@ -275,6 +275,12 @@ public interface RegistrarApi {
     boolean setPassive(URI eid)
             throws RegistrarDisabled, InvalidEid, EidNotRegistered, NullArgument;
 
+    /**
+     * Return a set of all the registered EID.
+     *
+     * @return set of eids.
+     */
+    Set<URI> allRegistrations();
 
     //todo: remove this
     String printTable();

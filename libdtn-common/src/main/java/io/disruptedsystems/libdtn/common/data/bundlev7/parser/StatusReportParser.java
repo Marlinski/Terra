@@ -1,12 +1,12 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import static io.disruptedsystems.libdtn.common.data.bundlev7.parser.AdministrativeRecordItem.TAG;
-
+import io.disruptedsystems.libdtn.common.data.StatusReport;
 import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
-import io.disruptedsystems.libdtn.common.data.StatusReport;
+
+import static io.disruptedsystems.libdtn.common.data.bundlev7.parser.AdministrativeRecordItem.TAG;
 
 /**
  * StatusReportParser parses a StatusReport.
@@ -28,30 +28,31 @@ public class StatusReportParser {
                     }
                 })
                 .cbor_parse_linear_array(
-                        () ->   /* array in array */
-                                () -> { /* status assertion item: [true, timestamp] or [false] */
-                                    StatusReport.StatusAssertion assertion = StatusReport.StatusAssertion.values()[report.statusInformation.size()];
-                                    return CBOR.parser()
-                                            .cbor_open_array((p, t, i) -> {
-                                                if (i == 1) {
-                                                    p.insert_now(CBOR.parser().cbor_parse_boolean((p2, b) -> {
-                                                        logger.v(TAG, ".... " + assertion + "=false");
-                                                    }));
-                                                } else if (i == 2) {
-                                                    p.insert_now(CBOR.parser()
-                                                            .cbor_parse_boolean((p2, b) -> {
-                                                                logger.v(TAG, ".... " + assertion + "=true");
-                                                            })
-                                                            .cbor_parse_int((p2, t2, timestamp) -> {
-                                                                logger.v(TAG, ".... timestamp=true");
-                                                                report.statusInformation.put(assertion, timestamp);
-                                                            })
-                                                    );
-                                                } else {
-                                                    throw new RxParserException("wrong number of element in status report");
-                                                }
-                                            });
-                                },
+                        (pos) -> { /* array in array */
+                            return () -> { /* status assertion item: [true, timestamp] or [false] */
+                                StatusReport.StatusAssertion assertion = StatusReport.StatusAssertion.values()[(int)pos];
+                                return CBOR.parser()
+                                        .cbor_open_array((p, t, i) -> {
+                                            if (i == 1) {
+                                                p.insert_now(CBOR.parser().cbor_parse_boolean((p2, b) -> {
+                                                    logger.v(TAG, ".... " + assertion + "=false");
+                                                }));
+                                            } else if (i == 2) {
+                                                p.insert_now(CBOR.parser()
+                                                        .cbor_parse_boolean((p2, b) -> {
+                                                            logger.v(TAG, ".... " + assertion + "=true");
+                                                        })
+                                                        .cbor_parse_int((p2, t2, timestamp) -> {
+                                                            logger.v(TAG, ".... timestamp=" + timestamp);
+                                                            report.statusInformation.put(assertion, timestamp);
+                                                        })
+                                                );
+                                            } else {
+                                                throw new RxParserException("wrong number of element in status report");
+                                            }
+                                        });
+                            };
+                        },
                         (p, t, size) -> {
                             logger.v(TAG, "... status_assertion_array_size=" + size);
                             if (size != StatusReport.StatusAssertion.values().length) {
@@ -75,7 +76,7 @@ public class StatusReportParser {
                     report.source = item.eid;
                 })
                 .cbor_parse_int((p, t, timestamp) -> {
-                    logger.v(TAG, ".. subbject_creation_timestamp=" + timestamp);
+                    logger.v(TAG, ".. subject_creation_timestamp=" + timestamp);
                     report.creationTimestamp = timestamp;
                 }); //todo fragmented bundle is not supported
     }

@@ -1,23 +1,5 @@
 package io.disruptedsystems.dtnping;
 
-import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
-import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
-import io.disruptedsystems.libdtn.aa.ldcp.ApplicationAgent;
-import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
-import io.disruptedsystems.libdtn.common.ExtensionToolbox;
-import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.PayloadBlock;
-import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
-import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.data.blob.NullBlob;
-import io.disruptedsystems.libdtn.common.data.eid.Api;
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
-import io.reactivex.rxjava3.core.Completable;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
@@ -28,7 +10,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
+import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
+import io.disruptedsystems.libdtn.aa.ldcp.ApplicationAgent;
+import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
+import io.disruptedsystems.libdtn.common.ExtensionToolbox;
+import io.disruptedsystems.libdtn.common.data.Bundle;
+import io.disruptedsystems.libdtn.common.data.PayloadBlock;
+import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
+import io.disruptedsystems.libdtn.common.data.StatusReport;
+import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
+import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
+import io.disruptedsystems.libdtn.common.data.blob.NullBlob;
+import io.disruptedsystems.libdtn.common.data.bundlev7.parser.AdministrativeRecordItem;
+import io.disruptedsystems.libdtn.common.data.eid.Api;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.common.utils.Log;
+import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
+import io.marlinski.libcbor.CBOR;
+import io.marlinski.libcbor.CborParser;
+import io.marlinski.libcbor.rxparser.RxParserException;
 import picocli.CommandLine;
+
+import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertion.ReportingNodeDeletedBundle;
+import static io.disruptedsystems.libdtn.common.data.StatusReport.StatusAssertion.ReportingNodeDeliveredBundle;
 
 @CommandLine.Command(
         name = "dtnping", mixinStandardHelpOptions = true, version = "dtnping 1.0",
@@ -95,39 +101,64 @@ public class DtnPing implements Callable<Void> {
     }
 
     private void receiveEchoResponse() throws Api.InvalidApiEid, Dtn.InvalidDtnEid, URISyntaxException {
-        ActiveRegistrationCallback cb = (recvbundle) ->
-                Completable.create(s -> {
-                    URI dest = recvbundle.getDestination();
+        ActiveRegistrationCallback cb = (recvbundle) -> {
+            CborParser reportParser = CBOR.parser().cbor_parse_custom_item(
+                    () -> new AdministrativeRecordItem(logger),
+                    (__, ___, adm) -> {
+                        URI dest = recvbundle.getDestination();
+                        final String regex = "^/dtnping/([0-9a-fA-F]+)\\?seq=([0-9]+)&ts=([0-9]+)$";
+                        Pattern r = Pattern.compile(regex);
+                        Matcher m = r.matcher(Eid.getDemux(dest));
+                        if (!m.matches()) {
+                            String error = "received malformed echo response: " + dest;
+                            throw new RxParserException(error);
+                        }
 
-                    final String regex = "^/dtnping/([0-9a-fA-F]+)\\?seq=([0-9]+)&ts=([0-9]+)$";
-                    Pattern r = Pattern.compile(regex);
-                    Matcher m = r.matcher(Eid.getDemux(dest));
-                    if (!m.matches()) {
-                        System.err.println("received malformed echo response: " + dest);
-                        System.err.println(Eid.getDemux(dest));
-                        s.onComplete();
-                        return;
-                    }
+                        String recvSessionId = m.group(1);
+                        int seq = Integer.parseInt(m.group(2));
+                        long timestamp = Long.parseLong(m.group(3));
 
-                    String recvSessionId = m.group(1);
-                    int seq = Integer.parseInt(m.group(2));
-                    long timestamp = Long.parseLong(m.group(3));
+                        if (!recvSessionId.equals(sessionId)) {
+                            String error = "received echo response from another session:"
+                                    + dest + " session=" + recvSessionId;
+                            throw new RxParserException(error);
+                        }
 
-                    if (!recvSessionId.equals(sessionId)) {
-                        System.err.println("received echo response from another session:"
-                                + dest + " session=" + recvSessionId);
-                        s.onComplete();
-                        return;
-                    }
+                        if (adm.record.type != 1) {
+                            String error = "wrong record type, status report expected! got: " + adm.record.type;
+                            throw new RxParserException(error);
+                        }
 
-                    long timeElapsed = System.nanoTime() - timestamp;
-                    System.err.println("echo response from "
-                            + recvbundle.getSource()
-                            + " seq=" + seq + " time=" + round((timeElapsed / 1000000.0f), 2)
-                            + " ms");
+                        StatusReport report = (StatusReport) adm.record;
+                        if (report.statusInformation.get(ReportingNodeDeliveredBundle) != null) {
+                            long timeElapsed = System.nanoTime() - timestamp;
+                            System.err.println("bundle delivered by  "
+                                    + recvbundle.getSource()
+                                    + " seq=" + seq + " time=" + round((timeElapsed / 1000000.0f), 2)
+                                    + " ms");
+                        }
+                        if (report.statusInformation.get(ReportingNodeDeletedBundle) != null) {
+                            long timeElapsed = System.nanoTime() - timestamp;
+                            System.err.println("bundle deleted by " + recvbundle.getSource()
+                                    + " (" + report.code.name() + ") "
+                                    + recvbundle.getSource()
+                                    + " seq=" + seq + " time=" + round((timeElapsed / 1000000.0f), 2)
+                                    + " ms");
+                        }
+                    });
 
-                    s.onComplete();
-                });
+            return recvbundle.getPayloadBlock().data
+                    .observe()
+                    .map(buffer -> {
+                        while (!reportParser.read(buffer)) {
+                            // continue
+                        }
+                        return buffer;
+                    })
+                    .ignoreElements()
+                    .doOnError(e -> System.err.println(e.getMessage()))
+                    .onErrorComplete();
+        };
 
         ExtensionToolbox toolbox = new BaseExtensionToolbox();
         BlobFactory factory = new BaseBlobFactory().setVolatileMaxSize(10000);
@@ -187,6 +218,7 @@ public class DtnPing implements Callable<Void> {
         Bundle bundle = new Bundle(destination);
         bundle.setSource(Api.me());
         bundle.setV7Flag(PrimaryBlock.BundleV7Flags.DELIVERY_REPORT, true);
+        bundle.setV7Flag(PrimaryBlock.BundleV7Flags.DELETION_REPORT, true);
         bundle.addBlock(new PayloadBlock(new NullBlob()));
 
         /* send periodic echo request */
@@ -196,7 +228,7 @@ public class DtnPing implements Callable<Void> {
             try {
                 /* update ping seq number */
                 long timestamp = System.nanoTime();
-                URI reportto = Api.me(sink, "seq="+seq.get() + "&ts=" + timestamp,null);
+                URI reportto = Api.me(sink, "seq=" + seq.get() + "&ts=" + timestamp, null);
                 bundle.setReportTo(reportto);
                 bundle.setCreationTimestamp(timestamp);
                 agent.send(bundle).subscribe(

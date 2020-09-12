@@ -12,6 +12,8 @@ public interface BundleProtocolApi {
     String TAG_DISPATCH_PENDING = "dispatch_pending";
     String TAG_DELIVERY_PENDING = "delivery_pending";
     String TAG_FORWARD_PENDING = "forward_pending";
+    String TAG_CLA_ORIGIN_IID = "cla-origin-iid";
+    String TAG_DELETION_REASON = "reason_code";
 
     /**
      * Process a bundle for transmission.
@@ -40,7 +42,7 @@ public interface BundleProtocolApi {
      * @param bundle to process
      * @param reason of the failure
      */
-    void bundleLocalDeliveryFailure(Bundle bundle,  Throwable reason);
+    void bundleLocalDeliveryFailure(Bundle bundle, Throwable reason);
 
     /**
      * Process Bundle that is expired.

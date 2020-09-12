@@ -55,13 +55,28 @@ public interface RoutingTableApi extends CoreComponentApi {
     void addRoute(URI to, URI nextHop);
 
     /**
+     * Remove a route from this routing table.
+     *
+     * @param to Eid of destination
+     * @param nextHop Eid of Next-Hop
+     */
+    void delRoute(URI to, URI nextHop);
+
+    /**
+     * Remove all routes whose next-hop matches the parameter
+     *
+     * @param nextHop Eid of Next-Hop
+     */
+    void delRoutesWithNextHop(URI nextHop);
+
+    /**
      * Resolve an Eid using this Routing Table and return an observable of cla-eid.
      * This method would typically be used when a bundle is to be forwarded.
      *
      * @param destination Eid of destination
      * @return Observable of cla-eids that can be used to make forward progress toward destination
      */
-    Observable<URI> resolveEid(URI destination);
+    Observable<URI> findClaForEid(URI destination);
 
     /**
      * Find all the routes that can make use of this cla-eid.
@@ -71,7 +86,7 @@ public interface RoutingTableApi extends CoreComponentApi {
      * @param claEid Eid of the channel
      * @return Observable of URI that can be forwarded through this cla-eid
      */
-    Observable<URI> reverseCla(URI claEid);
+    Observable<URI> findEidForCla(URI claEid);
 
     /**
      * Dump all entries from the Routing Table.

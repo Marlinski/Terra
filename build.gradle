@@ -39,7 +39,7 @@ allprojects {
 
 ext {
     rxjavaVersion = "3.0.0"
-    libcborVersion   = "400c31aada"
+    libcborVersion   = "0cc060162f"
     librxbusVersion  = "d9e0ce9e8d"
     librxtcpVersion  = "1fe5162602"
     libdetectVersion = "c55cb08990"

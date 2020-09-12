@@ -48,14 +48,14 @@ public class SecurityBlockParser {
                                     block.securitySource = item.eid;
                                 }))
                 .cbor_parse_linear_array(
-                        () ->   /* array in array */
+                        (pos1) ->   /* array in array */
                                 () -> {
                                     logger.v(BundleV7Item.TAG, "... target="
                                             + block.securityResults.size());
                                     block.securityResults.add(new LinkedList<>());
                                     return CBOR.parser()
                                             .cbor_parse_linear_array(
-                                                    () -> new SecurityResultItem(
+                                                    (pos2) -> new SecurityResultItem(
                                                             block.cipherSuiteId,
                                                             block.securityResults.getLast().size(),
                                                             logger),

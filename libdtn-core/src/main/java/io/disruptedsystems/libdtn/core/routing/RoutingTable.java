@@ -3,6 +3,7 @@ package io.disruptedsystems.libdtn.core.routing;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +59,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     }
 
     @Override
-    public Observable<URI> resolveEid(URI destination) {
+    public Observable<URI> findClaForEid(URI destination) {
         if (!isEnabled()) {
             return Observable.error(new ComponentIsDownException(getComponentName()));
         }
@@ -85,7 +86,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
     }
 
     @Override
-    public Observable<URI> reverseCla(URI claEid) {
+    public Observable<URI> findEidForCla(URI claEid) {
         if (!isEnabled()) {
             return Observable.error(new ComponentIsDownException(getComponentName()));
         }
@@ -116,9 +117,32 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
             return;
         }
 
-        core.getLogger().i(TAG, "adding a new Route: " + to.toString() + " -> "
-                + nextHop.toString());
-        routingTable.add(new TableEntry(to, nextHop));
+        if(routingTable.add(new TableEntry(to, nextHop))) {
+            core.getLogger().i(TAG, "route added: " + to.toString() + " -> "
+                    + nextHop.toString());
+        }
+    }
+
+    @Override
+    public void delRoute(URI to, URI nextHop) {
+        if (!isEnabled()) {
+            return;
+        }
+
+        if(routingTable.remove(new TableEntry(to, nextHop))) {
+            core.getLogger().i(TAG, "route deleted: " + to.toString() + " -> "
+                    + nextHop.toString());
+        }
+    }
+
+    @Override
+    public void delRoutesWithNextHop(URI nextHop) {
+        for (Iterator<TableEntry> i = routingTable.iterator(); i.hasNext();) {
+            TableEntry entry = i.next();
+            if (entry.getTo().equals(nextHop)) {
+                i.remove();
+            }
+        }
     }
 
     @Override
