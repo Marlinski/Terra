@@ -51,8 +51,8 @@ public interface Dtn {
      *  demux         = *VCHAR
      * </p>
      *
-     * @param uri
-     * @throws InvalidDtnEid
+     * @param uri a dtn-eid to check
+     * @throws InvalidDtnEid if the eid is invalid
      */
     static void checkValidDtnEid(URI uri) throws InvalidDtnEid {
         checkSchemeNotNull(uri);

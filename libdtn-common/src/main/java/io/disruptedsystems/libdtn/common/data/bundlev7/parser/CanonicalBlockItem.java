@@ -5,6 +5,7 @@ import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
+import io.disruptedsystems.libdtn.common.data.Block;
 import io.disruptedsystems.libdtn.common.data.BlockBlob;
 import io.disruptedsystems.libdtn.common.data.BlockFactory;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;

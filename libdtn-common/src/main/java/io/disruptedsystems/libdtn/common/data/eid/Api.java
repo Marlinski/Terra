@@ -39,7 +39,9 @@ public interface Api {
      *
      * @param uri1 swap into
      * @param uri2 swap from
-     * @return
+     * @return a URI with uri2's scheme and authority and uri1's path,query and fragment.
+     * @throws Dtn.InvalidDtnEid if one of the eid supplied is not a dtn-eid
+     * @throws URISyntaxException if it cannot constructs a swapped eid
      */
     static URI swapApiMe(URI uri1, URI uri2) throws URISyntaxException, Dtn.InvalidDtnEid {
         checkValidDtnEid(uri1);
