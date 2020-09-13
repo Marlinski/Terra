@@ -103,7 +103,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
         if (!isEnabled()) {
             return Maybe.error(new ComponentIsDownException(TAG));
         }
-        if(Cla.isClaEid(destination)) {
+        if(!Cla.isClaEid(destination)) {
             return Maybe.empty();
         }
         return Observable.fromIterable(linkLocalTable)

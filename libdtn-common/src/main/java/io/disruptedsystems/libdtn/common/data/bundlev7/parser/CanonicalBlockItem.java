@@ -128,7 +128,6 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
                 }); // tag the block
     }
 
-
     private CborParser crc16CloseParser() {
         return CBOR.parser()
                 .undo_for_each("crc-16", (p) -> {

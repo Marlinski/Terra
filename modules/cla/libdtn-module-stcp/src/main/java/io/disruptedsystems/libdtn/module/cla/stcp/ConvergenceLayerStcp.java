@@ -77,7 +77,7 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     }
 
     @Override
-    public boolean isLocalURI(URI uri) {
+    public boolean isEidLocalCla(URI uri) {
         // check if uri is stcp-cla-eid
         if (!ClaStcp.isClaStcpEid(uri)) {
             return false;

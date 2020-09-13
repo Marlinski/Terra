@@ -20,7 +20,7 @@ public interface ClaManagerApi {
      * @param eid to query
      * @return true if local, false otherwise
      */
-    boolean isURILocal(URI eid);
+    boolean isEidLocalCla(URI eid);
 
     /**
      * Add a new convergence-layer adapter (CLA).

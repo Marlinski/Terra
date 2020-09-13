@@ -126,7 +126,7 @@ public interface StorageApi extends CoreComponentApi {
      * @param destination
      * @return an Observable of Bundle ID
      */
-    Observable<String> findBundlesToForward(String destination);
+    Observable<String> findBundlesToForward(URI destination);
 
     /**
      * get all Bundles ID pending to be delivered and whose destination field matches the
@@ -135,7 +135,7 @@ public interface StorageApi extends CoreComponentApi {
      * @param destination
      * @return an Observable of Bundle ID
      */
-    Observable<String> findBundlesToDeliver(String destination);
+    Observable<String> findBundlesToDeliver(URI destination);
 
     /**
      * Clear all bundles.

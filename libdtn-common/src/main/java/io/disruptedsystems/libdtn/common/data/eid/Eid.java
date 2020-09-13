@@ -14,20 +14,25 @@ public interface Eid {
 
     /**
      * return only the endpoint part of the URI, that is without the query string nor the fragment.
+     * this is only valid for dtn-eid.
      *
      * @param a the URI
      * @return a copy of the URI reduced to the endpoint alone.
      */
     static URI getEndpoint(URI a) {
+        if (!Dtn.isDtnEid(a) || Dtn.isNullEid(a)) {
+            return a;
+        }
+
         try {
             return new URI(a.getScheme(), a.getAuthority(), a.getPath(), null, null);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException();
+            return a;
         }
     }
 
     static String getDemux(URI a) {
-        return a.getPath()
+        return ((a.getPath() != null) ? "" + a.getPath() : "")
                 + ((a.getQuery() != null) ? "?" + a.getQuery() : "")
                 + ((a.getFragment() != null) ? "#" + a.getFragment() : "");
     }

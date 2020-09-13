@@ -362,22 +362,24 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     public void deliverLater(Bundle bundle) {
-        core.getLogger().v(TAG, "deliver later: " + bundle.bid);
+        core.getLogger().v(TAG, "deliver later: " + bundle.bid + " to: "+bundle.getDestination());
     }
 
     @Subscribe
     public void onEvent(RegistrationActive event) {
+        URI eidToMatch = Eid.getEndpoint(event.eid);
+
         core.getLogger().v(TAG, event.eid + " : pull all relevant bundles for registration ");
-        Observable.just(event.eid)
-                .flatMap(eid -> core.getStorage().findBundlesToDeliver(eid.toString())) // pull all relevent bundles
+        Observable.just(eidToMatch)
+                .flatMap(eid -> core.getStorage().findBundlesToDeliver(eid)) // pull all relevent bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
                 .map(bundle -> { // check that the channel is open or close the whole stream
-                    if (!isRegistered(event.eid) || !isActive(event.eid)) {
+                    if (!isRegistered(eidToMatch) || !isActive(eidToMatch)) {
                         throw new IOException("registration is down");
                     }
                     return bundle;
                 })
-                .flatMapCompletable(bundle -> checkRegisteredSink(event.eid) // send it
+                .flatMapCompletable(bundle -> checkRegisteredSink(eidToMatch) // send it
                         .cb.recv(bundle)
                         .doOnError(e -> core.getLogger().w(TAG, event.eid
                                 + " : delivery failed for bundle "

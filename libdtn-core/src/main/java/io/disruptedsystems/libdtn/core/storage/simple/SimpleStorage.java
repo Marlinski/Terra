@@ -3,11 +3,13 @@ package io.disruptedsystems.libdtn.core.storage.simple;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Set;
 
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
 import io.disruptedsystems.libdtn.common.data.blob.NullBlob;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -106,13 +108,13 @@ public abstract class SimpleStorage<T> extends CoreComponent implements StorageA
     }
 
     @Override
-    public Observable<String> findBundlesToForward(String destination) {
-        return findBundlesFromTrie(index.forwardingTrie, destination);
+    public Observable<String> findBundlesToForward(URI destination) {
+        return findBundlesFromTrie(index.forwardingTrie, Eid.getEndpoint(destination).toString());
     }
 
     @Override
-    public Observable<String> findBundlesToDeliver(String destination) {
-        return findBundlesFromTrie(index.deliveryTrie, destination);
+    public Observable<String> findBundlesToDeliver(URI destination) {
+        return findBundlesFromTrie(index.deliveryTrie, Eid.getEndpoint(destination).toString());
     }
 
     private Observable<String> findBundlesFromTrie(PatriciaTrie<Set<StorageIndex.IndexEntry<T>>> trie,

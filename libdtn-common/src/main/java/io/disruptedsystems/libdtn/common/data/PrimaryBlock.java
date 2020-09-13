@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import io.disruptedsystems.libdtn.common.data.eid.Api;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 
 /**
  * PrimaryBlock is the first block of a {@link Bundle}, there can be only one per Bundle.

@@ -32,9 +32,9 @@ public class ClaManager implements ClaManagerApi {
     }
 
     @Override
-    public boolean isURILocal(URI eid) {
+    public boolean isEidLocalCla(URI eid) {
         for(ConvergenceLayerSpi cla : clas) {
-            if(cla.isLocalURI(eid)) {
+            if(cla.isEidLocalCla(eid)) {
                 return true;
             }
         }

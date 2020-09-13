@@ -22,7 +22,7 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
      * @param uri
      * @return true if uri is local, false otherwise.
      */
-    boolean isLocalURI(URI uri);
+    boolean isEidLocalCla(URI uri);
 
     /**
      * When a BaseURIis started it should return an Observable of ClaChannelSpi used to

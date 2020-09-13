@@ -1,33 +1,34 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
-import io.marlinski.libcbor.CBOR;
-import io.marlinski.libcbor.CborEncoder;
-import io.marlinski.libcbor.CborParser;
-import io.marlinski.libcbor.rxparser.RxParserException;
+import java.net.URI;
+
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
+import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 import io.disruptedsystems.libdtn.common.data.PayloadBlock;
 import io.disruptedsystems.libdtn.common.data.PreviousNodeBlock;
 import io.disruptedsystems.libdtn.common.data.PrimaryBlock;
-import io.disruptedsystems.libdtn.common.data.HopCountBlock;
 import io.disruptedsystems.libdtn.common.data.blob.BaseBlobFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
+import io.marlinski.libcbor.CBOR;
+import io.marlinski.libcbor.CborParser;
+import io.marlinski.libcbor.rxparser.RxParserException;
+import io.reactivex.rxjava3.core.Flowable;
 
-import org.junit.Test;
-
-import java.net.URI;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test class to test serialization and parsing of a Bundle.
@@ -44,6 +45,7 @@ public class BundleV7Test {
 
     /**
      * create a simple test Bundle with no payload.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle0() {
@@ -56,6 +58,7 @@ public class BundleV7Test {
 
     /**
      * create a simple test Bundle with a payload.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle1() {
@@ -66,6 +69,7 @@ public class BundleV7Test {
 
     /**
      * create a simple test Bundle with payload and an ageblock.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle2() {
@@ -76,6 +80,7 @@ public class BundleV7Test {
 
     /**
      * create a simple test Bundle with payload, an ageblock and a scopecontrolhoplimit.
+     *
      * @return a Bundle.
      */
     public static Bundle testBundle3() {
@@ -88,6 +93,7 @@ public class BundleV7Test {
     /**
      * create a simple test Bundle with payload, an ageblock and a scopecontrolhoplimit
      * and previous node block.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle4() {
@@ -101,6 +107,7 @@ public class BundleV7Test {
     /**
      * create a simple test Bundle with payload, an ageblock and a scopecontrolhoplimit,
      * previous node block and enable crc on primary block.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle5() {
@@ -115,6 +122,7 @@ public class BundleV7Test {
     /**
      * create a simple test Bundle with payload, an ageblock and a scopecontrolhoplimit,
      * previous node block and enable crc on all block.
+     *
      * @return a Bundle
      */
     public static Bundle testBundle6() {
@@ -153,69 +161,63 @@ public class BundleV7Test {
                 testBundle6()
         };
 
-        for (Bundle bundle : bundles) {
-            //System.out.println(bundle.bid.getBidString());
-            Bundle[] res = {null};
+        Bundle[] res = {null};
+        CborParser parser = CBOR.parser().cbor_parse_custom_item(
+                () -> new BundleV7Item(
+                        new SimpleLogger(),
+                        new BaseExtensionToolbox(),
+                        new BaseBlobFactory().setVolatileMaxSize(100000)),
+                (p, t, item) ->
+                        res[0] = item.bundle);
 
-            // prepare serializer
-            CborEncoder enc = BundleV7Serializer.encode(bundle,
-                    new BaseBlockDataSerializerFactory());
-
-            CborParser parser = CBOR.parser().cbor_parse_custom_item(
-                    () -> new BundleV7Item(
-                            new SimpleLogger(),
-                            new BaseExtensionToolbox(),
-                            new BaseBlobFactory().setVolatileMaxSize(100000)),
-                    (p, t, item) ->
-                            res[0] = item.bundle);
-
-            // serialize and parse
-            enc.observe(10).subscribe(
-                    buf -> {
-                        //System.out.println(new String(buf.array()));
-                        try {
-                            if (parser.read(buf)) {
-                                assertFalse(buf.hasRemaining());
+        Flowable
+                .fromArray(bundles)
+                .flatMap(bundle -> BundleV7Serializer
+                        .encode(bundle, new BaseBlockDataSerializerFactory()).observe(10))
+                .subscribe(
+                        buf -> {
+                            try {
+                                while (buf.hasRemaining()) {
+                                    if (parser.read(buf)) {
+                                        // check payload
+                                        checkBundlePayload(res[0]);
+                                        parser.reset();
+                                    }
+                                }
+                            } catch (RxParserException rpe) {
+                                rpe.printStackTrace();
+                                fail();
                             }
-                        } catch (RxParserException rpe) {
-                            rpe.printStackTrace();
-                            fail();
-                        }
-                    },
-                    e -> {
-                        System.out.println(e.getMessage());
-                        e.printStackTrace();
-                    });
-
-            // check payload
-            checkBundlePayload(res[0]);
-        }
+                        },
+                        e -> {
+                            System.out.println(e.getMessage());
+                            e.printStackTrace();
+                        });
     }
 
 
     /**
      * check that the payload of the bundle is correct.
+     *
      * @param bundle to check
      */
     public static void checkBundlePayload(Bundle bundle) {
         // assert
-        assertTrue(bundle != null);
+        assertNotNull(bundle);
         String[] payload = {null};
-        if (bundle != null) {
-            for (CanonicalBlock block : bundle.getBlocks()) {
-                assertTrue(block.isTagged("crc_check"));
-                assertTrue(block.<Boolean>getTagAttachment("crc_check"));
-            }
-
-            bundle.getPayloadBlock().data.observe().subscribe(
-                    buffer -> {
-                        byte[] arr = new byte[buffer.remaining()];
-                        buffer.get(arr);
-                        payload[0] = new String(arr);
-                    });
-
-            assertTrue(payload[0] != null);
-            assertEquals(testPayload, payload[0]);
+        for (CanonicalBlock block : bundle.getBlocks()) {
+            assertTrue(block.isTagged("crc_check"));
+            assertTrue(block.<Boolean>getTagAttachment("crc_check"));
         }
+
+        bundle.getPayloadBlock().data.observe().subscribe(
+                buffer -> {
+                    byte[] arr = new byte[buffer.remaining()];
+                    buffer.get(arr);
+                    payload[0] = new String(arr);
+                });
+
+        assertNotNull(payload[0]);
+        assertEquals(testPayload, payload[0]);
     }
 }

@@ -11,8 +11,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
-import io.disruptedsystems.libdtn.common.data.eid.Api;
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.events.BundleIndexed;
 import io.marlinski.librxbus.RxBus;
 
@@ -77,12 +76,12 @@ class StorageIndex<T> {
 
             // reverse index if bundle is to be forwarded
             if(bundle.isTagged(TAG_FORWARD_PENDING)) {
-                addToTrie(forwardingTrie, bundle.getDestination().toString(), entry);
+                addToTrie(forwardingTrie, Eid.getEndpoint(bundle.getDestination()).toString(), entry);
             }
 
             // reverse index if bundle is to be delivered
             if(bundle.isTagged(TAG_DELIVERY_PENDING)) {
-                addToTrie(deliveryTrie, bundle.getDestination().toString(), entry);
+                addToTrie(deliveryTrie, Eid.getEndpoint(bundle.getDestination()).toString(), entry);
             }
 
             bundle.tag("in_storage");
@@ -124,7 +123,7 @@ class StorageIndex<T> {
 
             // remove entry from index
             bundleIndex.remove(bid);
-            URI destination =  entry.bundle.getDestination();
+            URI destination =  Eid.getEndpoint(entry.bundle.getDestination());
 
             // remove entry from reverse index
             if(entry.bundle.isTagged(TAG_FORWARD_PENDING)) {

@@ -3,6 +3,7 @@ package io.disruptedsystems.libdtn.core.routing;
 import java.net.URI;
 import java.util.Set;
 
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
@@ -50,9 +51,11 @@ public class LocalEidTable implements LocalEidApi {
     // falls within local node namespace.
     @Override
     public LocalEidApi.LookUpResult isEidLocal(URI eid) {
+        URI eidToMatch = Eid.getEndpoint(eid);
+
         try {
             // returns an eid if it matches with a registration
-            if (core.getRegistrar().isRegistered(eid)) {
+            if (core.getRegistrar().isRegistered(eidToMatch)) {
                 return LookUpResult.eidMatchAARegistration;
             }
         } catch (RegistrarApi.NullArgument
@@ -68,12 +71,12 @@ public class LocalEidTable implements LocalEidApi {
         }
 
         // returns true if it matches with an alias created by a CLA
-        if (core.getClaManager().isURILocal(eid)) {
+        if (core.getClaManager().isEidLocalCla(eidToMatch)) {
             return LookUpResult.eidMatchCla;
         }
 
         // returns true if it matches with link local table
-        URI claEid = core.getLinkLocalTable().isEidLinkLocal(eid);
+        URI claEid = core.getLinkLocalTable().isEidLinkLocal(eidToMatch);
         if (claEid != null) {
             return LookUpResult.eidMatchCla;
         }

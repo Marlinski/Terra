@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.disruptedsystems.libdtn.common.data.eid.Cla;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -64,7 +65,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
             return Observable.error(new ComponentIsDownException(getComponentName()));
         }
 
-        return resolveEid(destination, Observable.just(destination));
+        return resolveEid(destination, Observable.just(Eid.getEndpoint(destination)));
     }
 
     private Observable<URI> resolveEid(URI destination, Observable<URI> path) {

@@ -19,7 +19,7 @@ public class BundlePulled implements DtnEvent {
     @Override
     public String toString() {
         return "Bundle pulled: triger=" + trigger.getClass().getName()
-                + " bid=" + bundle.bid.toString() + " to: "
+                + " bid=" + bundle.bid + " to: "
                 + bundle.getDestination().toString();
     }
 }

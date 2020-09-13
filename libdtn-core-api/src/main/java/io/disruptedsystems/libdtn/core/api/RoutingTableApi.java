@@ -44,6 +44,11 @@ public interface RoutingTableApi extends CoreComponentApi {
         public int hashCode() {
             return next.toString().concat(to.toString()).hashCode();
         }
+
+        @Override
+        public String toString() {
+            return "[ " + to + " -> " + next + " ]";
+        }
     }
 
     /**

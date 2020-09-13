@@ -51,7 +51,7 @@ public class ConvergenceLayerBows implements ConvergenceLayerSpi {
     }
 
     @Override
-    public boolean isLocalURI(URI uri) {
+    public boolean isEidLocalCla(URI uri) {
         return false;
     }
 
