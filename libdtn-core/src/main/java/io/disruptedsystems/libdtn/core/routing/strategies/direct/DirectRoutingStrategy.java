@@ -114,7 +114,8 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
         }
 
         return store.doOnSuccess(__ -> // try to force an opportunity
-                core.getRoutingTable().findClaForEid(bundle.getDestination())
+                core.getRoutingTable()
+                        .findClaForEid(bundle.getDestination())
                         .concatMapMaybe(claeid ->
                                 Maybe.fromSingle(core.getClaManager()
                                         .createOpportunity(claeid))
@@ -149,38 +150,4 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
                 .subscribeOn(Schedulers.computation()) // do not block the caller's thread
                 .subscribe(); // execute!
     }
-
-    /*
-    event.channel // send it
-                        .sendBundle(bundle, core.getExtensionManager().getBlockDataSerializerFactory())
-                        .doOnError(e -> core.getLogger().w(TAG, event.channel.channelEid()
-                                + " : transmission failed for bundle "
-                                + bundle.bid + " dest="
-                                + bundle.getDestination().toString()))
-                        .doOnComplete(() -> core.getLogger().w(TAG, event.channel.channelEid()
-                                + " : bundle successfully transmitted "
-                                + bundle.bid + " dest="
-                                + bundle.getDestination().toString()))
-                        .onErrorComplete()
-
-
-
-        // then try to force an opportunity
-        potentialClas
-                .distinct()
-                .concatMapMaybe(claeid ->
-                        Maybe.fromSingle(core.getClaManager()
-                                .createOpportunity(claeid))
-                                .onErrorComplete())
-                .firstElement()
-                .subscribe(
-                        (channel) -> {
-                        },
-                        e -> {
-                        },
-                        () -> {
-                        });
-        return Single.just(RoutingStrategyResult.CustodyAccepted);
-    */
-
 }
