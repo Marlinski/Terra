@@ -40,7 +40,6 @@ public class RequestBundle {
      * Fetch a bundle and deliver it to the api but don't mark the bundle as delivered
      */
     private final Action aaActionGet = (params, req, res) -> {
-        System.out.println("coucou");
         String param = params.get("*");
         if(param == null) {
             return res.setStatus(HttpResponseStatus.BAD_REQUEST)
