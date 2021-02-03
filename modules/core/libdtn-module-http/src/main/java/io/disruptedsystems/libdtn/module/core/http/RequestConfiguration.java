@@ -6,7 +6,6 @@ import java.util.Set;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Dispatch;
 import io.disruptedsystems.libdtn.module.core.http.nettyrouter.Router;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import rx.Observable;
@@ -24,20 +23,19 @@ public class RequestConfiguration {
         this.core = core;
     }
 
-    private Action confLocalEID = (params, req, res) -> {
+    private final Action confLocalEID = (params, req, res) -> {
         final URI localeid = core.getLocalEidTable().nodeId();
         return res.setStatus(HttpResponseStatus.OK).writeString(just("localeid=" + localeid));
     };
 
-    private Action confAliases = (params, req, res) -> {
+    private final Action confAliases = (params, req, res) -> {
         final Set<URI> aliases = core.getLocalEidTable().aliases();
 
         return res.setStatus(HttpResponseStatus.OK).writeString(
-                Observable.from(aliases)
-                        .flatMap((a) -> just(a + "\n")));
+                Observable.from(aliases).flatMap((a) -> just(a + "\n")));
     };
 
-    private Action dumpConfiguration = (params, req, res) ->
+    private final Action dumpConfiguration = (params, req, res) ->
             res.setStatus(HttpResponseStatus.OK).writeString(just("conf"));
 
     Router<ByteBuf, ByteBuf> router = new Router<ByteBuf, ByteBuf>()

@@ -39,7 +39,7 @@ public class RequestBundle {
     /**
      * Fetch a bundle and deliver it to the api but don't mark the bundle as delivered
      */
-    private Action aaActionGet = (params, req, res) -> {
+    private final Action aaActionGet = (params, req, res) -> {
         System.out.println("coucou");
         String param = params.get("*");
         if(param == null) {
@@ -82,7 +82,7 @@ public class RequestBundle {
      * Fetch a bundle and deliver it to the api then mark the bundle as delivered
      * (remove from storage, send report
      */
-    private Action aaActionFetch = (params, req, res) -> {
+    private final Action aaActionFetch = (params, req, res) -> {
         String param = params.get("*");
         if (core.getStorage().contains(param).onErrorReturnItem(false).blockingGet()) {
             core.getLogger().i(TAG, "delivering payload: "+param);
@@ -103,7 +103,7 @@ public class RequestBundle {
     /**
      * Create a new bundle and dispatch it immediatly
      */
-    private Action aaActionPost = (params, req, res) -> {
+    private final Action aaActionPost = (params, req, res) -> {
         final String destEID = req.getHeader("BundleDestinationEID");
         final String reportToEID = req.getHeader("BundleReportToEID");
         final String lifetime = req.getHeader("BundleLifetime");
