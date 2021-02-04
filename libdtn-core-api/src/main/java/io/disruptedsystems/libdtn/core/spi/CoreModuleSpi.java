@@ -1,7 +1,6 @@
 package io.disruptedsystems.libdtn.core.spi;
 
 import io.disruptedsystems.libdtn.core.api.CoreApi;
-import io.disruptedsystems.libdtn.core.spi.ModuleSpi;
 
 /**
  * Contract to be fulfilled by a core module. A core module has unrestricted access to all

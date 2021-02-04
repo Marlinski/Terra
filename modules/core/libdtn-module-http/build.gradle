@@ -1,5 +1,6 @@
 plugins {
-    id("java-library")
+    id "java-library"
+    id "org.jetbrains.kotlin.jvm"
     id "com.github.harbby.gradle.serviceloader" version "1.1.5"
 }
 
@@ -14,7 +15,7 @@ jar {
         serviceInterface 'io.disruptedsystems.libdtn.module.core.http.ModuleHTTPDaemon'
     }
 
-    // fat jar dependency to include rxnetty
+    // fat jar dependency
     from {
         configurations.compile
                 .collect { it.isDirectory() ? it : zipTree(it) }
@@ -33,11 +34,14 @@ dependencies {
     // interface spi
     implementation project(path: ':libdtn-core-api')
 
-    // lib rx netty for http ApiEid
-    // note: we need to use compile keyword to add in the fatjar, implementation/api doesn't work
-    compile "io.reactivex:rxnetty-http:${rxnetty_version}"
-    compile "tv.cntt:jauter:${jauter_version}"
+    compile("io.ktor:ktor-server-netty:$ktor_version")
+    compile("io.ktor:ktor-websockets:$ktor_version")
 
+    // log
+    compile "org.slf4j:slf4j-simple:1.7.30"
+
+    // kotlin (use compile keyword instead of implementation to include it in the jar)
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8

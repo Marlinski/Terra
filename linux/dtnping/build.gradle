@@ -13,6 +13,9 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    implementation project(path: ':libdtn-common')
+    implementation project(path: ':libdtn-client-api')
+
     // CBOR for parsing StatusReport
     implementation "com.github.Marlinski:libcbor:$libcborVersion"
 

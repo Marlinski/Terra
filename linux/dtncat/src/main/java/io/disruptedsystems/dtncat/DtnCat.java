@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 
 import io.disruptedsystems.libdtn.aa.api.ActiveRegistrationCallback;
 import io.disruptedsystems.libdtn.aa.api.ApplicationAgentApi;
-import io.disruptedsystems.libdtn.aa.ldcp.ApplicationAgent;
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.BlockHeader;

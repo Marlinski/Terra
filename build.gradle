@@ -1,5 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
+    ext.kotlin_version = '1.4.21'
     repositories {
         google()
         jcenter()
@@ -8,9 +9,9 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:4.1.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -47,50 +48,41 @@ ext {
 
 task build {
     dependsOn(':libdtn-client-api:build')
-    dependsOn(':libldcp:build')
-    dependsOn(':libdtn-client-ldcp:build')
     dependsOn(':libdtn-common:build')
     dependsOn(':libdtn-core-api:build')
     dependsOn(':libdtn-core:build')
     dependsOn(':libdtn-module-hello:build')
     dependsOn(':libdtn-module-ipdiscovery:build')
-    dependsOn(':libdtn-module-ldcp:build')
     dependsOn(':libdtn-module-stcp:build')
-    dependsOn(':dtncat:build')
-    dependsOn(':dtnping:build')
+    //dependsOn(':dtncat:build')
+    //dependsOn(':dtnping:build')
     dependsOn(':terra:build')
 }
 
 task bundle(type: Exec) {
-    dependsOn(':libldcp:jar')
     dependsOn(':libdtn-client-api:jar')
-    dependsOn(':libdtn-client-ldcp:jar')
     dependsOn(':libdtn-common:jar')
     dependsOn(':libdtn-core-api:jar')
     dependsOn(':libdtn-core:jar')
     dependsOn(':libdtn-module-hello:jar')
     dependsOn(':libdtn-module-ipdiscovery:jar')
-    dependsOn(':libdtn-module-ldcp:jar')
     dependsOn(':libdtn-module-stcp:jar')
-    dependsOn(':dtncat:distTar')
-    dependsOn(':dtnping:distTar')
+    //dependsOn(':dtncat:distTar')
+    //dependsOn(':dtnping:distTar')
     dependsOn(':terra:distTar')
     commandLine './package.sh'
 }
 
 task clean(type: Delete) {
-    dependsOn(':libldcp:clean')
     dependsOn(':libdtn-client-api:clean')
-    dependsOn(':libdtn-client-ldcp:clean')
     dependsOn(':libdtn-common:clean')
     dependsOn(':libdtn-core-api:clean')
     dependsOn(':libdtn-core:clean')
     dependsOn(':libdtn-module-hello:clean')
     dependsOn(':libdtn-module-ipdiscovery:clean')
-    dependsOn(':libdtn-module-ldcp:clean')
     dependsOn(':libdtn-module-stcp:clean')
-    dependsOn(':dtncat:clean')
-    dependsOn(':dtnping:clean')
+    //dependsOn(':dtncat:clean')
+    //dependsOn(':dtnping:clean')
     dependsOn(':terra:clean')
     delete rootProject.buildDir
 }

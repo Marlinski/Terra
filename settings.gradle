@@ -23,18 +23,6 @@ project(":libdtn-module-http").projectDir = file("modules/core/libdtn-module-htt
 // binaries
 include ':terra', ':dtnping', ':dtnconf', 'dtncat'
 project(":terra").projectDir = file("linux/terra")
-project(":dtnping").projectDir = file("linux/dtnping")
+//project(":dtnping").projectDir = file("linux/dtnping")
 project(":dtnconf").projectDir = file("linux/dtnconf")
-project(":dtncat").projectDir = file("linux/dtncat")
-
-// dependencies
-
-//include ':librxbus', ':libcbor', ':librxtcp', ':libdetect'
-//include ':librxbus'
-//project(":librxbus").projectDir = file("../librxbus")
-//include ':libcbor'
-//project(":libcbor").projectDir = file("../libcbor")
-//include ':librxtcp'
-//project(":librxtcp").projectDir = file("../librxtcp")
-//include ':libdetect'
-//project(":libdetect").projectDir = file("../libdetect")
+//project(":dtncat").projectDir = file("linux/dtncat")
