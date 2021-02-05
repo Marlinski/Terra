@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.module.core.hello;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.nio.ByteBuffer;
 
@@ -36,7 +39,7 @@ import static io.disruptedsystems.libdtn.core.api.BundleProtocolApi.TAG_CLA_ORIG
  */
 public class CoreModuleHello implements CoreModuleSpi {
 
-    private static final String TAG = "HelloModule";
+    private static final Logger log = LoggerFactory.getLogger(CoreModuleHello.class);
     private static final URI HELLO_URI = URI.create("dtn://link-local/~hello");
 
     private CoreApi core;
@@ -88,7 +91,7 @@ public class CoreModuleHello implements CoreModuleSpi {
         try {
             this.cookie = api.getRegistrar().register(HELLO_URI, (bundle) -> {
                 if (bundle.getTagAttachment("cla-origin-iid") != null) {
-                    core.getLogger().i(TAG, "received hello message from: "
+                    log.info("received hello message from: "
                             + bundle.getSource()
                             + " on cla-eid: "
                             + bundle.<Eid>getTagAttachment(TAG_CLA_ORIGIN_IID));
@@ -111,12 +114,12 @@ public class CoreModuleHello implements CoreModuleSpi {
                                         parser.read(b);
                                     }
                                 } catch (RxParserException rpe) {
-                                    core.getLogger().i(TAG, "malformed hello message: "
+                                    log.info("malformed hello message: "
                                             + rpe.getMessage());
                                 }
                             });
                 } else {
-                    core.getLogger().i(TAG, "received hello message from: "
+                    log.info("received hello message from: "
                             + bundle.getSource()
                             + " but the " + TAG_CLA_ORIGIN_IID + " tag is missing - ignoring");
                 }
@@ -127,7 +130,7 @@ public class CoreModuleHello implements CoreModuleSpi {
                 | RegistrarApi.InvalidEid
                 | RegistrarApi.RegistrarDisabled
                 | RegistrarApi.NullArgument re) {
-            api.getLogger().e(TAG, "initialization failed: " + re.getMessage());
+            log.error("initialization failed: " + re.getMessage());
             return;
         }
 
@@ -145,7 +148,7 @@ public class CoreModuleHello implements CoreModuleSpi {
             return;
         }
 
-        core.getLogger().i(TAG, "sending hello message to: " + up.channel.channelEid());
+        log.info("sending hello message to: " + up.channel.channelEid());
         up.channel.sendBundle(prepareHelloBundle(),
                 core.getExtensionManager().getBlockDataSerializerFactory())
                 .subscribe(
@@ -153,11 +156,11 @@ public class CoreModuleHello implements CoreModuleSpi {
                             /* ignore */
                         },
                         err -> {
-                            core.getLogger().v(TAG, "hello failed to be sent to: "
+                            log.warn("hello failed to be sent to: "
                                     + up.channel.channelEid());
                         },
                         () -> {
-                            core.getLogger().v(TAG, "hello sent to: "
+                            log.debug("hello sent to: "
                                     + up.channel.channelEid());
                         });
     }
@@ -169,7 +172,7 @@ public class CoreModuleHello implements CoreModuleSpi {
      */
     @Subscribe
     public void onEvent(LinkLocalEntryDown up) {
-        core.getLogger().i(TAG, "removing routes associated with: " + up.channel.channelEid());
+        log.info("removing routes associated with: " + up.channel.channelEid());
         core.getRoutingTable().delRoutesWithNextHop(up.channel.channelEid());
     }
 

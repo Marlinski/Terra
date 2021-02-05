@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -31,10 +34,10 @@ import static io.disruptedsystems.libdtn.core.api.BundleProtocolApi.TAG_CLA_ORIG
  */
 public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
 
-    private static final String TAG = "LinkLocalTable";
+    private static final Logger log = LoggerFactory.getLogger(LinkLocalTable.class);
 
-    private Set<ClaChannelSpi> linkLocalTable;
-    private CoreApi core;
+    private final Set<ClaChannelSpi> linkLocalTable;
+    private final CoreApi core;
 
     public LinkLocalTable(CoreApi core) {
         this.core = core;
@@ -43,7 +46,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
 
     @Override
     public String getComponentName() {
-        return TAG;
+        return "LinkLocalTable";
     }
 
     @Override
@@ -63,7 +66,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
                     core.getStorage().getBlobFactory())
                     .subscribe(
                             b -> {
-                                core.getLogger().i(TAG, "channel "
+                                log.info("channel "
                                         + channel.channelEid()
                                         + " received a new bundle from "
                                         + b.getSource());
@@ -101,7 +104,7 @@ public class LinkLocalTable extends CoreComponent implements LinkLocalTableApi {
     @Override
     public Maybe<ClaChannelSpi> lookupCla(URI destination) {
         if (!isEnabled()) {
-            return Maybe.error(new ComponentIsDownException(TAG));
+            return Maybe.error(new ComponentIsDownException("LinkLocalTable"));
         }
         if(!Cla.isClaEid(destination)) {
             return Maybe.empty();

@@ -1,6 +1,5 @@
 package io.disruptedsystems.libdtn.core.spi;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
 
 /**
@@ -10,6 +9,6 @@ import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
  */
 public interface BlockSpi {
 
-    void init(ExtensionManagerApi extensionManager, Log logger);
+    void init(ExtensionManagerApi extensionManager);
 
 }

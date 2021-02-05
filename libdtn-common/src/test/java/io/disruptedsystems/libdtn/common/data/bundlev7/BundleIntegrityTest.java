@@ -25,8 +25,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serial
 import io.disruptedsystems.libdtn.common.data.security.BlockIntegrityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityContext;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 
 import org.junit.Test;
 
@@ -41,7 +39,6 @@ public class BundleIntegrityTest {
     @Test
     public void testSimpleBundleEncryption() {
         System.out.println("[+] bundle: testing integrity");
-        Log logger = new SimpleLogger();
         Bundle[] bundles = {
                 testBundle1(),
                 testBundle2(),
@@ -69,7 +66,7 @@ public class BundleIntegrityTest {
 
             try {
                 // perform integrity sum
-                bib.applyTo(b, context, new BaseBlockDataSerializerFactory(), logger);
+                bib.applyTo(b, context, new BaseBlockDataSerializerFactory());
             } catch (SecurityBlock.SecurityOperationException foe) {
                 System.out.println(foe.getMessage());
                 foe.printStackTrace();
@@ -87,7 +84,6 @@ public class BundleIntegrityTest {
             // prepare parser
             CborParser parser = CBOR.parser().cbor_parse_custom_item(
                     () -> new BundleV7Item(
-                            logger,
                             new BaseExtensionToolbox(),
                             new BaseBlobFactory().setVolatileMaxSize(100000)),
                     (p, t, item) ->
@@ -116,8 +112,7 @@ public class BundleIntegrityTest {
                         ((BlockIntegrityBlock) block).applyFrom(
                                 res[0],
                                 context,
-                                new BaseBlockDataSerializerFactory(),
-                                logger);
+                                new BaseBlockDataSerializerFactory());
                     } catch (SecurityBlock.SecurityOperationException soe) {
                         soe.printStackTrace();
                         fail();

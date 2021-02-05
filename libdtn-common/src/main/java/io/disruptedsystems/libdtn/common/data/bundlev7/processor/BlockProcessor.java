@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.processor;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
 
@@ -18,11 +18,10 @@ public interface BlockProcessor {
      *
      * @param block being processed
      * @param bundle being processed
-     * @param logger instance.
      * @return true if the bundle needs another processing pass, false otherwise
      * @throws ProcessingException if there is any issue during processings
      */
-    boolean onPrepareForTransmission(CanonicalBlock block, Bundle bundle, Log logger)
+    boolean onPrepareForTransmission(CanonicalBlock block, Bundle bundle)
             throws ProcessingException;
 
     /**
@@ -40,11 +39,10 @@ public interface BlockProcessor {
      *
      * @param block being processed
      * @param bundle being processed
-     * @param logger instance.
      * @return true if the bundle needs another processing pass, false otherwise
      * @throws ProcessingException if there is any issue during processing
      */
-    boolean onReceptionProcessing(CanonicalBlock block, Bundle bundle, Log logger)
+    boolean onReceptionProcessing(CanonicalBlock block, Bundle bundle)
             throws ProcessingException;
 
     /**
@@ -53,11 +51,10 @@ public interface BlockProcessor {
      *
      * @param block being processed
      * @param bundle being processed
-     * @param logger instance.
      * @return true if the bundle needs another processing pass, false otherwise
      * @throws ProcessingException if there is any issue during processing
      */
-    boolean onPutOnStorage(CanonicalBlock block, Bundle bundle, Log logger)
+    boolean onPutOnStorage(CanonicalBlock block, Bundle bundle)
             throws ProcessingException;
 
     /**
@@ -66,11 +63,10 @@ public interface BlockProcessor {
      *
      * @param block being processed
      * @param bundle being processed
-     * @param logger instance.
      * @return true if the bundle needs another processing pass, false otherwise
      * @throws ProcessingException if there is any issue during processing
      */
-    boolean onPullFromStorage(CanonicalBlock block, Bundle bundle, Log logger)
+    boolean onPullFromStorage(CanonicalBlock block, Bundle bundle)
             throws ProcessingException;
 
 }

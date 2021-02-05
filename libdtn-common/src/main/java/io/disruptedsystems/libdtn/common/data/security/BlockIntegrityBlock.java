@@ -1,8 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
-import static io.disruptedsystems.libdtn.common.data.security.BlockConfidentialityBlock.TAG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CborEncoder;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
@@ -22,6 +22,8 @@ import javax.crypto.NoSuchPaddingException;
  * @author Lucien Loiseau on 03/11/18.
  */
 public class BlockIntegrityBlock extends AbstractSecurityBlock {
+
+    private static final Logger log = LoggerFactory.getLogger(BlockIntegrityBlock.class);
 
     public static final int BLOCK_INTEGRITY_BLOCK_TYPE = 193;
 
@@ -89,15 +91,13 @@ public class BlockIntegrityBlock extends AbstractSecurityBlock {
      * @param bundle            to apply the integrity block to.
      * @param context           security context.
      * @param serializerFactory to serialize the encoded block.
-     * @param logger            instance.
      * @throws SecurityOperationException if there was an issue during encryption.
      */
     public void applyTo(Bundle bundle,
                         SecurityContext context,
-                        BlockDataSerializerFactory serializerFactory,
-                        Log logger) throws SecurityOperationException {
+                        BlockDataSerializerFactory serializerFactory) throws SecurityOperationException {
         for (int blockNumber : securityTargets) {
-            logger.v(TAG, ".. computing integrity for block number: " + blockNumber);
+            log.trace(".. computing integrity for block number: " + blockNumber);
             CanonicalBlock block = bundle.getBlock(blockNumber);
             LinkedList<SecurityResult> results = new LinkedList<>();
             securityResults.add(results);
@@ -141,13 +141,12 @@ public class BlockIntegrityBlock extends AbstractSecurityBlock {
      * @param bundle  to apply the security block to.
      * @param context security context.
      * @param serializerFactory to serialize target block.
-     * @param logger  instance.
      * @throws SecurityOperationException if there was an issue during encryption.
      */
     public void applyFrom(Bundle bundle,
                           SecurityContext context,
-                          BlockDataSerializerFactory serializerFactory,
-                          Log logger) throws SecurityOperationException {
+                          BlockDataSerializerFactory serializerFactory)
+            throws SecurityOperationException {
         if (securityResults.size() != securityTargets.size()) {
             throw new SecurityOperationException("There should same number of results "
                     + "as there is targets");
@@ -157,7 +156,7 @@ public class BlockIntegrityBlock extends AbstractSecurityBlock {
             int blockNumber = securityTargets.get(i);
             List<SecurityResult> results = securityResults.get(i);
 
-            logger.v(TAG, ".. checking integrity for block number: " + blockNumber);
+            log.trace(".. checking integrity for block number: " + blockNumber);
             CanonicalBlock block = bundle.getBlock(blockNumber);
             if (block != null) {
                 MessageDigest digest;
@@ -205,12 +204,12 @@ public class BlockIntegrityBlock extends AbstractSecurityBlock {
 
                 byte[] checkDigest = digest.digest();
                 if (!Arrays.equals(ir.getChecksum(), checkDigest)) {
-                    logger.v(TAG, ".. integrity failed for target block=" + blockNumber);
+                    log.trace(".. integrity failed for target block=" + blockNumber);
                     throw new SecurityOperationException("checksum doesn't match: "
                             + "\nbib_result=" + new String(ir.getChecksum())
                             + "\ndigest=" + new String(checkDigest));
                 } else {
-                    logger.v(TAG, ".. integrity ok for target block=" + blockNumber);
+                    log.trace(".. integrity ok for target block=" + blockNumber);
                 }
             } else {
                 /* should we thrown a NoSuchBlockException ? probably means that it was removed

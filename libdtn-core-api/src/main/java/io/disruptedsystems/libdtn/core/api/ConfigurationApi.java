@@ -94,7 +94,6 @@ public interface ConfigurationApi {
         COMPONENT_ENABLE_CONNECTION_AGENT("component_enable_connection_agent"),
         COMPONENT_ENABLE_EVENT_PROCESSING("component_enable_event_processing"),
         COMPONENT_ENABLE_AA_REGISTRATION("component_enable_aa_registration"),
-        COMPONENT_ENABLE_DETECT_PEER_ON_LAN("component_enable_detect_peer_lan"),
         COMPONENT_ENABLE_LINKLOCAL_ROUTING("component_enable_linklocal_routing"),
         COMPONENT_ENABLE_ROUTING("component_enable_routing"),
         COMPONENT_ENABLE_STATIC_ROUTING("component_enable_static_routing"),
@@ -150,7 +149,7 @@ public interface ConfigurationApi {
     <T> EntryInterface<T> get(CoreEntry key);
 
     /**
-     * set wether a module is enabled or not.
+     * get wether a module is enabled or not.
      *
      * @param name of the module
      * @param defaultValue set the default value if not set already

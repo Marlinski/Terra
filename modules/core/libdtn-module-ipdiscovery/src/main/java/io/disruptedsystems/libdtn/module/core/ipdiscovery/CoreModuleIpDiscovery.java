@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.module.core.ipdiscovery;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -17,7 +20,7 @@ import io.marlinski.libdetect.PeerUnreachable;
  */
 public class CoreModuleIpDiscovery implements CoreModuleSpi {
 
-    private static final String TAG = "IpDiscovery";
+    private static final Logger log = LoggerFactory.getLogger(CoreModuleIpDiscovery.class);
 
     private CoreApi core;
 
@@ -32,7 +35,7 @@ public class CoreModuleIpDiscovery implements CoreModuleSpi {
         LibDetect.start(4000, new ActionListener() {
             @Override
             public void onPeerReachable(PeerReachable peer) {
-                api.getLogger().i(TAG, "peer detected :" + peer.address.getHostAddress());
+                log.info("peer detected :" + peer.address.getHostAddress());
                 if (core.getConf().<Boolean>get(ConfigurationApi.CoreEntry
                         .ENABLE_AUTO_CONNECT_FOR_DETECT_EVENT).value()) {
                     URI eid = URI.create("dtn://@stcp:" + peer.address.getHostAddress() + ":" + "4556/");
@@ -49,7 +52,7 @@ public class CoreModuleIpDiscovery implements CoreModuleSpi {
 
             @Override
             public void onPeerUnreachable(PeerUnreachable peer) {
-                api.getLogger().i(TAG, "peer unreachable");
+                log.info("peer unreachable");
             }
         }, true);
     }

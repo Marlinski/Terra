@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,6 +56,8 @@ import static io.disruptedsystems.libdtn.core.storage.simple.FileStorageUtils.cr
  */
 public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
 
+    private static final Logger log = LoggerFactory.getLogger(FileStorage.class);
+
     protected static final String BLOB_FOLDER = "blob";
     protected static final String BUNDLE_FOLDER = "bundle";
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -89,7 +94,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
             return;
         }
 
-        core.getLogger().i(TAG, "indexing bundles.. " + folder.getAbsolutePath());
+        log.info("indexing bundles.. " + folder.getAbsolutePath());
         lock.writeLock().lock();
         try {
             for (final File file : folder.listFiles()) {
@@ -105,7 +110,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                 // prepare parser
                 boolean done = false;
                 CborParser parser = CBOR.parser().cbor_parse_custom_item(
-                        () -> new FileStorageUtils.MetaBundleFileItem(core.getLogger()),
+                        FileStorageUtils.MetaBundleFileItem::new,
                         (p, t, item) -> {
                             item.info.bundlePath = file.getAbsolutePath();
                             index.put(item.meta.bid, item.meta, item.info);
@@ -113,7 +118,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
 
                 // parse file
                 try {
-                    core.getLogger().v(TAG, "parsing file < " + file.getAbsolutePath());
+                    log.debug("parsing file < " + file.getAbsolutePath());
                     while ((in.read(buffer) > 0) && !done) {
                         buffer.flip();
                         done = parser.read(buffer);
@@ -124,7 +129,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                     }
                 } catch (RxParserException | IOException rpe) {
                     //rpe.printStackTrace();
-                    core.getLogger().w(TAG, "deleting corrupted bundle: " + file.getName());
+                    log.warn("deleting corrupted bundle: " + file.getName());
                     file.delete();
                 }
             }
@@ -224,7 +229,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                     })
                     .doOnTerminate(out::close)
                     .doOnError(e -> {
-                        core.getLogger().w(TAG, "could not serialize payload in file blob: "
+                        log.warn("could not serialize payload in file blob: "
                                 + newFile.getAbsolutePath());
                         newFile.delete();
                     })
@@ -266,7 +271,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                     ctx.in = new FileInputStream(fbundle).getChannel();
                     return ctx;
                 })
-                .flatMap(ctx -> Single.just(FileStorageUtils.createBundleParser(core.getExtensionManager(), blobFactory, core.getLogger()))
+                .flatMap(ctx -> Single.just(FileStorageUtils.createBundleParser(core.getExtensionManager(), blobFactory))
                         .map(p -> {
                             lock.readLock().lock();
                             try {
@@ -312,7 +317,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                             throw new StorageFailedException("can't access bundle file for deletion: " + entry.attached.bundlePath);
                         }
 
-                        core.getLogger().i(TAG, "deleting  " + bid
+                        log.info("deleting  " + bid
                                 + " bundle file: "
                                 + fbundle.getAbsolutePath());
                         fbundle.delete();
@@ -323,7 +328,7 @@ public class FileStorage extends SimpleStorage<FileStorageUtils.BundleInfo> {
                         if (fblob.exists() && !fblob.canWrite()) {
                             throw new StorageFailedException("can't access payload blob file for deletion: " + entry.attached.bundlePath);
                         }
-                        core.getLogger().i(TAG, "deleting  " + bid
+                        log.info("deleting  " + bid
                                 + " blob file: "
                                 + fblob.getAbsolutePath());
                         fblob.delete();

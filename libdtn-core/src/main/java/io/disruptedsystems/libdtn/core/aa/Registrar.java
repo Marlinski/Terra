@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.aa;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
@@ -9,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.eid.Api;
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
 import io.disruptedsystems.libdtn.common.data.eid.Eid;
 import io.disruptedsystems.libdtn.core.CoreComponent;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
@@ -23,7 +25,6 @@ import io.marlinski.librxbus.Subscribe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Reason.DeliveryDisabled;
@@ -38,7 +39,7 @@ import static io.disruptedsystems.libdtn.core.api.DeliveryApi.DeliveryFailure.Re
  */
 public class Registrar extends CoreComponent implements RegistrarApi, DeliveryApi {
 
-    private static final String TAG = "Registrar";
+    private static final Logger log = LoggerFactory.getLogger(Registrar.class);
 
     public static class Registration {
         URI registration;
@@ -56,8 +57,8 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         }
     }
 
-    private CoreApi core;
-    private Map<URI, Registration> registrations;
+    private final CoreApi core;
+    private final Map<URI, Registration> registrations;
 
     /**
      * Constructor.
@@ -71,7 +72,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     public String getComponentName() {
-        return TAG;
+        return "Registrar";
     }
 
     @Override
@@ -163,7 +164,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
         Registration registration = new Registration(eid, cb);
         if (registrations.putIfAbsent(Eid.getEndpoint(eid), registration) == null) {
-            core.getLogger().i(TAG, "sink registered: " + eid
+            log.info("sink registered: " + eid
                     + " (cookie=" + registration.cookie + ") - "
                     + (cb == passiveRegistration ? "passive" : "active"));
             RxBus.post(new RegistrationActive(eid, registration.cb));
@@ -183,7 +184,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         if (registrations.remove(eid) == null) {
             throw new EidNotRegistered();
         }
-        core.getLogger().i(TAG, "sink unregistered: " + eid);
+        log.info("sink unregistered: " + eid);
         return true;
     }
 
@@ -267,7 +268,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         checkArgumentNotNull(cb);
         Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = cb;
-        core.getLogger().i(TAG, "registration active: " + eid);
+        log.info("registration active: " + eid);
         RxBus.post(new RegistrationActive(eid, registration.cb));
         return true;
     }
@@ -279,7 +280,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         eid = replaceApiMe(eid);
         Registration registration = checkRegisteredSink(eid);
         registration.cb = passiveRegistration;
-        core.getLogger().i(TAG, "registration passive: " + eid);
+        log.info("registration passive: " + eid);
         return true;
     }
 
@@ -290,7 +291,7 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
         eid = replaceApiMe(eid);
         Registration registration = checkRegisteredSink(eid, cookie);
         registration.cb = passiveRegistration;
-        core.getLogger().i(TAG, "registration passive: " + eid);
+        log.info("registration passive: " + eid);
         return true;
     }
 
@@ -362,14 +363,14 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
 
     @Override
     public void deliverLater(Bundle bundle) {
-        core.getLogger().v(TAG, "deliver later: " + bundle.bid + " to: "+bundle.getDestination());
+        log.debug("deliver later: " + bundle.bid + " to: "+bundle.getDestination());
     }
 
     @Subscribe
     public void onEvent(RegistrationActive event) {
         URI eidToMatch = Eid.getEndpoint(event.eid);
 
-        core.getLogger().v(TAG, event.eid + " : pull all relevant bundles for registration ");
+        log.debug(event.eid + " : pull all relevant bundles for registration ");
         Observable.just(eidToMatch)
                 .flatMap(eid -> core.getStorage().findBundlesToDeliver(eid)) // pull all relevent bundles
                 .flatMap(bid -> core.getStorage().get(bid).toObservable().onErrorComplete()) // pull the bundle from storage
@@ -381,12 +382,12 @@ public class Registrar extends CoreComponent implements RegistrarApi, DeliveryAp
                 })
                 .flatMapCompletable(bundle -> checkRegisteredSink(eidToMatch) // send it
                         .cb.recv(bundle)
-                        .doOnError(e -> core.getLogger().w(TAG, event.eid
+                        .doOnError(e -> log.warn(event.eid
                                 + " : delivery failed for bundle "
                                 + bundle.bid + " dest="
                                 + bundle.getDestination().toString()))
                         .doOnComplete(() -> {
-                            core.getLogger().w(TAG, event.eid
+                            log.warn(event.eid
                                     + " : bundle successfully delivered "
                                     + bundle.bid + " dest="
                                     + bundle.getDestination().toString());

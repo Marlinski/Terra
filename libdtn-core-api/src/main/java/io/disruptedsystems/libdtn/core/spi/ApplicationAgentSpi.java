@@ -1,6 +1,5 @@
 package io.disruptedsystems.libdtn.core.spi;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 
 /**
@@ -10,6 +9,6 @@ import io.disruptedsystems.libdtn.core.api.RegistrarApi;
  */
 public interface ApplicationAgentSpi {
 
-    void init(RegistrarApi registrar, Log logger);
+    void init(RegistrarApi registrar);
 
 }

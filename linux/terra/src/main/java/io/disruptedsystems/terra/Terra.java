@@ -2,11 +2,8 @@ package io.disruptedsystems.terra;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.DtnCore;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -156,20 +153,6 @@ public class Terra implements Callable<Void> {
         conf.get(ConfigurationApi.CoreEntry.ENABLE_CORE_MODULES).update(true);
         conf.get(ConfigurationApi.CoreEntry.MODULES_CORE_PATH).update(moduleDirectory);
 
-        switch (verbose.length) {
-            case 0:
-                conf.get(ConfigurationApi.CoreEntry.LOG_LEVEL).update(Log.LogLevel.WARN);
-                break;
-            case 1:
-                conf.get(ConfigurationApi.CoreEntry.LOG_LEVEL).update(Log.LogLevel.INFO);
-                break;
-            case 2:
-                conf.get(ConfigurationApi.CoreEntry.LOG_LEVEL).update(Log.LogLevel.DEBUG);
-                break;
-            default:
-                conf.get(ConfigurationApi.CoreEntry.LOG_LEVEL).update(Log.LogLevel.VERBOSE);
-        }
-
         /* module configuration */
         for (String enableModule : whitelistModules) {
             conf.getModuleEnabled(enableModule, true).update(true);
@@ -185,8 +168,8 @@ public class Terra implements Callable<Void> {
         conf.getModuleConf("http", "module_http_port", 8080)
                 .update(httpPort);
 
-        CoreApi core = new DtnCore(conf);
-        ((DtnCore) core).init();
+        DtnCore core = new DtnCore(conf);
+        core.init();
         return null;
     }
 

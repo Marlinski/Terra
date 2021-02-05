@@ -1,20 +1,16 @@
 package io.disruptedsystems.libdtn.core;
 
-
-import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.data.eid.Eid;
-import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-
-
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.subjects.BehaviorSubject;
-
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import io.disruptedsystems.libdtn.common.data.eid.Dtn;
+import io.disruptedsystems.libdtn.common.data.eid.Eid;
+import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 /**
  * CoreConfiguration implements the ConfigurationAPI and provides a set of predefined configuration
@@ -24,7 +20,7 @@ import java.util.Set;
  */
 public class CoreConfiguration implements ConfigurationApi {
 
-    private HashMap<String, ConfigurationEntry> entries = new HashMap<>();
+    private final HashMap<String, ConfigurationEntry> entries = new HashMap<>();
 
     /**
      * Configuration entry that stores a single value.
@@ -196,7 +192,6 @@ public class CoreConfiguration implements ConfigurationApi {
         this.createCoreEntry(CoreEntry.MAX_TIMESTAMP_FUTURE, (long) 0);
         this.createCoreEntry(CoreEntry.ALLOW_RECEIVE_ANONYMOUS_BUNDLE, false);
         this.createCoreEntry(CoreEntry.ENABLE_STATUS_REPORTING, true);
-        this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_DETECT_PEER_ON_LAN, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_CONNECTION_AGENT, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_EVENT_PROCESSING, true);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_AA_REGISTRATION, true);
@@ -223,7 +218,6 @@ public class CoreConfiguration implements ConfigurationApi {
         this.createCoreEntry(CoreEntry.BLOB_VOLATILE_MAX_SIZE, 50000);
         this.createCoreEntry(CoreEntry.LIMIT_BLOCKSIZE, (long) 1000000000);
         this.createCoreEntry(CoreEntry.COMPONENT_ENABLE_LOGGING, true);
-        this.createCoreEntry(CoreEntry.LOG_LEVEL, Log.LogLevel.VERBOSE);
         this.createCoreEntry(CoreEntry.ENABLE_LOG_FILE, false);
         this.createCoreEntry(CoreEntry.LOG_FILE_PATH, "");
     }

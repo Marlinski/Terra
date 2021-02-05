@@ -1,8 +1,11 @@
 package io.disruptedsystems.libdtn.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.disruptedsystems.libdtn.common.data.bundlev7.parser.AdministrativeRecordItem;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreComponentApi;
-import io.disruptedsystems.libdtn.common.utils.Log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,25 +20,23 @@ import java.util.Set;
  */
 public abstract class CoreComponent implements CoreComponentApi {
 
+    private static final Logger log = LoggerFactory.getLogger(CoreComponent.class);
+
     private boolean enabled = false;
     private static final Set<CoreComponent> REGISTERED_COMPONENTS = new HashSet<>();
 
     @Override
-    public void initComponent(ConfigurationApi.EntryInterface<Boolean> entry, Log logger) {
+    public void initComponent(ConfigurationApi.EntryInterface<Boolean> entry) {
         REGISTERED_COMPONENTS.add(this);
         entry.observe()
                 .subscribe(
                         enabled -> {
                             this.enabled = enabled;
                             if (enabled) {
-                                if (logger != null) {
-                                    logger.i(getComponentName(), "UP");
-                                }
+                                log.info(getComponentName() + " UP");
                                 componentUp();
                             } else {
-                                if (logger != null) {
-                                    logger.i(getComponentName(), "DOWN");
-                                }
+                                log.info(getComponentName() + " DOWN");
                                 componentDown();
                             }
                         },

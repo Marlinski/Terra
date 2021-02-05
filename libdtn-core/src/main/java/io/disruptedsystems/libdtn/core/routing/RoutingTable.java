@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,13 +26,13 @@ import io.reactivex.rxjava3.core.Observable;
  */
 public class RoutingTable extends CoreComponent implements RoutingTableApi {
 
-    private static final String TAG = "RoutingTable";
+    private static final Logger log = LoggerFactory.getLogger(RoutingTable.class);
 
     // ---- RoutingTable ----
-    private CoreApi core;
+    private final CoreApi core;
     private boolean staticIsEnabled;
-    private Set<TableEntry> staticRoutingTable;
-    private Set<TableEntry> routingTable;
+    private final Set<TableEntry> staticRoutingTable;
+    private final Set<TableEntry> routingTable;
 
 
     public RoutingTable(CoreApi core) {
@@ -40,7 +43,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
 
     @Override
     public String getComponentName() {
-        return TAG;
+        return "RoutingTable";
     }
 
     @Override
@@ -119,7 +122,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         }
 
         if(routingTable.add(new TableEntry(to, nextHop))) {
-            core.getLogger().i(TAG, "route added: " + to.toString() + " -> "
+            log.info("route added: " + to.toString() + " -> "
                     + nextHop.toString());
         }
     }
@@ -131,7 +134,7 @@ public class RoutingTable extends CoreComponent implements RoutingTableApi {
         }
 
         if(routingTable.remove(new TableEntry(to, nextHop))) {
-            core.getLogger().i(TAG, "route deleted: " + to.toString() + " -> "
+            log.info("route deleted: " + to.toString() + " -> "
                     + nextHop.toString());
         }
     }

@@ -4,7 +4,6 @@ import static junit.framework.TestCase.fail;
 
 import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.common.BaseExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.Bundle;
@@ -75,7 +74,7 @@ public class ConvergenceLayerStcpTest {
         }
         new ConvergenceLayerStcp()
                 .setPort(4591)
-                .start(stcpConf, new NullLogger())
+                .start(stcpConf)
                 .subscribe(
                         channel -> {
                             channel.recvBundle(
@@ -152,7 +151,7 @@ public class ConvergenceLayerStcpTest {
         }
         new ConvergenceLayerStcp()
                 .setPort(4592)
-                .start(stcpConf, new NullLogger())
+                .start(stcpConf)
                 .subscribe(
                         channel -> {
                             channel.recvBundle(

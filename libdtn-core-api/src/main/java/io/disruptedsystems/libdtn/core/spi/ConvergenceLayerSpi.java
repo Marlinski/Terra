@@ -1,11 +1,8 @@
 package io.disruptedsystems.libdtn.core.spi;
 
 import java.net.URI;
-import java.util.Set;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
-import io.disruptedsystems.libdtn.core.api.LocalEidApi;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -29,9 +26,8 @@ public interface ConvergenceLayerSpi extends ModuleSpi {
      * actually send and receive bundles.
      *
      * @param api    configuration
-     * @param logger logger instance
      */
-    Observable<ClaChannelSpi> start(ConfigurationApi api, Log logger);
+    Observable<ClaChannelSpi> start(ConfigurationApi api);
 
     /**
      * Return true if the convergence layer is currently running, false otherwise.

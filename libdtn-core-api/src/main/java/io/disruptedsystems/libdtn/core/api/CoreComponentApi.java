@@ -1,7 +1,5 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
-
 /**
  * A core component is a component in the library that can be turned on or off. It works by
  * watching a specific entry in the configuration.
@@ -28,8 +26,7 @@ public interface CoreComponentApi {
      * the entry in the DTNconfiguration that is passed to this method.
      *
      * @param entry  entry in the configuration to watch to turn the component up/down
-     * @param logger instance of logger
      */
-    void initComponent(ConfigurationApi.EntryInterface<Boolean> entry, Log logger);
+    void initComponent(ConfigurationApi.EntryInterface<Boolean> entry);
 
 }

@@ -1,6 +1,9 @@
 package io.disruptedsystems.libdtn.core.routing.strategies.direct;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.stream.Collectors;
@@ -30,10 +33,10 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
-    private static final String TAG = "DirectRouting";
+    private static final Logger log = LoggerFactory.getLogger(DirectRoutingStrategy.class);
     public static final int MAIN_ROUTING_STRATEGY_ID = 1;
 
-    private CoreApi core;
+    private final CoreApi core;
 
     public DirectRoutingStrategy(CoreApi core) {
         this.core = core;
@@ -47,12 +50,12 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     @Override
     public String getRoutingStrategyName() {
-        return TAG;
+        return "DirectRoutingStrategy";
     }
 
     @Override
     public Single<RoutingStrategyResult> route(Bundle bundle) {
-        core.getLogger().v(TAG, "trying to route bundle " + bundle.bid
+        log.debug("trying to route bundle " + bundle.bid
                 + " toward " + bundle.getDestination().toString() + "\n"
                 + core.getRoutingTable().dumpTable().stream()
                 .map(entry -> entry.toString() + "\n").collect(Collectors.joining()));
@@ -80,7 +83,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
     }
 
     private void prepareBundleForTransmission(Bundle bundle, ClaChannelSpi claChannel) {
-        core.getLogger().v(TAG, "5.4-4 "
+        log.debug("5.4-4 "
                 + bundle.bid + " -> "
                 + claChannel.channelEid().toString());
 
@@ -92,8 +95,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
                         .create(block.type)
                         .onPrepareForTransmission(
                                 block,
-                                bundle,
-                                core.getLogger());
+                                bundle);
             } catch (ProcessingException | BlockProcessorFactory.ProcessorNotFoundException pe) {
                 /* ignore */
             }
@@ -102,7 +104,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
 
     @Override
     public Single<RoutingStrategyResult> forwardLater(final Bundle bundle) {
-        core.getLogger().v(TAG, "forward later: " + bundle.bid);
+        log.debug("forward later: " + bundle.bid);
 
         Single<RoutingStrategyResult> store;
         if (!bundle.isTagged("in_storage")) {
@@ -131,7 +133,7 @@ public class DirectRoutingStrategy implements DirectRoutingStrategyApi {
             return;
         }
 
-        core.getLogger().v(TAG, "pull all relevant bundles for cla: " + event.channel.channelEid());
+        log.debug("pull all relevant bundles for cla: " + event.channel.channelEid());
         core.getRoutingTable()
                 .findEidForCla(event.channel.channelEid()) // find all destination enabled by this channel
                 .flatMap(destination -> core.getStorage().findBundlesToForward(destination)) // pull all relevant bundles

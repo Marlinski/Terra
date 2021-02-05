@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.ManifestBlock;
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.ManifestBlock;
  */
 public class ManifestBlockParser {
 
-    static CborParser getParser(ManifestBlock block, Log logger) {
+    static CborParser getParser(ManifestBlock block) {
         return CBOR.parser(); //todo
     }
 

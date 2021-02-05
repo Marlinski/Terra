@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.module.cla.stcp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -17,8 +20,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSeria
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.data.eid.Cla;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.spi.ClaChannelSpi;
 import io.disruptedsystems.libdtn.core.spi.ConvergenceLayerSpi;
@@ -60,11 +61,10 @@ import static io.disruptedsystems.libdtn.module.cla.stcp.Configuration.CLA_STCP_
  */
 public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
 
-    private static final String TAG = "ConvergenceLayerStcp";
+    private static final Logger log = LoggerFactory.getLogger(ConvergenceLayerStcp.class);
 
     private RxTCP.Server<RxTCP.Connection> server;
     private int port = 0;
-    private Log logger = new NullLogger();
 
     public String getModuleName() {
         return "stcp";
@@ -128,14 +128,13 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
     }
 
     @Override
-    public Observable<ClaChannelSpi> start(ConfigurationApi conf, Log logger) {
-        this.logger = logger;
+    public Observable<ClaChannelSpi> start(ConfigurationApi conf) {
         if (port == 0) {
             port = conf.getModuleConf(getModuleName(),
                     CLA_STCP_LISTENING_PORT, CLA_STCP_LISTENING_PORT_DEFAULT).value();
         }
         server = new RxTCP.Server<>(port);
-        logger.i(TAG, "starting a stcp server on port " + port);
+        log.info("starting a stcp server on port " + port);
 
         return server.start()
                 .map(tcpcon -> new Channel(tcpcon, false));
@@ -189,10 +188,10 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
             try {
                 channelEid = ClaStcp.create(tcpcon.getRemoteHost(), tcpcon.getRemotePort());
                 localEid = ClaStcp.create(tcpcon.getLocalHost(), tcpcon.getLocalPort());
-                logger.i(TAG, "new stcp channel openned (initiated="
+                log.info("new stcp channel openned (initiated="
                         + initiator + "): " + channelEid);
             } catch (URISyntaxException | Dtn.InvalidDtnEid | Cla.InvalidClaEid e) {
-                logger.e(TAG, "could not create stcp eid: " + e.toString());
+                log.info("could not create stcp eid: " + e.toString());
                 close();
                 throw e;
             }
@@ -286,7 +285,6 @@ public class ConvergenceLayerStcp implements ConvergenceLayerSpi {
                         })
                         .cbor_parse_custom_item(
                                 () -> new BundleV7Item(
-                                        logger,
                                         toolbox,
                                         blobFactory),
                                 (p, t, item) -> s.onNext(item.bundle));

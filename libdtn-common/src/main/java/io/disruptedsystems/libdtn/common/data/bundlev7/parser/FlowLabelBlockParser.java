@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.FlowLabelBlock;
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.FlowLabelBlock;
  */
 public class FlowLabelBlockParser {
 
-    static CborParser getParser(FlowLabelBlock block,  Log logger) {
+    static CborParser getParser(FlowLabelBlock block) {
         return CBOR.parser(); //todo
     }
 

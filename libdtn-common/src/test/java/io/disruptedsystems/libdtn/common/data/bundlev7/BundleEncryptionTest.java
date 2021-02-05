@@ -11,7 +11,6 @@ import static io.disruptedsystems.libdtn.common.data.security.CipherSuites.BCB_A
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import io.disruptedsystems.libdtn.common.utils.NullLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -26,9 +25,10 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serial
 import io.disruptedsystems.libdtn.common.data.security.BlockConfidentialityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityBlock;
 import io.disruptedsystems.libdtn.common.data.security.SecurityContext;
-import io.disruptedsystems.libdtn.common.utils.Log;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test class to test Bundle Encryption Block.
@@ -37,10 +37,11 @@ import org.junit.Test;
  */
 public class BundleEncryptionTest {
 
+    private static final Logger log = LoggerFactory.getLogger(BundleEncryptionTest.class);
+
     @Test
     public void testSimpleBundleEncryption() {
-        System.out.println("[+] bundle: testing encryption");
-        Log logger = new NullLogger();
+        log.info("[+] bundle: testing encryption");
         Bundle[] bundles = {
                 testBundle1(),
                 testBundle2(),
@@ -68,7 +69,7 @@ public class BundleEncryptionTest {
 
             try {
                 // perform confidentiality
-                bcb.applyTo(b, context, new BaseBlockDataSerializerFactory(), logger);
+                bcb.applyTo(b, context, new BaseBlockDataSerializerFactory());
             } catch (SecurityBlock.SecurityOperationException soe) {
                 System.out.println(soe.getMessage());
                 soe.printStackTrace();
@@ -86,7 +87,6 @@ public class BundleEncryptionTest {
             // prepare parser
             CborParser parser = CBOR.parser().cbor_parse_custom_item(
                     () -> new BundleV7Item(
-                            logger,
                             new BaseExtensionToolbox(),
                             new BaseBlobFactory().setVolatileMaxSize(100000)),
                     (p, t, item) ->
@@ -108,15 +108,14 @@ public class BundleEncryptionTest {
                         e.printStackTrace();
                     });
 
-            logger.v("BundleEncryptionTest", " > decryption <");
+            log.info(" > decryption <");
             for (CanonicalBlock block : res[0].blocks) {
                 if (block.type == BlockConfidentialityBlock.BLOCK_CONFIDENTIALITY_BLOCK_TYPE) {
                     try {
                         ((BlockConfidentialityBlock) block).applyFrom(
                                 res[0],
                                 context,
-                                new BaseExtensionToolbox(),
-                                logger);
+                                new BaseExtensionToolbox());
                     } catch (SecurityBlock.SecurityOperationException e) {
                         e.printStackTrace();
                         fail();

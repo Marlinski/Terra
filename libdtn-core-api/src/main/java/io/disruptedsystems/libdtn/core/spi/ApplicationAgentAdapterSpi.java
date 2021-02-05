@@ -2,7 +2,6 @@ package io.disruptedsystems.libdtn.core.spi;
 
 import io.disruptedsystems.libdtn.common.ExtensionToolbox;
 import io.disruptedsystems.libdtn.common.data.blob.BlobFactory;
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 
@@ -18,13 +17,11 @@ public interface ApplicationAgentAdapterSpi extends ModuleSpi {
      *
      * @param api registrar api
      * @param conf configuration
-     * @param logger logger instance
      * @param toolbox block and eids factories
      * @param factory to create new Blob
      */
     void init(RegistrarApi api,
               ConfigurationApi conf,
-              Log logger,
               ExtensionToolbox toolbox,
               BlobFactory factory);
 

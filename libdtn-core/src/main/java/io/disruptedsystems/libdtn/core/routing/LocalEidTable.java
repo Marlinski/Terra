@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.Set;
 
@@ -16,13 +19,13 @@ import io.disruptedsystems.libdtn.core.api.RegistrarApi;
  */
 public class LocalEidTable implements LocalEidApi {
 
-    private static final String TAG = "LocalEidTable";
+    private static final Logger log = LoggerFactory.getLogger(LocalEidTable.class);
 
     private CoreApi core;
 
     public LocalEidTable(CoreApi core) {
         this.core = core;
-        core.getLogger().i(TAG, "localEid=" + nodeId().toString());
+        log.info("localEid=" + nodeId().toString());
     }
 
     public URI nodeId() {

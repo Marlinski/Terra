@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.AgeBlock;
  */
 public class AgeBlockParser {
 
-    static CborParser getParser(AgeBlock block, Log logger) {
+    static CborParser getParser(AgeBlock block) {
         return CBOR.parser()
                 .cbor_parse_int((parser, tags, i) -> block.age = i)
                 .do_here((parser) -> block.start());

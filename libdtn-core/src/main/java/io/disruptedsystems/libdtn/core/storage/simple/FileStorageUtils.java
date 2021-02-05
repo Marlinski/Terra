@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.storage.simple;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -13,7 +16,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.PrimaryBlockItem;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
 import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.marlinski.libcbor.CBOR;
@@ -73,14 +75,11 @@ class FileStorageUtils {
 
     public static class MetaBundleFileItem implements CborParser.ParseableItem {
 
-        Log logger;
+        private static final Logger log = LoggerFactory.getLogger(MetaBundleFileItem.class);
+
         BundleInfo info = new BundleInfo();
         Collection<CBOR.TextStringItem> tags;
         MetaBundle meta;
-
-        MetaBundleFileItem(Log logger) {
-            this.logger = logger;
-        }
 
         @Override
         public CborParser getItemParser() {
@@ -90,17 +89,17 @@ class FileStorageUtils {
                     .cbor_parse_linear_array(
                             (pos) -> new CBOR.TextStringItem(),
                             (__, ___, col) -> {
-                                logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
+                                log.trace(".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
                                 tags = col;
                             })
                     .cbor_parse_text_string_full((p, str) -> {
-                        logger.v(TAG, ".. blobPath=" + str);
+                        log.trace(".. blobPath=" + str);
                         info.blobPath = str;
                     })
                     .cbor_open_array((p, t, s) -> {  //// META BUNDLE
                     })
                     .cbor_parse_custom_item( /* we are just parsing the primary block */
-                            () -> new PrimaryBlockItem(logger),
+                            PrimaryBlockItem::new,
                             (p, t, item) -> {
                                 meta = new MetaBundle(item.bundle);
                                 for (CBOR.TextStringItem tag : tags) {
@@ -112,15 +111,15 @@ class FileStorageUtils {
 
     public static class BundleFileItem implements CborParser.ParseableItem {
 
-        Log logger;
+        private static final Logger log = LoggerFactory.getLogger(BundleFileItem.class);
+
         ExtensionManagerApi extensions;
         BlobFactory factory;
 
 
-        BundleFileItem(ExtensionManagerApi extensions, BlobFactory factory, Log logger) {
+        BundleFileItem(ExtensionManagerApi extensions, BlobFactory factory) {
             this.extensions = extensions;
             this.factory = factory;
-            this.logger = logger;
         }
 
         BundleInfo info = new BundleInfo();
@@ -135,15 +134,15 @@ class FileStorageUtils {
                     .cbor_parse_linear_array(
                             (pos) -> new CBOR.TextStringItem(),
                             (__, ___, col) -> {
-                                logger.v(TAG, ".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
+                                log.trace(".. tags=" + col.stream().map(CBOR.TextStringItem::value).reduce("", (s, i) -> s + i + " "));
                                 tags = col;
                             })
                     .cbor_parse_text_string_full((p, str) -> {
-                        logger.v(TAG, ".. blobPath=" + str);
+                        log.trace(".. blobPath=" + str);
                         info.blobPath = str;
                     })
                     .cbor_parse_custom_item( //// BUNDLE
-                            () -> new BundleV7Item(logger, extensions, factory),
+                            () -> new BundleV7Item(extensions, factory),
                             (p, t, item) -> {
                                 String path = info.blobPath;
                                 try {
@@ -161,9 +160,9 @@ class FileStorageUtils {
         }
     }
 
-    public static CborParser createBundleParser(ExtensionManagerApi extensions, BlobFactory factory, Log logger) {
+    public static CborParser createBundleParser(ExtensionManagerApi extensions, BlobFactory factory) {
         return CBOR.parser().cbor_parse_custom_item(
-                () -> new FileStorageUtils.BundleFileItem(extensions, factory, logger),
+                () -> new FileStorageUtils.BundleFileItem(extensions, factory),
                 (p, t, item) -> {
                     p.setReg(1, item.bundle); // ret value
                 });

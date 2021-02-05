@@ -1,9 +1,12 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.disruptedsystems.libdtn.common.data.security.CipherSuites;
 import io.disruptedsystems.libdtn.common.data.security.IntegrityResult;
 import io.disruptedsystems.libdtn.common.data.security.SecurityResult;
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 
@@ -14,17 +17,17 @@ import io.marlinski.libcbor.CborParser;
  */
 public class SecurityResultItem implements CborParser.ParseableItem {
 
-    SecurityResultItem(int cipherId, int resultId, Log logger) {
+    private static final Logger log = LoggerFactory.getLogger(SecurityResultItem.class);
+
+    SecurityResultItem(int cipherId, int resultId) {
         this.cipherId = cipherId;
         this.resultId = resultId;
-        this.logger = logger;
     }
 
     public SecurityResult securityResult;
 
-    private int cipherId;
+    private final int cipherId;
     private int resultId;
-    private Log logger;
 
     @Override
     public CborParser getItemParser() {
@@ -36,9 +39,9 @@ public class SecurityResultItem implements CborParser.ParseableItem {
                             },
                             (p, chunk) -> {
                                 securityResult = new IntegrityResult(chunk.array());
-                                logger.v(BundleV7Item.TAG, ".... result_id="
+                                log.trace(".... result_id="
                                         + securityResult.getResultId());
-                                logger.v(BundleV7Item.TAG, ".... result_value="
+                                log.trace(".... result_value="
                                         + new String(chunk.array()));
                             },
                             (p) -> {

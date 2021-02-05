@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.ModuleLoaderApi;
@@ -20,9 +23,9 @@ import java.util.ServiceLoader;
  */
 public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
 
-    private static final String TAG = "ModuleLoader";
+    private static final Logger log = LoggerFactory.getLogger(ModuleLoader.class);
 
-    private CoreApi core;
+    private final CoreApi core;
 
     /**
      * Constructor.
@@ -35,7 +38,7 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
 
     @Override
     public String getComponentName() {
-        return TAG;
+        return "ModuleLoader";
     }
 
     @Override
@@ -58,10 +61,9 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
 
         aa.init(core.getRegistrar(),
                 core.getConf(),
-                core.getLogger(),
                 core.getExtensionManager(),
                 core.getStorage().getBlobFactory());
-        core.getLogger().i(TAG, "AA module loaded: " + aa.getModuleName() + " - UP");
+        log.info("AA module loaded: " + aa.getModuleName() + " - UP");
     }
 
     @Override
@@ -71,7 +73,7 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
         }
 
         core.getClaManager().addCla(cla);
-        core.getLogger().i(TAG, "CLA module loaded: " + cla.getModuleName() + " - UP");
+        log.info("CLA module loaded: " + cla.getModuleName() + " - UP");
     }
 
     @Override
@@ -81,7 +83,7 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
         }
 
         cm.init(core);
-        core.getLogger().i(TAG, "CORE module loaded: " + cm.getModuleName() + " - UP");
+        log.info("CORE module loaded: " + cm.getModuleName() + " - UP");
     }
 
     private void loadAaModulesFromDirectory() {
@@ -96,12 +98,12 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
                             .value()) {
                         loadAaModule(aa);
                     } else {
-                        core.getLogger().i(TAG, "AA module loaded: " + aa.getModuleName()
+                        log.info("AA module loaded: " + aa.getModuleName()
                                 + " - DOWN");
                     }
                 }
             } catch (Exception e) {
-                core.getLogger().w(TAG, "error loading AA module: " + e.getMessage());
+                log.warn("error loading AA module: " + e.getMessage());
             }
         }
     }
@@ -118,12 +120,12 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
                             .value()) {
                         loadClaModule(cla);
                     } else {
-                        core.getLogger().i(TAG, "CLA module loaded: " + cla.getModuleName()
+                        log.info("CLA module loaded: " + cla.getModuleName()
                                 + " - DOWN");
                     }
                 }
             } catch (Exception e) {
-                core.getLogger().w(TAG, "error loading CLA module: " + e.getMessage());
+                log.warn("error loading CLA module: " + e.getMessage());
             }
         }
     }
@@ -139,12 +141,12 @@ public class ModuleLoader extends CoreComponent implements ModuleLoaderApi {
                             .value()) {
                         loadCoreModule(cm);
                     } else {
-                        core.getLogger().i(TAG, "CORE module loaded: " + cm.getModuleName()
+                        log.info("CORE module loaded: " + cm.getModuleName()
                                 + " - DOWN");
                     }
                 }
             } catch (Exception e) {
-                core.getLogger().w(TAG, "error loading CORE module: " + e.getMessage());
+                log.warn("error loading CORE module: " + e.getMessage());
             }
         }
     }

@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.routing;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,12 +28,12 @@ import io.reactivex.rxjava3.core.Single;
  */
 public class RoutingEngine implements RoutingEngineApi {
 
-    private static final String TAG = "RoutingEngine";
+    private static final Logger log = LoggerFactory.getLogger(RoutingEngine.class);
     public static final int ROUTING_ENGINE_STRATEGY_ID = 0;
 
-    private CoreApi core;
-    private DirectRoutingStrategyApi directStrategy;
-    private Map<Integer, RoutingStrategyApi> additionalStrategies;
+    private final CoreApi core;
+    private final DirectRoutingStrategyApi directStrategy;
+    private final Map<Integer, RoutingStrategyApi> additionalStrategies;
 
     /**
      * Constructor.
@@ -50,7 +53,7 @@ public class RoutingEngine implements RoutingEngineApi {
 
     @Override
     public String getRoutingStrategyName() {
-        return TAG;
+        return "RoutingEngine";
     }
 
     @Override
@@ -64,7 +67,7 @@ public class RoutingEngine implements RoutingEngineApi {
 
     @Override
     public Single<RoutingStrategyResult> route(Bundle bundle) {
-        core.getLogger().v(TAG, "trying direct strategy: " + bundle.bid.toString());
+        log.debug("trying direct strategy: " + bundle.bid.toString());
         return directStrategy
                 .route(bundle)
                 .flatMap(directRoutingResult -> {
@@ -84,7 +87,7 @@ public class RoutingEngine implements RoutingEngineApi {
         return findAlternateStrategy(bundle)
                 .flatMap(strategy -> strategy.route(bundle))
                 .onErrorResumeNext(e -> {
-                    core.getLogger().d(TAG, "no alternate strategy found, route later: " + bundle.bid);
+                    log.debug("no alternate strategy found, route later: " + bundle.bid);
                     return directStrategy.forwardLater(bundle);
                 });
     }
@@ -94,10 +97,10 @@ public class RoutingEngine implements RoutingEngineApi {
             for (CanonicalBlock block : bundle.getBlocks(RoutingBlock.ROUTING_BLOCK_TYPE)) {
                 RoutingBlock rb = (RoutingBlock) block;
                 if (additionalStrategies.containsKey(rb.strategyId)) {
-                    core.getLogger().i(TAG, "using routing block strategy id: " + rb.strategyId);
+                    log.debug("using routing block strategy id: " + rb.strategyId);
                     return Single.just(additionalStrategies.get(rb.strategyId));
                 } else {
-                    core.getLogger().i(TAG, "routing block strategy id unknown: " + rb.strategyId);
+                    log.debug("routing block strategy id unknown: " + rb.strategyId);
                 }
             }
         }

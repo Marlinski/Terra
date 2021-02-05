@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.HopCountBlock;
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.HopCountBlock;
  */
 public class HopCountBlockParser {
 
-    static CborParser getParser(HopCountBlock block, Log logger) {
+    static CborParser getParser(HopCountBlock block) {
         return CBOR.parser()
                 .cbor_open_array(2)
                 .cbor_parse_int((p, t, i) -> block.count = i)

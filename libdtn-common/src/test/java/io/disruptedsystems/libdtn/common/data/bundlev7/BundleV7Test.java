@@ -18,7 +18,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.parser.BundleV7Item;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BundleV7Serializer;
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
@@ -164,7 +163,6 @@ public class BundleV7Test {
         Bundle[] res = {null};
         CborParser parser = CBOR.parser().cbor_parse_custom_item(
                 () -> new BundleV7Item(
-                        new SimpleLogger(),
                         new BaseExtensionToolbox(),
                         new BaseBlobFactory().setVolatileMaxSize(100000)),
                 (p, t, item) ->

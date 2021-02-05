@@ -5,8 +5,6 @@ import io.disruptedsystems.libdtn.core.api.ClaManagerApi;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
 import io.disruptedsystems.libdtn.core.api.CoreApi;
 import io.disruptedsystems.libdtn.core.api.DeliveryApi;
-import io.disruptedsystems.libdtn.core.api.DirectRoutingStrategyApi;
-import io.disruptedsystems.libdtn.core.api.EventListenerApi;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
 import io.disruptedsystems.libdtn.core.api.LinkLocalTableApi;
 import io.disruptedsystems.libdtn.core.api.LocalEidApi;
@@ -15,7 +13,6 @@ import io.disruptedsystems.libdtn.core.api.RegistrarApi;
 import io.disruptedsystems.libdtn.core.api.RoutingEngineApi;
 import io.disruptedsystems.libdtn.core.api.RoutingTableApi;
 import io.disruptedsystems.libdtn.core.api.StorageApi;
-import io.disruptedsystems.libdtn.core.events.BundleIndexed;
 import io.disruptedsystems.libdtn.core.events.DtnEvent;
 import io.disruptedsystems.libdtn.core.extension.ExtensionManager;
 import io.disruptedsystems.libdtn.core.network.ClaManager;
@@ -24,15 +21,11 @@ import io.disruptedsystems.libdtn.core.routing.LinkLocalTable;
 import io.disruptedsystems.libdtn.core.routing.LocalEidTable;
 import io.disruptedsystems.libdtn.core.routing.RoutingEngine;
 import io.disruptedsystems.libdtn.core.routing.RoutingTable;
-import io.disruptedsystems.libdtn.core.routing.strategies.direct.DirectRoutingStrategy;
 import io.disruptedsystems.libdtn.core.services.NullAa;
 import io.disruptedsystems.libdtn.core.spi.ApplicationAgentSpi;
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.aa.Registrar;
 import io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage;
-import io.disruptedsystems.libdtn.core.utils.Logger;
 import io.marlinski.librxbus.RxBus;
-import io.marlinski.librxbus.RxThread;
 import io.marlinski.librxbus.Subscribe;
 
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_AA_REGISTRATION;
@@ -51,7 +44,6 @@ public class DtnCore implements CoreApi {
     public static final String TAG = "DtnCore";
 
     private ConfigurationApi conf;
-    private Log logger;
     private LocalEidApi localEidTable;
     private ExtensionManagerApi extensionManager;
     private LinkLocalTableApi linkLocalRouting;
@@ -72,11 +64,10 @@ public class DtnCore implements CoreApi {
         this.conf = conf;
 
         /* core */
-        this.logger = new Logger(conf);
         this.localEidTable = new LocalEidTable(this);
 
         /* BP block toolbox */
-        this.extensionManager = new ExtensionManager(logger);
+        this.extensionManager = new ExtensionManager();
 
         /* storage */
         this.storage = SimpleStorage.create(this);
@@ -100,25 +91,20 @@ public class DtnCore implements CoreApi {
     @Override
     public void init() {
         RxBus.register(this);
-        linkLocalRouting.initComponent(getConf().get(COMPONENT_ENABLE_LINKLOCAL_ROUTING), getLogger());
-        routingTable.initComponent(getConf().get(COMPONENT_ENABLE_ROUTING), getLogger());
-        registrar.initComponent(getConf().get(COMPONENT_ENABLE_AA_REGISTRATION), getLogger());
-        storage.initComponent(getConf().get(COMPONENT_ENABLE_STORAGE), getLogger());
-        moduleLoader.initComponent(getConf().get(COMPONENT_ENABLE_MODULE_LOADER), getLogger());
+        linkLocalRouting.initComponent(getConf().get(COMPONENT_ENABLE_LINKLOCAL_ROUTING));
+        routingTable.initComponent(getConf().get(COMPONENT_ENABLE_ROUTING));
+        registrar.initComponent(getConf().get(COMPONENT_ENABLE_AA_REGISTRATION));
+        storage.initComponent(getConf().get(COMPONENT_ENABLE_STORAGE));
+        moduleLoader.initComponent(getConf().get(COMPONENT_ENABLE_MODULE_LOADER));
 
         /* starts DtnEid core services (AA) */
         ApplicationAgentSpi nullAa = new NullAa();
-        nullAa.init(this.registrar, this.logger);
+        nullAa.init(this.registrar);
     }
 
     @Override
     public ConfigurationApi getConf() {
         return conf;
-    }
-
-    @Override
-    public Log getLogger() {
-        return logger;
     }
 
     @Override

@@ -5,8 +5,6 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.List;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.MockCore;
 import io.disruptedsystems.libdtn.core.api.ConfigurationApi;
@@ -21,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 public class RoutingTableTest {
 
     CoreConfiguration conf = new CoreConfiguration();
-    private CoreApi mockCore = mockCore();
+    private final CoreApi mockCore = mockCore();
 
     public CoreApi mockCore() {
         return new MockCore() {
@@ -33,18 +31,13 @@ public class RoutingTableTest {
             public ConfigurationApi getConf() {
                 return conf;
             }
-
-            @Override
-            public Log getLogger() {
-                return new SimpleLogger();
-            }
         };
     }
 
     @Test
     public void testRoutingTable() {
         RoutingTable table = new RoutingTable(mockCore);
-        table.initComponent(mockCore.getConf().get(COMPONENT_ENABLE_ROUTING), mockCore.getLogger());
+        table.initComponent(mockCore.getConf().get(COMPONENT_ENABLE_ROUTING));
 
         table.addRoute(URI.create("dtn://mars.orbital/station/1"), URI.create("dtn://@cla:stcp:nasa.gov:7777/"));
         table.addRoute(URI.create("dtn://mars.orbital/station/1"), URI.create("dtn://mars.orbital/mule/001"));

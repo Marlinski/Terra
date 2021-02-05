@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.core.network;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,10 +24,10 @@ import io.reactivex.rxjava3.core.Single;
  */
 public class ClaManager implements ClaManagerApi {
 
-    private static final String TAG = "ClaManager";
+    private static final Logger log = LoggerFactory.getLogger(ClaManager.class);
 
-    private CoreApi core;
-    private List<ConvergenceLayerSpi> clas;
+    private final CoreApi core;
+    private final List<ConvergenceLayerSpi> clas;
 
     public ClaManager(CoreApi core) {
         this.core = core;
@@ -44,17 +47,17 @@ public class ClaManager implements ClaManagerApi {
     @Override
     public void addCla(ConvergenceLayerSpi cla) {
         clas.add(cla);
-        cla.start(core.getConf(), core.getLogger()).subscribe(
+        cla.start(core.getConf()).subscribe(
                 dtnChannel -> {
                     RxBus.post(new ChannelOpened(dtnChannel));
                 },
                 e -> {
-                    core.getLogger().w(TAG, "can't start CLA " + cla.getModuleName()
+                    log.warn("can't start CLA " + cla.getModuleName()
                             + ": " + e.getMessage());
                     clas.remove(cla);
                 },
                 () -> {
-                    core.getLogger().w(TAG, "CLA " + cla.getModuleName() + " has stopped");
+                    log.warn("CLA " + cla.getModuleName() + " has stopped");
                     clas.remove(cla);
                 });
     }
@@ -74,14 +77,14 @@ public class ClaManager implements ClaManagerApi {
         String parameters = Cla.getClaParametersUnsafe(eid);
         final String opp = "cla=" + scheme + " peer=" + parameters;
 
-        core.getLogger().d(TAG, "trying to create an opportunity with " + opp);
+        log.info("trying to create an opportunity with " + opp);
         for (ConvergenceLayerSpi cla : clas) {
             if (scheme.equals(cla.getModuleName())) {
                 return cla.open(eid)
-                        .doOnError(e -> core.getLogger().d(TAG, "opportunity creation failed "
+                        .doOnError(e -> log.warn("opportunity creation failed "
                                 + opp + ": " + e.getMessage()))
                         .doOnSuccess((c) -> {
-                            core.getLogger().d(TAG, "opportunity creation success: " + opp);
+                            log.info("opportunity creation success: " + opp);
                             RxBus.post(new ChannelOpened(c));
                         });
             }

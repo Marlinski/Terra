@@ -1,7 +1,5 @@
 package io.disruptedsystems.libdtn.core.api;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
-
 /**
  * API for the core. It basically acts as a hub to access all of the subcomponents.
  *
@@ -15,8 +13,6 @@ public interface CoreApi {
     void init();
 
     ConfigurationApi getConf();
-
-    Log getLogger();
 
     LocalEidApi getLocalEidTable();
 

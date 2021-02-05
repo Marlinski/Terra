@@ -7,8 +7,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProces
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.MockCore;
 import io.disruptedsystems.libdtn.core.MockExtensionManager;
@@ -60,11 +58,6 @@ public class VolatileStorageTest {
                     }
                 };
             }
-
-            @Override
-            public Log getLogger() {
-                return new SimpleLogger();
-            }
         };
     }
 
@@ -72,9 +65,7 @@ public class VolatileStorageTest {
     public void testVolatileStoreBundle() {
         System.out.println("[+] Volatile Storage");
         StorageApi storage = SimpleStorage.create(mockCore);
-        storage.initComponent(
-                mockCore.getConf().get(COMPONENT_ENABLE_STORAGE),
-                mockCore.getLogger());
+        storage.initComponent(mockCore.getConf().get(COMPONENT_ENABLE_STORAGE));
 
         System.out.println("[.] clear VolatileStorage");
         storage.clear().subscribe();

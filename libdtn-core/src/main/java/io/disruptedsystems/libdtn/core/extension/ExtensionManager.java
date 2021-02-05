@@ -12,17 +12,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorF
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 
-
-
-
-
-
-
-
-
-
-
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.disruptedsystems.libdtn.core.api.ExtensionManagerApi;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -44,21 +33,15 @@ public class ExtensionManager implements ExtensionManagerApi {
     public static final String TAG = "ExtensionManager";
 
     /* extension block */
-    private Map<Integer, Supplier<CanonicalBlock>> extensionBlockFactory = new HashMap<>();
-    private Map<Integer, Supplier<CborParser>> extensionBlockParserFactory = new HashMap<>();
-    private Map<Integer, Supplier<CborEncoder>> extensionBlockSerializerFactory = new HashMap<>();
-    private Map<Integer, Supplier<BlockProcessor>> extensionBlockProcessorFactory = new HashMap<>();
-
-    private Log logger;
-
-    public ExtensionManager(Log logger) {
-        this.logger = logger;
-    }
+    private final Map<Integer, Supplier<CanonicalBlock>> extensionBlockFactory = new HashMap<>();
+    private final Map<Integer, Supplier<CborParser>> extensionBlockParserFactory = new HashMap<>();
+    private final Map<Integer, Supplier<CborEncoder>> extensionBlockSerializerFactory = new HashMap<>();
+    private final Map<Integer, Supplier<BlockProcessor>> extensionBlockProcessorFactory = new HashMap<>();
 
     /*** BLOCK EXTENSION LOGIC ***/
 
-    private BlockFactory coreBlockFactory = new BlockFactory() {
-        BlockFactory baseBlockFactory = new BaseBlockFactory();
+    private final BlockFactory coreBlockFactory = new BlockFactory() {
+        final BlockFactory baseBlockFactory = new BaseBlockFactory();
 
         @Override
         public CanonicalBlock create(int type) throws UnknownBlockTypeException {
@@ -73,16 +56,15 @@ public class ExtensionManager implements ExtensionManagerApi {
         }
     };
 
-    private BlockDataParserFactory coreBlockParserFactory = new BlockDataParserFactory() {
-        BaseBlockDataParserFactory baseBlockParserFactory = new BaseBlockDataParserFactory();
+    private final BlockDataParserFactory coreBlockParserFactory = new BlockDataParserFactory() {
+        final BaseBlockDataParserFactory baseBlockParserFactory = new BaseBlockDataParserFactory();
 
         @Override
         public CborParser create(int type,
                                  CanonicalBlock block,
-                                 BlobFactory blobFactory,
-                                 Log logger) throws UnknownBlockTypeException {
+                                 BlobFactory blobFactory) throws UnknownBlockTypeException {
             try {
-                return baseBlockParserFactory.create(type, block, blobFactory, logger);
+                return baseBlockParserFactory.create(type, block, blobFactory);
             } catch (UnknownBlockTypeException ubte) {
                 if (extensionBlockFactory.containsKey(type)) {
                     return extensionBlockParserFactory.get(type).get();
@@ -92,8 +74,8 @@ public class ExtensionManager implements ExtensionManagerApi {
         }
     };
 
-    private BlockDataSerializerFactory coreSerializerFactory = new BlockDataSerializerFactory() {
-        BaseBlockDataSerializerFactory baseSerializerFactory = new BaseBlockDataSerializerFactory();
+    private final BlockDataSerializerFactory coreSerializerFactory = new BlockDataSerializerFactory() {
+        final BaseBlockDataSerializerFactory baseSerializerFactory = new BaseBlockDataSerializerFactory();
 
         @Override
         public CborEncoder create(CanonicalBlock block) throws UnknownBlockTypeException {
@@ -108,8 +90,8 @@ public class ExtensionManager implements ExtensionManagerApi {
         }
     };
 
-    private BlockProcessorFactory coreProcessorFactory = new BlockProcessorFactory() {
-        BaseBlockProcessorFactory baseBlockProcessorFactory = new BaseBlockProcessorFactory();
+    private final BlockProcessorFactory coreProcessorFactory = new BlockProcessorFactory() {
+        final BaseBlockProcessorFactory baseBlockProcessorFactory = new BaseBlockProcessorFactory();
 
         @Override
         public BlockProcessor create(int type) throws ProcessorNotFoundException {

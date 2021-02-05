@@ -1,6 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
@@ -14,33 +16,28 @@ import io.disruptedsystems.libdtn.common.data.StatusReport;
  */
 public class AdministrativeRecordItem implements CborParser.ParseableItem {
 
-    static final String TAG = "AdministrativeRecordItem";
-
-    public AdministrativeRecordItem(Log logger) {
-        this.logger = logger;
-    }
+    private static final Logger log = LoggerFactory.getLogger(AdministrativeRecordItem.class);
 
     public AdministrativeRecord record;
 
-    private Log logger;
     private CborParser body;
 
     @Override
     public CborParser getItemParser() {
         return CBOR.parser()
                 .cbor_open_array((parser, tags, i) -> {
-                    logger.v(TAG, ". array size=" + i);
+                    log.trace(". array size=" + i);
                     if (i != 2) {
                         throw new RxParserException("wrong number of element in canonical block");
                     }
                 })
                 .cbor_parse_int((parser, tags, i) -> { // block PAYLOAD_BLOCK_TYPE
-                    logger.v(TAG, ". PAYLOAD_BLOCK_TYPE=" + i);
+                    log.trace(". PAYLOAD_BLOCK_TYPE=" + i);
                     switch ((int) i) {
                         case StatusReport.STATUS_REPORT_ADM_TYPE:
                             record = new StatusReport();
                             body = StatusReportParser
-                                    .getParser((StatusReport) record, logger);
+                                    .getParser((StatusReport) record);
                             break;
                         default:
                             throw new RxParserException("administrative record type unknown: " + i);

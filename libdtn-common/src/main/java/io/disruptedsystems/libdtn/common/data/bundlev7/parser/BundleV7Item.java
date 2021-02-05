@@ -1,6 +1,9 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
@@ -17,26 +20,23 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.ProcessingExcep
  */
 public class BundleV7Item implements CborParser.ParseableItem {
 
+    private static final Logger log = LoggerFactory.getLogger(BundleV7Item.class);
     static final String TAG = "BundleV7Item";
 
     /**
      * A Bundle Item requires a toolbox to be able to parse extension block and
      * extension eid. It also need a BlobFactory to create a new Blob to hold the payload.
      *
-     * @param logger      to output parsing information
      * @param toolbox     for the data structure factory
      * @param blobFactory to create blobs.
      */
-    public BundleV7Item(Log logger,
-                        ExtensionToolbox toolbox,
+    public BundleV7Item(ExtensionToolbox toolbox,
                         BlobFactory blobFactory) {
-        this.logger = logger;
         this.toolbox = toolbox;
         this.blobFactory = blobFactory;
     }
 
     public Bundle bundle = null;
-    private Log logger;
     private ExtensionToolbox toolbox;
     private BlobFactory blobFactory;
 
@@ -45,18 +45,18 @@ public class BundleV7Item implements CborParser.ParseableItem {
     public CborParser getItemParser() {
         return CBOR.parser()
                 .cbor_open_array((parser, tags, size) -> {
-                    logger.v(TAG, "[+] parsing new bundle");
+                    log.trace( "[+] parsing new bundle");
                 })
                 .cbor_parse_custom_item(
-                        () -> new PrimaryBlockItem(logger),
+                        () -> new PrimaryBlockItem(),
                         (parser, tags, item) -> {
-                            logger.v(TAG, "-> primary block parsed");
+                            log.trace( "-> primary block parsed");
                             bundle = item.bundle;
                         })
                 .cbor_parse_array_items(
-                        () -> new CanonicalBlockItem(logger, toolbox, blobFactory),
+                        () -> new CanonicalBlockItem(toolbox, blobFactory),
                         (parser, tags, item) -> {
-                            logger.v(TAG, "-> canonical block parsed");
+                            log.trace( "-> canonical block parsed");
 
                             /* early validation of block */
                             try {

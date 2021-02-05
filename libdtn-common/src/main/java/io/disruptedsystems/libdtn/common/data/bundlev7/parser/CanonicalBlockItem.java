@@ -1,6 +1,9 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
@@ -23,27 +26,24 @@ import java.nio.ByteBuffer;
  */
 public class CanonicalBlockItem implements CborParser.ParseableItem {
 
+    private static final Logger log = LoggerFactory.getLogger(CanonicalBlockItem.class);
     public static final String TAG_CANONICAL_BLOCK_CRC_CHECK = "crc_check";
 
     /**
      * A BundleItem requires a toolbox to be able to parse extension {@link Block} and
      * extension eid. It also need a BlobFactory to create a new Blob to hold the payload.
      *
-     * @param logger      to output parsing information
      * @param toolbox     for the data structure factory
      * @param blobFactory to create blobs.
      */
-    public CanonicalBlockItem(Log logger,
-                              ExtensionToolbox toolbox,
+    public CanonicalBlockItem(ExtensionToolbox toolbox,
                               BlobFactory blobFactory) {
-        this.logger = logger;
         this.toolbox = toolbox;
         this.blobFactory = blobFactory;
     }
 
     public CanonicalBlock block;
 
-    private Log logger;
     private ExtensionToolbox toolbox;
     private BlobFactory blobFactory;
     private CborParser payloadParser;
@@ -56,20 +56,20 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
     public CborParser getItemParser() {
         return CBOR.parser()
                 .do_here((p) -> {
-                    logger.v(BundleV7Item.TAG, ". preparing canonical block Crc");
+                    log.trace(". preparing canonical block Crc");
                     crc16 = Crc.init(Crc.CrcType.CRC16); // prepare Crc16 feeding
                     crc32 = Crc.init(Crc.CrcType.CRC32); // prepare Crc32 feeding
                 })
                 .do_for_each("crc-16", (p, buffer) -> crc16.read(buffer))
                 .do_for_each("crc-32", (p, buffer) -> crc32.read(buffer))
                 .cbor_open_array((parser, tags, i) -> {
-                    logger.v(BundleV7Item.TAG, ". array size=" + i);
+                    log.trace(". array size=" + i);
                     if ((i != 5) && (i != 6)) {
                         throw new RxParserException("wrong number of element in canonical block");
                     }
                 })
                 .cbor_parse_int((p, t, i) -> { // block PAYLOAD_BLOCK_TYPE
-                    logger.v(BundleV7Item.TAG, ". PAYLOAD_BLOCK_TYPE=" + i);
+                    log.trace(". PAYLOAD_BLOCK_TYPE=" + i);
                     try {
                         block = toolbox.getBlockFactory().create((int) i);
                     } catch (BlockFactory.UnknownBlockTypeException ubte) {
@@ -80,27 +80,26 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
                         payloadParser = toolbox.getBlockDataParserFactory().create(
                                 (int) i,
                                 block,
-                                blobFactory,
-                                logger);
+                                blobFactory);
                     } catch (BlockDataParserFactory.UnknownBlockTypeException ubte) {
                         payloadParser = BlockBlobParser.getParser(
-                                (BlockBlob) block, blobFactory, logger);
+                                (BlockBlob) block, blobFactory);
                     }
                 })
                 .cbor_parse_int((p, t, i) -> {
-                    logger.v(BundleV7Item.TAG, ". number=" + i);
+                    log.trace(". number=" + i);
                     block.number = (int) i;
                 })
                 .cbor_parse_int((p, t, i) -> {
-                    logger.v(BundleV7Item.TAG, ". procV7flags=" + i);
+                    log.trace(". procV7flags=" + i);
                     block.procV7flags = i;
                     if (block.getV7Flag(BlockHeader.BlockV7Flags.BLOCK_IS_ENCRYPTED)) {
                         payloadParser = BlockBlobParser.getParser(
-                                (BlockBlob) block, blobFactory, logger);
+                                (BlockBlob) block, blobFactory);
                     }
                 })
                 .cbor_parse_int((p, t, i) -> {
-                    logger.v(BundleV7Item.TAG, ". crc=" + i);
+                    log.trace(". crc=" + i);
                     switch ((int) i) {
                         case 0:
                             block.crcType = BlockHeader.CrcFieldType.NO_CRC;
@@ -124,7 +123,7 @@ public class CanonicalBlockItem implements CborParser.ParseableItem {
                 .do_here(p -> p.insert_now(payloadParser))
                 .do_here(p -> p.insert_now(closeCrc))  // validate closeCrc
                 .do_here(p -> {
-                    logger.v(BundleV7Item.TAG, ". crc_check=" + crcOk);
+                    log.trace(". crc_check=" + crcOk);
                     block.tag(TAG_CANONICAL_BLOCK_CRC_CHECK, crcOk);
                 }); // tag the block
     }

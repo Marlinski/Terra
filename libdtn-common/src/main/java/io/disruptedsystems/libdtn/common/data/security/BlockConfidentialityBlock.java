@@ -1,5 +1,8 @@
 package io.disruptedsystems.libdtn.common.data.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
@@ -16,7 +19,6 @@ import io.disruptedsystems.libdtn.common.data.blob.WritableBlob;
 import io.disruptedsystems.libdtn.common.data.bundlev7.parser.CanonicalBlockItem;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockHeaderSerializer;
-import io.disruptedsystems.libdtn.common.utils.Log;
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborEncoder;
 import io.marlinski.libcbor.CborParser;
@@ -28,7 +30,8 @@ import io.marlinski.libcbor.CborParser;
  */
 public class BlockConfidentialityBlock extends AbstractSecurityBlock {
 
-    public static final String TAG = "BlockConfidentialityBlock";
+    private static final Logger log = LoggerFactory.getLogger(BlockConfidentialityBlock.class);
+
     public static final int BLOCK_CONFIDENTIALITY_BLOCK_TYPE = 194;
 
     public BlockConfidentialityBlock() {
@@ -88,16 +91,15 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
      * @param bundle            to apply the security block to.
      * @param context           security context.
      * @param serializerFactory to serialize target block.
-     * @param logger            instance.
      * @throws SecurityOperationException if there was an issue during encryption.
      */
     // CHECKSTYLE IGNORE IllegalCatch
     public void applyTo(Bundle bundle,
                         SecurityContext context,
-                        BlockDataSerializerFactory serializerFactory,
-                        Log logger) throws SecurityOperationException {
+                        BlockDataSerializerFactory serializerFactory)
+            throws SecurityOperationException {
         for (int blockNumber : securityTargets) {
-            logger.v(TAG, ".. applying encryption to: " + blockNumber);
+            log.trace(".. applying encryption to: " + blockNumber);
             CanonicalBlock block = bundle.getBlock(blockNumber);
             if (block != null) {
                 // init cipher
@@ -195,16 +197,14 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
      * @param bundle  to apply the security block to.
      * @param context security context.
      * @param toolbox to parse the decoded block.
-     * @param logger  instance.
      * @throws SecurityOperationException if there was an issue during encryption.
      */
     public void applyFrom(Bundle bundle,
                           SecurityContext context,
-                          ExtensionToolbox toolbox,
-                          Log logger) throws SecurityOperationException {
+                          ExtensionToolbox toolbox) throws SecurityOperationException {
         for (int blockNumber : securityTargets) {
             CanonicalBlock block = bundle.getBlock(blockNumber);
-            logger.v(TAG, ".. applying decryption to: " + blockNumber);
+            log.trace(".. applying decryption to: " + blockNumber);
             if (block instanceof BlockBlob && block.getV7Flag(BlockV7Flags.BLOCK_IS_ENCRYPTED)) {
 
                 // init cipher
@@ -221,7 +221,7 @@ public class BlockConfidentialityBlock extends AbstractSecurityBlock {
                     // decrypted block
                     CborParser parser = CBOR.parser()
                             .cbor_parse_custom_item(
-                                    () -> new CanonicalBlockItem(logger, toolbox,
+                                    () -> new CanonicalBlockItem(toolbox,
                                             (size) -> new VolatileBlob(1024)),
                                     (p, t, item) -> {
                                         bundle.updateBlock(block.number, item.block);

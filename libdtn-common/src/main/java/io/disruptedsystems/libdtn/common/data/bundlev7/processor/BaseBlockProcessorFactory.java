@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.processor;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.Bundle;
 import io.disruptedsystems.libdtn.common.data.CanonicalBlock;
@@ -26,25 +26,25 @@ public class BaseBlockProcessorFactory implements BlockProcessorFactory {
         }
 
         @Override
-        public boolean onReceptionProcessing(CanonicalBlock block, Bundle bundle, Log logger)
+        public boolean onReceptionProcessing(CanonicalBlock block, Bundle bundle)
                 throws ProcessingException {
             return false;
         }
 
         @Override
-        public boolean onPutOnStorage(CanonicalBlock block, Bundle bundle, Log logger)
+        public boolean onPutOnStorage(CanonicalBlock block, Bundle bundle)
                 throws ProcessingException {
             return false;
         }
 
         @Override
-        public boolean onPullFromStorage(CanonicalBlock block, Bundle bundle, Log logger)
+        public boolean onPullFromStorage(CanonicalBlock block, Bundle bundle)
                 throws ProcessingException {
             return false;
         }
 
         @Override
-        public boolean onPrepareForTransmission(CanonicalBlock block, Bundle bundle, Log logger)
+        public boolean onPrepareForTransmission(CanonicalBlock block, Bundle bundle)
                 throws ProcessingException {
             return false;
         }

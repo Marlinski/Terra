@@ -1,10 +1,13 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.disruptedsystems.libdtn.common.data.eid.Dtn;
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.marlinski.libcbor.rxparser.RxParserException;
@@ -19,11 +22,7 @@ import static io.disruptedsystems.libdtn.common.data.eid.Ipn.EID_IPN_IANA_VALUE;
  */
 public class EidItem implements CborParser.ParseableItem {
 
-    public EidItem(Log logger) {
-        this.logger = logger;
-    }
-
-    private Log logger;
+    private static final Logger log = LoggerFactory.getLogger(EidItem.class);
 
     public URI eid;
     public int ianaNumber;
@@ -34,7 +33,7 @@ public class EidItem implements CborParser.ParseableItem {
         return CBOR.parser()
                 .cbor_open_array(2)
                 .cbor_parse_int((p, t, i) -> {
-                    logger.v(BundleV7Item.TAG, ".. iana_value=" + i);
+                    log.trace(".. iana_value=" + i);
                     this.ianaNumber = (int) i;
                     switch ((int) i) {
                         case EID_IPN_IANA_VALUE:
@@ -52,11 +51,11 @@ public class EidItem implements CborParser.ParseableItem {
     private CborParser parseIpn = CBOR.parser()
             .cbor_open_array(2)
             .cbor_parse_int((p, t, node) -> {
-                logger.v(BundleV7Item.TAG, ".. ipn_node =" + node);
+                log.trace(".. ipn_node =" + node);
                 this.node = node;
             })
             .cbor_parse_int((p, t, service) -> {
-                logger.v(BundleV7Item.TAG, ".. ipn_service =" + service);
+                log.trace(".. ipn_service =" + service);
                 eid = URI.create("ipn:" + node + "." + service);
             });
 
@@ -72,7 +71,7 @@ public class EidItem implements CborParser.ParseableItem {
                                 }
                             },
                             (p, str) -> {
-                                logger.v(BundleV7Item.TAG, ".. dtn_ssp=" + str);
+                                log.trace(".. dtn_ssp=" + str);
                                 try {
                                     eid = new URI("dtn", str, null);
                                 } catch (URISyntaxException efe) {
@@ -90,7 +89,7 @@ public class EidItem implements CborParser.ParseableItem {
                     (p, ssp) -> {
                         try {
                             eid = new URI(ianaNumber+":"+ssp);
-                            logger.v(BundleV7Item.TAG, ".. eid scheme=" + ianaNumber + " ssp=" + ssp);
+                            log.trace(".. eid scheme=" + ianaNumber + " ssp=" + ssp);
                         } catch (URISyntaxException efe) {
                             throw new RxParserException("error parsing eid: " + efe.getMessage());
                         }

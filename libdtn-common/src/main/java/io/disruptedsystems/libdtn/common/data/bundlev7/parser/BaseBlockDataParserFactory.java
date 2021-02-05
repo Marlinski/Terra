@@ -3,7 +3,7 @@ package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 import io.disruptedsystems.libdtn.common.data.security.BlockAuthenticationBlock;
 import io.disruptedsystems.libdtn.common.data.security.BlockConfidentialityBlock;
 import io.disruptedsystems.libdtn.common.data.security.BlockIntegrityBlock;
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.AgeBlock;
 import io.disruptedsystems.libdtn.common.data.BlockBlob;
@@ -28,43 +28,42 @@ public class BaseBlockDataParserFactory implements BlockDataParserFactory {
     @Override
     public CborParser create(int type,
                              CanonicalBlock block,
-                             BlobFactory blobFactory,
-                             Log logger) throws UnknownBlockTypeException {
+                             BlobFactory blobFactory) throws UnknownBlockTypeException {
         switch (type) {
             case PayloadBlock.PAYLOAD_BLOCK_TYPE:
                 return BlockBlobParser
-                        .getParser((BlockBlob) block, blobFactory, logger);
+                        .getParser((BlockBlob) block, blobFactory);
             case RoutingBlock.ROUTING_BLOCK_TYPE:
                 return RoutingBlockParser
-                        .getParser((RoutingBlock) block, logger);
+                        .getParser((RoutingBlock) block);
             case ManifestBlock.MANIFEST_BLOCK_TYPE:
                 return ManifestBlockParser
-                        .getParser((ManifestBlock) block, logger);
+                        .getParser((ManifestBlock) block);
             case FlowLabelBlock.FLOW_LABEL_BLOCK_TYPE:
                 return FlowLabelBlockParser
-                        .getParser((FlowLabelBlock) block, logger);
+                        .getParser((FlowLabelBlock) block);
             case PreviousNodeBlock.PREVIOUS_NODE_BLOCK_TYPE:
                 return PreviousNodeBlockParser
-                        .getParser((PreviousNodeBlock) block, logger);
+                        .getParser((PreviousNodeBlock) block);
             case AgeBlock.AGE_BLOCK_TYPE:
                 return AgeBlockParser
-                        .getParser((AgeBlock) block, logger);
+                        .getParser((AgeBlock) block);
             case HopCountBlock.HOP_COUNT_BLOCK_TYPE:
                 return HopCountBlockParser
-                        .getParser((HopCountBlock) block, logger);
+                        .getParser((HopCountBlock) block);
             case BlockAuthenticationBlock.BLOCK_AUTHENTICATION_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockAuthenticationBlock) block, logger);
+                        .getParser((BlockAuthenticationBlock) block);
             case BlockIntegrityBlock.BLOCK_INTEGRITY_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockIntegrityBlock) block, logger);
+                        .getParser((BlockIntegrityBlock) block);
             case BlockConfidentialityBlock.BLOCK_CONFIDENTIALITY_BLOCK_TYPE:
                 return SecurityBlockParser
-                        .getParser((BlockConfidentialityBlock) block, logger);
+                        .getParser((BlockConfidentialityBlock) block);
             default:
                 if (block instanceof UnknownExtensionBlock) {
                     return BlockBlobParser
-                            .getParser((BlockBlob) block, blobFactory, logger);
+                            .getParser((BlockBlob) block, blobFactory);
                 } else {
                     throw new UnknownBlockTypeException();
                 }

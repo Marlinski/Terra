@@ -1,6 +1,6 @@
 package io.disruptedsystems.libdtn.common.data.bundlev7.parser;
 
-import io.disruptedsystems.libdtn.common.utils.Log;
+
 import io.marlinski.libcbor.CBOR;
 import io.marlinski.libcbor.CborParser;
 import io.disruptedsystems.libdtn.common.data.RoutingBlock;
@@ -12,7 +12,7 @@ import io.disruptedsystems.libdtn.common.data.RoutingBlock;
  */
 public class RoutingBlockParser {
 
-    static CborParser getParser(RoutingBlock block, Log logger) {
+    static CborParser getParser(RoutingBlock block) {
         return CBOR.parser(); //todo
     }
 

@@ -1,6 +1,8 @@
 package io.disruptedsystems.libdtn.core.storage;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,8 +25,6 @@ import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BaseBlockProces
 import io.disruptedsystems.libdtn.common.data.bundlev7.processor.BlockProcessorFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BaseBlockDataSerializerFactory;
 import io.disruptedsystems.libdtn.common.data.bundlev7.serializer.BlockDataSerializerFactory;
-import io.disruptedsystems.libdtn.common.utils.Log;
-import io.disruptedsystems.libdtn.common.utils.SimpleLogger;
 import io.disruptedsystems.libdtn.core.CoreConfiguration;
 import io.disruptedsystems.libdtn.core.MockCore;
 import io.disruptedsystems.libdtn.core.MockExtensionManager;
@@ -35,7 +35,6 @@ import io.disruptedsystems.libdtn.core.api.StorageApi;
 import io.disruptedsystems.libdtn.core.storage.simple.SimpleStorage;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.BLOB_VOLATILE_MAX_SIZE;
 import static io.disruptedsystems.libdtn.core.api.ConfigurationApi.CoreEntry.COMPONENT_ENABLE_STORAGE;
@@ -51,11 +50,10 @@ import static org.junit.Assert.fail;
  * @author Lucien Loiseau on 04/10/18.
  */
 public class FileStorageTest {
-
-    private CoreConfiguration conf = new CoreConfiguration();
-    private File dir = new File("/tmp/bundle/");
+    private final CoreConfiguration conf = new CoreConfiguration();
+    private final File dir = new File("/tmp/bundle/");
     private StorageApi storage;
-    private CoreApi mockCore = mockCore();
+    private final CoreApi mockCore = mockCore();
 
 
     private void cleanup() {
@@ -97,11 +95,6 @@ public class FileStorageTest {
                     }
                 };
             }
-
-            @Override
-            public Log getLogger() {
-                return new SimpleLogger().set(Log.LogLevel.DEBUG);
-            }
         };
     }
 
@@ -126,7 +119,7 @@ public class FileStorageTest {
             ///////////// SETUP
             System.out.println("[+] SimpleStorage");
             storage = SimpleStorage.create(mockCore);
-            storage.initComponent(mockCore.getConf().get(COMPONENT_ENABLE_STORAGE), mockCore.getLogger());
+            storage.initComponent(mockCore.getConf().get(COMPONENT_ENABLE_STORAGE));
 
             System.out.println("[.] clear SimpleStorage");
             storage.clear().blockingAwait();
