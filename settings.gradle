@@ -16,10 +16,6 @@ project(":libdtn-module-hello").projectDir = file("modules/core/libdtn-module-he
 include ':libdtn-module-ipdiscovery'
 project(":libdtn-module-ipdiscovery").projectDir = file("modules/core/libdtn-module-ipdiscovery")
 
-// module http
-include ':libdtn-module-http'
-project(":libdtn-module-http").projectDir = file("modules/core/libdtn-module-http")
-
 // binaries
 include ':terra', ':dtnping', ':dtnconf', 'dtncat'
 project(":terra").projectDir = file("linux/terra")
