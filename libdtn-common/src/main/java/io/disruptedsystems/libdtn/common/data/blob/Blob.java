@@ -58,7 +58,6 @@ public interface Blob extends Taggable {
 
     /**
      * return true if the entire Blob is hold into a file. A FileBlob always returns true,
-     * VersatileBLOB may return true only if its volatile part is null.
      *
      * @return true if blob is a file, false otherwise.
      */
@@ -74,8 +73,7 @@ public interface Blob extends Taggable {
 
     /**
      * Move the blob into a file. If the file does not exists it creates it. For volatile blob
-     * (such as UntrackedByteBufferBlob, ByteBufferBlob, GrowingBLOB), this method simply
-     * serializes the blob into a file. For file-based Blob (FileBlob, VersatileBLOB), this
+     * this method simply serializes the blob into a file. For file-based Blob, this
      * operation simply moves the file to its new location and update the fileBLOB accordingly.
      *
      * @param path new path to move the Blob to.

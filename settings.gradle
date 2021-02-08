@@ -17,8 +17,9 @@ include ':libdtn-module-ipdiscovery'
 project(":libdtn-module-ipdiscovery").projectDir = file("modules/core/libdtn-module-ipdiscovery")
 
 // binaries
-include ':terra', ':dtnping', ':dtnconf', 'dtncat'
+include ':terra', ':dtnping', ':dtnconf', 'dtncat', 'bundle'
 project(":terra").projectDir = file("linux/terra")
 //project(":dtnping").projectDir = file("linux/dtnping")
+project(":bundle").projectDir = file("linux/bundle")
 project(":dtnconf").projectDir = file("linux/dtnconf")
 //project(":dtncat").projectDir = file("linux/dtncat")

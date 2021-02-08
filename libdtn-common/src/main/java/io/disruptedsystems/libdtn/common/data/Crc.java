@@ -219,7 +219,7 @@ public abstract class Crc {
         @Override
         public void read(ByteBuffer buffer) {
             while (buffer.hasRemaining()) {
-                crc16 = (short) ((crc16 >> 8)
+                crc16 = (short) ((crc16 >>> 8)
                         ^ (short) CRC16_X25_TABLE[((crc16 & 0xff)
                         ^ buffer.get()) & 0xff]);
             }
@@ -249,7 +249,7 @@ public abstract class Crc {
         @Override
         public void read(ByteBuffer buffer) {
             while (buffer.hasRemaining()) {
-                crc32 = ((crc32 >> 8) ^ CRC32_TABLE[((crc32 & 0xff) ^ buffer.get()) & 0xff]);
+                crc32 = ((crc32 >>> 8) ^ CRC32_TABLE[(crc32 ^ buffer.get()) & 0xff]);
             }
         }
 

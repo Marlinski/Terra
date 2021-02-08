@@ -1,4 +1,4 @@
-package io.disruptedsystems.dtncat;
+package io.disruptedsystems.bundle;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

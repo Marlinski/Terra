@@ -21,6 +21,11 @@ mv linux-dtn/terra/bin/* linux-dtn/bin
 mv linux-dtn/terra/lib/* linux-dtn/lib
 rm -rf linux-dtn/terra/
 
+tar xvf linux/bundle/build/distributions/bundle.tar -C linux-dtn/
+mv linux-dtn/bundle/bin/* linux-dtn/bin
+mv linux-dtn/bundle/lib/* linux-dtn/lib
+rm -rf linux-dtn/bundle/
+
 #tar xvf linux/dtnping/build/distributions/dtnping.tar -C linux-dtn/
 #mv linux-dtn/dtnping/bin/* linux-dtn/bin
 #mv linux-dtn/dtnping/lib/* linux-dtn/lib
